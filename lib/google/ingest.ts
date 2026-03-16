@@ -37,21 +37,29 @@ async function generateEmbedding(text: string): Promise<number[]> {
 
 const VISION_MODEL = "claude-sonnet-4-20250514";
 
-const EXTRACTION_SYSTEM_PROMPT = `You are extracting content from a photographed page of a Pilates curriculum manual.
+const PDF_EXTRACTION_SYSTEM_PROMPT = `You are extracting content from PDF text of a Pilates curriculum manual.
 
 Extract all printed text faithfully and completely.
-Describe any anatomical diagrams or movement illustrations in detail — include muscle names, body positions, movement directions.
-Extract handwritten annotations separately, prefixed with HANDWRITTEN NOTE:
+Describe any anatomical diagrams or movement illustrations in detail — prefix with [DIAGRAM:]. Include muscle names, body positions, movement directions.
+Extract handwritten annotations — prefix with [HANDWRITTEN:].
 Preserve all exercise names, spring settings, anatomical terms, and rep counts exactly as written.
 
-Return a JSON object with this exact structure — no markdown, no preamble, only valid JSON:
-{
-  "printed_text": "string",
-  "diagrams": ["string"],
-  "handwritten_notes": ["string"]
-}
+Return ONLY a valid JSON object with no markdown, no backticks, no explanation.
+Format: {"printed_text": "all extracted content here as a single string"}
+Include all text, diagram descriptions prefixed with [DIAGRAM:], and handwritten notes prefixed with [HANDWRITTEN:].
+Escape quotes (\\"), backslashes (\\\\), and newlines (\\n) inside the string.`;
 
-CRITICAL: Output must be valid JSON parseable by JSON.parse(). Escape all quotes (\\"), backslashes (\\\\), and control chars inside strings. Use \\n for newlines within printed_text.`;
+const IMAGE_EXTRACTION_SYSTEM_PROMPT = `You are extracting content from a photographed page of a Pilates curriculum manual.
+
+Extract all printed text faithfully and completely.
+Describe any anatomical diagrams or movement illustrations in detail — prefix with [DIAGRAM:].
+Extract handwritten annotations — prefix with [HANDWRITTEN:].
+Preserve all exercise names, spring settings, anatomical terms, and rep counts exactly as written.
+
+Return ONLY a valid JSON object with no markdown, no backticks, no explanation.
+Format: {"printed_text": "all extracted content here as a single string"}
+Include all text, diagram descriptions prefixed with [DIAGRAM:], and handwritten notes prefixed with [HANDWRITTEN:].
+Escape quotes (\\"), backslashes (\\\\), and newlines (\\n) inside the string.`;
 
 const CHARS_PER_TOKEN = 4;
 const OVERLAP_CHARS = 50 * CHARS_PER_TOKEN;
@@ -78,34 +86,92 @@ export type ProcessImageSuccess = ExtractedContent;
 export type ProcessImageError = { error: string; fileName: string };
 export type ProcessImageResult = ProcessImageSuccess | ProcessImageError;
 
+const PDF_CHUNK_MAX_CHARS = 6000;
+
 /**
- * Extracts text from a PDF buffer via unpdf (serverless PDF.js), then structures it
- * via Claude using the same extraction prompt (sent as text content). Returns ExtractedContent format.
- * On failure returns { error, fileName }.
+ * Unescapes a JSON string value (handles \n, \", \\, etc.).
  */
-function parseStructuredResponse(text: string): {
-  printed_text: string;
-  diagrams: string[];
-  handwritten_notes: string[];
-} | null {
-  const jsonStr = text.replace(/^```json\s*|\s*```$/g, "").trim();
+function unescapeJsonString(s: string): string {
   try {
-    const parsed = JSON.parse(jsonStr) as {
-      printed_text?: string;
-      diagrams?: string[];
-      handwritten_notes?: string[];
-    };
-    const printed_text = typeof parsed.printed_text === "string" ? parsed.printed_text : "";
-    const diagrams = Array.isArray(parsed.diagrams)
-      ? parsed.diagrams.filter((d): d is string => typeof d === "string")
-      : [];
-    const handwritten_notes = Array.isArray(parsed.handwritten_notes)
-      ? parsed.handwritten_notes.filter((h): h is string => typeof h === "string")
-      : [];
-    return { printed_text, diagrams, handwritten_notes };
+    return JSON.parse('"' + s.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"') as string;
   } catch {
-    return null;
+    return s.replace(/\\n/g, "\n").replace(/\\r/g, "\r").replace(/\\"/g, '"').replace(/\\\\/g, "\\");
   }
+}
+
+/**
+ * Parses PDF extraction response. Simple format: {"printed_text": "..."}.
+ * Tries JSON.parse first; on failure, uses multiple fallbacks including truncated output.
+ */
+function parsePdfResponse(text: string): string | null {
+  const stripMarkdown = (s: string) =>
+    s.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/g, "").trim();
+  const stripped = stripMarkdown(text);
+
+  const tryParse = (str: string): string | null => {
+    try {
+      const parsed = JSON.parse(str) as { printed_text?: unknown };
+      if (typeof parsed.printed_text === "string") return parsed.printed_text;
+    } catch {
+      // ignore
+    }
+    return null;
+  };
+
+  // 1. Direct parse
+  let result = tryParse(stripped);
+  if (result !== null) return result;
+
+  // 2. Repair trailing commas and retry
+  const repaired = stripped.replace(/,(\s*[}\]])/g, "$1").trim();
+  result = tryParse(repaired);
+  if (result !== null) return result;
+
+  // 3. Regex: full match for "printed_text":"...".
+  const regexMatch = stripped.match(/"printed_text"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+  if (regexMatch) return unescapeJsonString(regexMatch[1]);
+
+  // 4. Extract printed_text value by walking the string (handles truncation)
+  const key = '"printed_text"';
+  const idx = stripped.indexOf(key);
+  if (idx === -1) return null;
+
+  const afterKey = stripped.slice(idx + key.length);
+  const colonMatch = afterKey.match(/^\s*:\s*"/);
+  if (!colonMatch) return null;
+
+  const start = colonMatch[0].length;
+  let value = "";
+  let i = start;
+  while (i < afterKey.length) {
+    const c = afterKey[i];
+    if (c === "\\" && i + 1 < afterKey.length) {
+      value += afterKey.slice(i, i + 2);
+      i += 2;
+      continue;
+    }
+    if (c === '"') break;
+    value += c;
+    i++;
+  }
+  return value ? unescapeJsonString(value) : null;
+}
+
+/**
+ * Converts parsed printed_text (with [DIAGRAM:] and [HANDWRITTEN:] inline) to ExtractedContent.
+ */
+function toExtractedContent(
+  printedText: string,
+  fileName: string,
+  folderName: string
+): ExtractedContent {
+  return {
+    printed_text: printedText,
+    diagrams: [],
+    handwritten_notes: [],
+    fileName,
+    folderName,
+  };
 }
 
 export async function processPdf(
@@ -116,41 +182,39 @@ export async function processPdf(
   try {
     const { extractText, getDocumentProxy } = await import("unpdf");
     const pdf = await getDocumentProxy(new Uint8Array(pdfBuffer));
-    const { text: pageTexts } = await extractText(pdf, { mergePages: false });
+    const { text: pageTexts } = await extractText(pdf, { mergePages: true });
 
-    const pages = Array.isArray(pageTexts) ? pageTexts : [];
-    const nonEmpty = pages
-      .map((p, i) => ({ pageNum: i + 1, text: (p ?? "").trim() }))
-      .filter((p) => p.text);
+    const fullText =
+      typeof pageTexts === "string"
+        ? pageTexts.trim()
+        : (Array.isArray(pageTexts) ? pageTexts : []).join("\n\n").trim();
 
-    if (nonEmpty.length === 0) {
+    if (!fullText) {
       return {
         error: "PDF contains no extractable text",
         fileName,
       };
     }
 
-    const combined: { printed_text: string[]; diagrams: string[]; handwritten_notes: string[] } = {
-      printed_text: [],
-      diagrams: [],
-      handwritten_notes: [],
-    };
-    const PDF_PAGES_PER_BATCH = 20;
+    const chunks: string[] = [];
+    for (let i = 0; i < fullText.length; i += PDF_CHUNK_MAX_CHARS) {
+      chunks.push(fullText.slice(i, i + PDF_CHUNK_MAX_CHARS));
+    }
 
-    for (let i = 0; i < nonEmpty.length; i += PDF_PAGES_PER_BATCH) {
-      const batch = nonEmpty.slice(i, i + PDF_PAGES_PER_BATCH);
-      const batchText = batch
-        .map((p) => `--- Page ${p.pageNum} ---\n${p.text}`)
-        .join("\n\n");
+    const combined: string[] = [];
+
+    for (let i = 0; i < chunks.length; i++) {
+      const chunkText = chunks[i];
+      const chunkLabel = chunks.length > 1 ? ` (chunk ${i + 1}/${chunks.length})` : "";
 
       const response = await anthropic.messages.create({
         model: VISION_MODEL,
         max_tokens: 4096,
-        system: EXTRACTION_SYSTEM_PROMPT,
+        system: PDF_EXTRACTION_SYSTEM_PROMPT,
         messages: [
           {
             role: "user",
-            content: `Structure this extracted PDF content (pages ${batch[0].pageNum}-${batch[batch.length - 1].pageNum}) into the required format. File: ${fileName}, Folder: ${folderName}.\n\n--- PDF content ---\n\n${batchText}`,
+            content: `Structure this extracted PDF content${chunkLabel} into the required format. File: ${fileName}, Folder: ${folderName}.\n\n--- PDF content ---\n\n${chunkText}`,
           },
         ],
       });
@@ -163,31 +227,23 @@ export async function processPdf(
 
       if (!text.trim()) {
         return {
-          error: `Claude returned empty response for pages ${batch[0].pageNum}-${batch[batch.length - 1].pageNum}`,
+          error: `Claude returned empty response for chunk ${i + 1}`,
           fileName,
         };
       }
 
-      const parsed = parseStructuredResponse(text);
+      const parsed = parsePdfResponse(text);
       if (!parsed) {
         return {
-          error: `Claude returned invalid JSON for pages ${batch[0].pageNum}-${batch[batch.length - 1].pageNum}`,
+          error: `Claude returned invalid JSON for chunk ${i + 1}`,
           fileName,
         };
       }
 
-      if (parsed.printed_text) combined.printed_text.push(parsed.printed_text);
-      combined.diagrams.push(...parsed.diagrams);
-      combined.handwritten_notes.push(...parsed.handwritten_notes);
+      if (parsed.trim()) combined.push(parsed.trim());
     }
 
-    return {
-      printed_text: combined.printed_text.join("\n\n"),
-      diagrams: combined.diagrams,
-      handwritten_notes: combined.handwritten_notes,
-      fileName,
-      folderName,
-    };
+    return toExtractedContent(combined.join("\n\n"), fileName, folderName);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return {
@@ -208,37 +264,33 @@ export async function processImage(
 ): Promise<ProcessImageResult> {
   const base64 = imageBuffer.toString("base64");
   const mediaType = getMediaType(fileName);
+  const userContent = [
+    {
+      type: "image" as const,
+      source: {
+        type: "base64" as const,
+        media_type: mediaType,
+        data: base64,
+      },
+    },
+    {
+      type: "text" as const,
+      text: `Extract all content from this image. File: ${fileName}, Folder: ${folderName}.`,
+    },
+  ];
 
   try {
     const response = await anthropic.messages.create({
       model: VISION_MODEL,
-      max_tokens: 8192,
-      system: EXTRACTION_SYSTEM_PROMPT,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "image",
-              source: {
-                type: "base64",
-                media_type: mediaType,
-                data: base64,
-              },
-            },
-            {
-              type: "text",
-              text: `Extract all content from this image. File: ${fileName}, Folder: ${folderName}.`,
-            },
-          ],
-        },
-      ],
+      max_tokens: 4096,
+      system: IMAGE_EXTRACTION_SYSTEM_PROMPT,
+      messages: [{ role: "user", content: userContent }],
     });
 
     const text =
       response.content
         .filter((block) => block.type === "text")
-        .map((block) => "text" in block ? (block as { text: string }).text : "")
+        .map((block) => ("text" in block ? (block as { text: string }).text : ""))
         .join("") ?? "";
 
     if (!text.trim()) {
@@ -248,28 +300,15 @@ export async function processImage(
       };
     }
 
-    const jsonStr = text.replace(/^```json\s*|\s*```$/g, "").trim();
-    const parsed = JSON.parse(jsonStr) as {
-      printed_text?: string;
-      diagrams?: string[];
-      handwritten_notes?: string[];
-    };
+    const parsed = parsePdfResponse(text);
+    if (!parsed) {
+      return {
+        error: "Claude returned invalid JSON structure",
+        fileName,
+      };
+    }
 
-    const printed_text = typeof parsed.printed_text === "string" ? parsed.printed_text : "";
-    const diagrams = Array.isArray(parsed.diagrams)
-      ? parsed.diagrams.filter((d): d is string => typeof d === "string")
-      : [];
-    const handwritten_notes = Array.isArray(parsed.handwritten_notes)
-      ? parsed.handwritten_notes.filter((h): h is string => typeof h === "string")
-      : [];
-
-    return {
-      printed_text,
-      diagrams,
-      handwritten_notes,
-      fileName,
-      folderName,
-    };
+    return toExtractedContent(parsed, fileName, folderName);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return {
