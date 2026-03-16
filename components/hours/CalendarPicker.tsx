@@ -11,16 +11,12 @@ interface CalendarPickerProps {
 
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-function getMonthYear(date: Date) {
-  return { year: date.getFullYear(), month: date.getMonth() };
-}
 
 function toISO(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
 function getDaysInMonth(year: number, month: number): Date[] {
-  const first = new Date(year, month, 1);
   const last = new Date(year, month + 1, 0);
   const days: Date[] = [];
   for (let d = 1; d <= last.getDate(); d++) {
@@ -74,7 +70,9 @@ export default function CalendarPicker({
   );
 
   useEffect(() => {
-    if (value) setFocusedDate(value);
+    if (value) {
+      queueMicrotask(() => setFocusedDate(value));
+    }
   }, [value]);
 
   const todayISO = toISO(new Date());
@@ -178,8 +176,7 @@ export default function CalendarPicker({
                     ? "border-2 border-clara-accent text-clara-deep hover:bg-clara-highlight"
                     : "text-clara-deep hover:bg-clara-highlight"
               } ${isFocused && !isSelected ? "ring-2 ring-clara-strong ring-offset-1" : ""}`}
-              aria-label={`Select ${dateISO}`}
-              aria-selected={isSelected}
+              aria-label={`Select ${dateISO}${isSelected ? " (selected)" : ""}`}
             >
               <span>{date.getDate()}</span>
               {hasLogs && (

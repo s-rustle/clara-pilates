@@ -7,6 +7,7 @@ const PROTECTED_PATHS = [
   "/quiz",
   "/cues",
   "/sessions",
+  "/learn",
   "/hours",
   "/curriculum",
   "/settings",
@@ -19,6 +20,7 @@ function isProtectedPath(pathname: string): boolean {
   if (pathname.startsWith("/api/hours")) return true;
   if (pathname.startsWith("/api/sessions")) return true;
   if (pathname.startsWith("/api/ingest")) return true;
+  if (pathname.startsWith("/api/auth/")) return true;
   return false;
 }
 

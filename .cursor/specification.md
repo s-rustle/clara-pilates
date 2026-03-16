@@ -207,7 +207,28 @@ All study-facing agents query the pgvector store first. If relevant content is n
 - Option to mark session as complete and link to an hour log entry (auto-populates category, date, duration)
 - Completed sessions saved to Supabase and visible in session history
 
-### 5.6 Hour Tracking Agent
+### 5.6 Learn Agent
+**Trigger:** User opens Learn screen and selects apparatus + exercise or body part/muscle group  
+**Input:**
+- Apparatus (Mat, Reformer, Cadillac, Chair, Barrels)
+- Either: specific exercise name (e.g., "The Hundred") OR body part/muscle group (e.g., "hip flexors", "core")
+
+**Output — structured tutorial, one exercise at a time:**
+- Starting position description
+- Movement description
+- Breath cues
+- Spring settings (if applicable)
+- Precautions and contraindications
+- Manual page image from Google Drive displayed alongside text
+
+**Behavior:**
+- Searches pgvector for relevant curriculum chunks and manual page images
+- Structures content exclusively from source material — never invents
+- Presents exercises in sequence — "Next" advances, "Previous" goes back
+- Progress indicator: "Exercise 2 of 6"
+- Phase 2: audio narration via Whisper
+
+### 5.7 Hour Tracking Agent
 **Trigger:** User logs hours or requests hour summary  
 **Input:** Log entry fields or summary request  
 **Output:**
@@ -216,7 +237,7 @@ All study-facing agents query the pgvector store first. If relevant content is n
 - Plain-language gap summary when requested
 - Flag if a category is significantly behind overall pace
 
-### 5.7 Weak Spot Agent
+### 5.8 Weak Spot Agent
 **Trigger:** Automatic — runs analysis after every 5 completed quiz sessions  
 **Input:** Full quiz history from Supabase  
 **Output:**
@@ -225,7 +246,7 @@ All study-facing agents query the pgvector store first. If relevant content is n
 - Recommended study action routed to Curriculum Agent
 - Weak spot summary card visible on dashboard — updates after each analysis run
 
-### 5.7 Readiness Synthesizer Agent
+### 5.9 Readiness Synthesizer Agent
 **Trigger:** User opens Readiness dashboard or requests a readiness check  
 **Input:** Quiz performance history + hour log totals + curriculum coverage metrics  
 **Output — three-dimension score:**
@@ -281,14 +302,31 @@ All study-facing agents query the pgvector store first. If relevant content is n
 - Submit → structured feedback card appears
 - History of submitted cues + feedback in this session
 
-### 6.6 Hour Tracking Screen
+### 6.6 Learn Screen
+- Route: `/learn`
+- Nav position: between Sessions and Hours
+- Apparatus selector — Mat, Reformer, Cadillac, Chair, Barrels
+- Search mode: specific exercise name (free text) OR body part/muscle group (free text)
+- Tutorial format — one exercise at a time:
+  - Starting position
+  - Movement description
+  - Breath cues
+  - Spring settings
+  - Precautions
+- Manual page image from Google Drive displayed alongside text
+- "Next" button — advances to next exercise in sequence
+- "Previous" button — goes back
+- Progress indicator: "Exercise 2 of 6"
+- Phase 2: audio narration via Whisper
+
+### 6.7 Hour Tracking Screen
 - Log entry form — category, sub-type, date, duration, notes
 - Total progress bar — hours logged vs. 536
 - Practical targets section — Mat / Reformer / Apparatus progress bars
 - Category breakdown table — expandable rows
 - Gap summary — plain language
 
-### 6.7 Session Planner Screen
+### 6.8 Session Planner Screen
 - Mode toggle at top: Plan / Log
 - Session type selector: Teaching / Personal Practice
 - Apparatus selector
@@ -322,14 +360,14 @@ All study-facing agents query the pgvector store first. If relevant content is n
 - Each entry: date, apparatus, session type, overall feedback summary
 - Click to view full session and feedback
 
-### 6.8 Curriculum Manager Screen (Admin only)
+### 6.9 Curriculum Manager Screen (Admin only)
 - Google Drive connection status
 - Folder list — each folder with ingestion status + last ingested date
 - Ingest / Re-ingest button per folder
 - Processing log — file-level status
 - Error display — explicit message per failed file
 
-### 6.9 Settings Screen
+### 6.10 Settings Screen
 - Profile (name, email)
 - Exam target date (optional — Phase 1 stores but does not yet drive countdown)
 - Hour requirement targets (editable — for when official breakdown is confirmed)
@@ -388,6 +426,7 @@ The build is complete when:
 - [ ] Cueing Feedback Agent evaluates written cues with structured output
 - [ ] Session Planner accepts warm-up + sequence with sets/reps and returns structured feedback
 - [ ] Log Mode sessions link to hour log entries correctly
+- [ ] Learn screen presents exercise tutorials from RAG (apparatus + exercise or body part)
 - [ ] Hours can be logged and tracked against all targets
 - [ ] Weak Spot Agent surfaces patterns after 5+ quiz sessions
 - [ ] Readiness Score updates after each quiz session and hour log

@@ -1,14 +1,68 @@
+import { createClient } from "@/lib/supabase/server";
 import Card from "@/components/ui/Card";
+import DriveConnect from "@/components/curriculum/DriveConnect";
+import FolderList from "@/components/curriculum/FolderList";
 
-export default function CurriculumPage() {
+export default async function CurriculumPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return null;
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("google_access_token")
+    .eq("id", user.id)
+    .single();
+
+  const isConnected = Boolean(
+    profile?.google_access_token && profile.google_access_token.length > 0
+  );
+
+  let hasIngestedFolders = false;
+  if (isConnected) {
+    const { count } = await supabase
+      .from("curriculum_uploads")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id);
+    hasIngestedFolders = (count ?? 0) > 0;
+  }
+
   return (
     <div>
       <h1 className="mb-4 text-2xl font-bold text-clara-strong">
         Curriculum Manager
       </h1>
-      <Card>
-        <p className="text-clara-deep">Coming soon — Curriculum Manager</p>
-      </Card>
+
+      <div className="mb-6">
+        <DriveConnect isConnected={isConnected} />
+      </div>
+
+      {!isConnected ? (
+        <Card>
+          <p className="text-clara-deep">
+            Connect your Google Drive to begin ingesting your Balanced Body
+            materials.
+          </p>
+        </Card>
+      ) : (
+        <>
+          <FolderList />
+          {!hasIngestedFolders && (
+            <div className="mt-4">
+              <Card>
+                <p className="text-clara-deep">
+                  No folders ingested yet. Select a folder above to begin.
+                </p>
+              </Card>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

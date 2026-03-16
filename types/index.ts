@@ -1,7 +1,38 @@
+export interface ExtractedContent {
+  printed_text: string;
+  diagrams: string[];
+  handwritten_notes: string[];
+  fileName: string;
+  folderName: string;
+}
+
+export interface ContentChunk {
+  content: string;
+  content_type: "text" | "diagram" | "handwritten";
+  upload_id: string;
+  folder_name: string;
+  file_name: string;
+  chunk_index: number;
+}
+
+export interface DriveFolder {
+  id: string;
+  name: string;
+}
+
+export interface DriveFile {
+  id: string;
+  name: string;
+  mimeType: string;
+  size: string;
+}
+
 export interface Profile {
   id: string;
   full_name: string | null;
   exam_target_date: string | null;
+  google_access_token: string | null;
+  google_refresh_token: string | null;
   created_at: string;
 }
 
@@ -92,6 +123,26 @@ export interface CurriculumUpload {
   last_ingested_at: string | null;
   error_message: string | null;
   created_at: string;
+}
+
+export interface CurriculumResponse {
+  answer: string;
+  confidence: "confident" | "partial" | "not_found";
+  source_folder: string | null;
+  chunks_used: number;
+}
+
+export interface RagChunk {
+  content: string;
+  content_type: "text" | "diagram" | "handwritten";
+  folder_name: string;
+  file_name: string;
+  similarity: number;
+}
+
+export interface RAGResult {
+  chunks: RagChunk[];
+  notFound: boolean;
 }
 
 export interface CurriculumChunk {

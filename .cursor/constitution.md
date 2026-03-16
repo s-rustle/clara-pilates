@@ -73,7 +73,10 @@ Analyzes quiz history over time. Surfaces patterns — not just missed questions
 ### 4.7 Session Planner Agent
 Accepts a planned or completed session — pre-Pilates warm-up (pelvic floor engagement, breathing, stretching) plus full exercise sequence with sets, reps, and apparatus — and evaluates it against Balanced Body methodology. Assesses progression logic, contraindication risk, volume appropriateness (standard 8-12 rep range), muscle group balance, and sequence alignment with Balanced Body curriculum. Supports both planning mode (feedback before teaching/practicing) and logging mode (record what was actually done, feeds hour tracking). Reasons exclusively over uploaded source materials.
 
-### 4.8 Readiness Synthesizer Agent
+### 4.8 Learn Agent
+Accepts apparatus + either a specific exercise name OR a body part/muscle group. Searches the RAG layer for relevant curriculum chunks and manual page images. Structures tutorial content from source material only — one exercise at a time covering starting position, movement description, breath cues, spring settings, and precautions. Never invents information not present in uploaded materials. Phase 2 adds audio narration via Whisper.
+
+### 4.9 Readiness Synthesizer Agent
 Produces a readiness score anchored to three dimensions: curriculum coverage (% of uploaded material queried and demonstrated), quiz performance (rolling accuracy score by domain), and hour completion (% of required hours logged). Generates a plain-language readiness brief with recommended next study actions.
 
 ---
@@ -123,7 +126,7 @@ No client data, no Lumenalta data, no third-party information of any kind touche
 - Clean and fresh — generous whitespace, no visual clutter
 - Subtle warmth — surfaces lean warm, not sterile
 - No heavy shadows, no dark mode (Phase 1)
-- Wordmark: initials **SC**, set in Inter Bold, `#2E7D32`
+- Wordmark: initials **SR**, set in Inter Bold, `#2E7D32`
 
 ### 6.4 Voice
 - Direct and precise — no filler language
@@ -139,6 +142,7 @@ No client data, no Lumenalta data, no third-party information of any kind touche
 - Curriculum Agent (written Q&A over uploaded materials)
 - Examiner Agent (written quiz mode)
 - Cueing Feedback Agent (written cue submission + evaluation)
+- Learn Agent (tutorial mode — exercise-by-exercise from RAG)
 - Hour Tracker (log, view, gap analysis by category)
 - Readiness Score dashboard
 - Weak Spot analysis
@@ -147,6 +151,7 @@ No client data, no Lumenalta data, no third-party information of any kind touche
 
 ### Phase 2 — Document Now, Build Later
 - Verbal cueing via OpenAI Whisper (mic → transcription → Cueing Feedback Agent)
+- Learn screen audio narration via Whisper
 - Exam date countdown layer on Readiness Score
 - Hour requirement targets (once Balanced Body breakdown is confirmed)
 - Multi-user access with individual progress tracking

@@ -82,7 +82,7 @@ No external component library. Pure Tailwind only.
 ```
 Build /components/layout/Wordmark.tsx.
 
-Display the initials "SC" in Inter Bold, color clara-strong (#2E7D32).
+Display the initials "SR" in Inter Bold, color clara-strong (#2E7D32).
 Below the initials, display "Clara" in Inter Regular, smaller size, color clara-primary.
 The wordmark should work on both light (clara-bg) and clara-surface backgrounds.
 Accept a size prop: "sm" | "md" | "lg".
@@ -151,7 +151,7 @@ Sidebar design:
 
 Main content area: clara-bg background, full width, scrollable.
 
-TopBar: displays current page title and user initials avatar (clara-primary circle, white text "SC").
+TopBar: displays current page title and user initials avatar (clara-primary circle, white text "SR").
 ```
 
 ---
@@ -880,13 +880,107 @@ Confirm navigation works and active state highlights correctly.
 
 ---
 
-## Phase 8 — Weak Spot Agent
+## Phase 8 — Learn Agent (Tutorial Mode)
+
+**Goal:** Exercise-by-exercise tutorial screen driven by RAG. User selects apparatus + exercise or body part; Clara presents structured content from source material only.
+
+---
+
+**Task 8.1 — Learn Agent**
+```
+Build /lib/anthropic/agents/learn.ts.
+
+fetchTutorialContent(apparatus, query, userId):
+- Accepts: apparatus (Mat, Reformer, Cadillac, Chair, Barrels), query (specific exercise name OR body part/muscle group)
+- Searches pgvector for relevant curriculum chunks using queryRAG pattern
+- If query is exercise name: search for that exercise
+- If query is body part/muscle group: search for exercises targeting that area
+- Returns structured array of exercises, each with:
+  - exercise_name: string
+  - starting_position: string
+  - movement_description: string
+  - breath_cues: string
+  - spring_settings: string | null
+  - precautions: string
+  - source_file_name: string (for manual page image lookup)
+  - source_folder: string
+
+- Agent structures content exclusively from source chunks — never invents
+- If no chunks found: return { not_found: true, suggestion: "Consider adding relevant pages from your [folder] manual." }
+- Orders exercises logically (by sequence in source material when possible)
+
+Build /app/api/agents/learn/route.ts:
+- POST: accepts { apparatus, query } (query = exercise name OR body part)
+- Returns { exercises: [...], not_found?: boolean, suggestion?: string }
+- Fetches manual page image URL from Google Drive for each exercise's source_file_name (if available)
+- Explicit error if Claude API fails or RAG returns empty
+```
+
+---
+
+**Task 8.2 — Manual Image Retrieval**
+```
+Extend ingestion/Drive logic to support fetching a specific file's image URL for display.
+
+- Add utility or extend /lib/google/drive.ts: getFileImageUrl(accessToken, fileId) or getFileThumbnailUrl
+- Curriculum chunks store upload_id, folder_name, file_name — use to lookup Drive file ID from curriculum_uploads + folder structure
+- Learn Agent response includes image_url for each exercise when source image exists in Drive
+
+If Drive file-to-chunk mapping is complex: Phase 1 can display "Manual page" placeholder with source citation (file name, folder) — image display in Phase 2.
+```
+
+---
+
+**Task 8.3 — Learn Screen**
+```
+Build /app/(dashboard)/learn/page.tsx and components.
+
+LearnSelector component (/components/learn/LearnSelector.tsx):
+- Apparatus selector: Mat, Reformer, Cadillac, Chair, Barrels
+- Search input: "Exercise name or body part (e.g., The Hundred, hip flexors)"
+- "Start Tutorial" button
+- On submit: POST to /api/agents/learn, store exercises in state
+- LoadingSpinner during fetch
+- If not_found: display ErrorMessage with suggestion
+
+TutorialCard component (/components/learn/TutorialCard.tsx):
+- Displays one exercise at a time
+- Sections: Starting Position, Movement, Breath Cues, Spring Settings (if any), Precautions
+- Manual page image (or placeholder + citation) alongside text
+- "Next" and "Previous" buttons
+- Progress indicator: "Exercise 2 of 6"
+
+Page layout:
+- LearnSelector at top
+- When exercises loaded: TutorialCard with nav and progress
+- Empty state before search: "Select an apparatus and enter an exercise name or body part to learn from your curriculum."
+```
+
+---
+
+**Task 8.4 — Sidebar Navigation Update**
+```
+Update /components/layout/Sidebar.tsx to add Learn nav item.
+
+Add between Sessions and Hours:
+- Label: "Learn"
+- Icon: GraduationCap or BookMarked
+- Route: /learn
+
+Update DashboardShell/titleMap if used to include "Learn" for /learn route.
+
+Confirm navigation works and Learn screen is accessible.
+```
+
+---
+
+## Phase 9 — Weak Spot Agent
 
 **Goal:** Pattern analysis across quiz history, surfaced on dashboard.
 
 ---
 
-**Task 7.1 — Weak Spot Agent**
+**Task 9.1 — Weak Spot Agent**
 ```
 Build /lib/anthropic/agents/weakspot.ts.
 
@@ -913,7 +1007,7 @@ Build /app/api/agents/weakspot/route.ts:
 
 ---
 
-**Task 7.2 — Weak Spot Schema + Dashboard Card**
+**Task 9.2 — Weak Spot Schema + Dashboard Card**
 ```
 Add to Supabase SQL editor:
 Create weak_spot_analyses table:
@@ -936,7 +1030,7 @@ Build /components/dashboard/WeakSpotCard.tsx:
 
 ---
 
-**Task 8.1 — Readiness Calculations**
+**Task 10.1 — Readiness Calculations**
 ```
 Build /lib/utils/readiness.ts.
 
@@ -963,7 +1057,7 @@ calculateOverallScore(curriculum, quiz, hours):
 
 ---
 
-**Task 8.2 — Readiness Synthesizer Agent**
+**Task 10.2 — Readiness Synthesizer Agent**
 ```
 Build /lib/anthropic/agents/readiness.ts.
 
@@ -984,7 +1078,7 @@ Build /app/api/agents/readiness/route.ts:
 
 ---
 
-**Task 8.3 — Readiness Dashboard Screen**
+**Task 10.3 — Readiness Dashboard Screen**
 ```
 Update /app/(dashboard)/page.tsx (Dashboard home).
 
@@ -1009,13 +1103,13 @@ Dashboard layout (final):
 
 ---
 
-## Phase 10 — Polish + Error Handling Audit
+## Phase 11 — Polish + Error Handling Audit
 
 **Goal:** Every error state tested. UI consistent across all screens.
 
 ---
 
-**Task 9.1 — Error Handling Audit**
+**Task 11.1 — Error Handling Audit**
 ```
 Review every API route and agent call in the application.
 
@@ -1032,11 +1126,12 @@ Test the following failure scenarios manually:
 - Supabase write fails during quiz session save
 - Hour log submitted with missing required fields
 - Quiz started with no curriculum ingested (show warning: "No curriculum uploaded yet — answers may be limited")
+- Learn screen: no RAG chunks for exercise/body part (show "not found" with folder suggestion)
 ```
 
 ---
 
-**Task 9.2 — UI Consistency Pass**
+**Task 11.2 — UI Consistency Pass**
 ```
 Review all screens for visual consistency:
 
@@ -1054,7 +1149,7 @@ Fix any inconsistencies found. Do not add new features.
 
 ---
 
-**Task 9.3 — Settings Screen**
+**Task 11.3 — Settings Screen**
 ```
 Build /app/(dashboard)/settings/page.tsx.
 
@@ -1069,13 +1164,13 @@ All saves: explicit success confirmation or ErrorMessage.
 
 ---
 
-## Phase 11 — Vercel Deployment + Smoke Test
+## Phase 12 — Vercel Deployment + Smoke Test
 
 **Goal:** Live URL, accessible on phone, end-to-end working.
 
 ---
 
-**Task 10.1 — Vercel Deployment**
+**Task 12.1 — Vercel Deployment**
 ```
 Deploy Clara to Vercel:
 
@@ -1092,7 +1187,7 @@ If build fails: fix errors before proceeding to smoke test.
 
 ---
 
-**Task 10.2 — Smoke Test**
+**Task 12.2 — Smoke Test**
 ```
 Test the following end-to-end on the live Vercel URL:
 
@@ -1123,6 +1218,12 @@ Quiz:
 Cueing:
 - [ ] Submit a written cue — structured feedback returns
 - [ ] "Better version" appears in feedback
+
+Learn:
+- [ ] Select apparatus + exercise name — tutorial loads, Next/Previous works
+- [ ] Select apparatus + body part — tutorial loads from RAG
+- [ ] Progress indicator shows "Exercise X of Y"
+- [ ] Manual page image or citation displayed
 
 Dashboard:
 - [ ] Readiness score updates after completing quiz

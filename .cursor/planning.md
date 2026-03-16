@@ -16,10 +16,11 @@ Build in this order. Do not skip ahead. Each phase depends on the previous being
 | 5 | Examiner Agent (quiz mode) | Full quiz session runs, saves to Supabase |
 | 6 | Cueing Feedback Agent | Written cue submitted, structured feedback returned |
 | 7 | Session Planner Agent | Routine submitted, five-dimension feedback returned; Log Mode links to hours |
-| 8 | Weak Spot Agent | Patterns surface after 5+ quiz sessions |
-| 9 | Readiness Synthesizer | Score calculates and displays correctly |
-| 10 | Polish + error handling audit | All error states tested, UI consistent |
-| 11 | Vercel deployment + smoke test | Live URL works end to end |
+| 8 | Learn Agent (tutorial mode) | Exercise-by-exercise tutorials from RAG; manual images; Next/Previous navigation |
+| 9 | Weak Spot Agent | Patterns surface after 5+ quiz sessions |
+| 10 | Readiness Synthesizer | Score calculates and displays correctly |
+| 11 | Polish + error handling audit | All error states tested, UI consistent |
+| 12 | Vercel deployment + smoke test | Live URL works end to end |
 
 ---
 
@@ -85,6 +86,8 @@ clara/
 │   │   │   └── page.tsx             # Cueing Feedback Agent
 │   │   ├── sessions/
 │   │   │   └── page.tsx             # Session Planner
+│   │   ├── learn/
+│   │   │   └── page.tsx             # Learn (tutorial mode)
 │   │   ├── hours/
 │   │   │   └── page.tsx             # Hour tracking + calendar
 │   │   ├── curriculum/
@@ -101,6 +104,8 @@ clara/
 │       │   │   └── route.ts         # Cueing Feedback Agent endpoint
 │       │   ├── sessions/
 │       │   │   └── route.ts         # Session Planner Agent endpoint
+│       │   ├── learn/
+│       │   │   └── route.ts         # Learn Agent endpoint
 │       │   ├── weakspot/
 │       │   │   └── route.ts         # Weak Spot Agent endpoint
 │       │   └── readiness/
@@ -146,6 +151,10 @@ clara/
 │   ├── cues/
 │   │   ├── CueInput.tsx
 │   │   └── FeedbackCard.tsx
+│   ├── learn/
+│   │   ├── LearnSelector.tsx
+│   │   ├── TutorialCard.tsx
+│   │   └── ManualImage.tsx
 │   ├── sessions/
 │   │   ├── SessionPlannerForm.tsx
 │   │   ├── WarmUpSection.tsx
@@ -174,6 +183,7 @@ clara/
 │   │       ├── examiner.ts
 │   │       ├── cues.ts
 │   │       ├── sessions.ts
+│   │       ├── learn.ts
 │   │       ├── weakspot.ts
 │   │       └── readiness.ts
 │   ├── google/
@@ -380,6 +390,7 @@ All study-facing agents follow this pattern:
 ```
 User input → Coordinator
   → Is this a study question? → Curriculum Agent
+  → Is this a learn/tutorial request? → Learn Agent
   → Is this a quiz request? → Examiner Agent
   → Is this a cue to evaluate? → Cueing Feedback Agent
   → Is this a readiness request? → Readiness Synthesizer

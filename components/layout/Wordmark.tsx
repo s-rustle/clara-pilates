@@ -24,7 +24,7 @@ export default function Wordmark({ size = "md", className }: WordmarkProps) {
       <span
         className={clsx("font-bold text-clara-strong", styles.initials)}
       >
-        SC
+        SR
       </span>
       <span
         className={clsx("font-normal text-clara-primary", styles.clara)}
