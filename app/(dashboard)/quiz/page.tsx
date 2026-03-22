@@ -329,7 +329,7 @@ export default function QuizPage() {
             your uploaded manuals. Go to{" "}
             <a
               href="/curriculum"
-              className="font-medium text-clara-primary underline"
+              className="font-medium text-clara-accent underline"
             >
               Curriculum Manager
             </a>{" "}

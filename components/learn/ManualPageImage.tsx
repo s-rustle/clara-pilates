@@ -40,7 +40,7 @@ export default function ManualPageImage({
       <img
         src={url}
         alt=""
-        className={`mx-auto max-h-64 w-auto max-w-full rounded-lg border border-clara-border object-contain shadow-card ${
+        className={`mx-auto max-h-64 w-auto max-w-full rounded-sm border border-clara-highlight object-contain ${
           loaded ? "block" : "sr-only"
         }`}
         onLoad={() => setLoaded(true)}

@@ -82,7 +82,7 @@ function DiagramImage({
       <img
         src={src}
         alt="Anatomy diagram"
-        className="max-h-64 w-auto rounded-lg border border-clara-border object-contain"
+        className="max-h-64 w-auto rounded-sm border border-clara-highlight object-contain"
       />
     );
   }
@@ -102,7 +102,7 @@ export default function QuestionCard({
       <p className="text-sm text-clara-deep">
         Question {currentIndex + 1} of {totalCount}
       </p>
-      <p className="text-sm text-clara-primary">
+      <p className="text-sm font-medium text-clara-accent">
         {scoreSoFar} correct so far
       </p>
       {image_file_name && folder_name && (

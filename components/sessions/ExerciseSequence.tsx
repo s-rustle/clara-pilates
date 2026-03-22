@@ -77,7 +77,7 @@ export default function ExerciseSequence({
             }}
             disabled={disabled}
             placeholder={`e.g. Footwork (${apparatusLabel})`}
-            className="w-full rounded-md border border-clara-border bg-clara-elevated px-3 py-2 text-sm text-clara-ink placeholder:text-clara-muted/80 focus:border-clara-warm focus:outline-none focus:ring-1 focus:ring-clara-warm/40 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-sm border border-clara-highlight bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted/80 focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
         <Button
@@ -91,7 +91,7 @@ export default function ExerciseSequence({
       </div>
 
       {exercises.length === 0 ? (
-        <p className="rounded-md border border-dashed border-clara-border bg-clara-elevated/50 px-3 py-6 text-center text-sm text-clara-muted">
+        <p className="rounded-sm border border-dashed border-clara-highlight bg-clara-bg/50 px-3 py-6 text-center text-sm text-clara-muted">
           Add at least one exercise
         </p>
       ) : (
@@ -99,7 +99,7 @@ export default function ExerciseSequence({
           {exercises.map((ex, index) => (
             <li
               key={`${ex.exercise_name}-${index}`}
-              className="rounded-md border border-clara-border bg-clara-elevated p-3"
+              className="rounded-sm border border-clara-highlight bg-clara-bg p-3"
             >
               <div className="flex flex-wrap items-end gap-2">
                 <div className="min-w-[120px] flex-1">
@@ -191,7 +191,7 @@ function ExerciseNotesRow({
   const [expanded, setExpanded] = useState(Boolean(exercise.notes?.trim()));
 
   return (
-    <div className="mt-2 border-t border-clara-border/80 pt-2">
+    <div className="mt-2 border-t border-clara-highlight/80 pt-2">
       <button
         type="button"
         onClick={() => setExpanded((e) => !e)}
@@ -206,7 +206,7 @@ function ExerciseNotesRow({
           disabled={disabled}
           rows={2}
           placeholder="Cues, springs, modifications…"
-          className="mt-1 w-full rounded-md border border-clara-border bg-clara-surface px-3 py-2 text-sm text-clara-deep placeholder:text-clara-deep/60 focus:border-clara-strong focus:outline-none focus:ring-1 focus:ring-clara-strong disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-1 w-full rounded-sm border border-clara-highlight bg-clara-surface px-3 py-2 text-sm text-clara-deep placeholder:text-clara-deep/60 focus:border-clara-strong focus:outline-none focus:ring-1 focus:ring-clara-strong disabled:cursor-not-allowed disabled:opacity-50"
         />
       )}
     </div>

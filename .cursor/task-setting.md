@@ -42,22 +42,18 @@ Confirm the app runs locally on localhost:3000.
 
 **Task 1.2 — Tailwind Theme**
 ```
-Configure tailwind.config.ts to include the Clara color palette (warm whitewash + terracotta — Constitution §6):
+Configure tailwind.config.ts to include the Clara color palette (Red Rocks brutalist — Constitution §6):
 
 clara: {
-  bg: '#F4EDE6',
-  sidebar: '#D4C4B8',
-  surface: '#EBE3D9',
-  elevated: '#F7F1EA',
-  muted: '#8A7268',
-  ink: '#3D2E28',
-  deep: '#4A352C',
-  strong: '#5C2E24',
-  border: '#C9B3A4',
-  highlight: '#E5D5CA',
-  primary: '#B8482E',
-  accent: '#C45F3D',
-  warm: '#A65D45',
+  bg: '#E8E0D5',
+  surface: '#DDD5C8',
+  highlight: '#C9BFB0',
+  accent: '#C4522A',
+  primary: '#5C4A32',
+  strong: '#3D3128',
+  deep: '#1C1610',
+  muted: '#8A7F74',
+  rock: '#A63D1F',
 }
 
 Set the default background color to clara-bg and default text color to clara-deep.

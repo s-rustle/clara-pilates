@@ -94,9 +94,9 @@ export default function WeakSpotCard() {
           Complete {sessionsNeeded} more quiz{" "}
           {sessionsNeeded === 1 ? "session" : "sessions"} to unlock weak spot analysis.
         </p>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-clara-highlight">
+        <div className="h-2 w-full overflow-hidden rounded-sm bg-clara-highlight">
           <div
-            className="h-full bg-clara-primary transition-[width] duration-300"
+            className="h-full bg-clara-accent transition-[width] duration-300"
             style={{ width: `${progress * 100}%` }}
             role="progressbar"
             aria-valuenow={completed}
@@ -142,7 +142,7 @@ export default function WeakSpotCard() {
       </p>
       <Link
         href={studyHref}
-        className="inline-flex w-full items-center justify-center rounded-md bg-clara-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-clara-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-primary sm:w-auto"
+        className="inline-flex w-full items-center justify-center rounded-sm bg-clara-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-clara-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-rock sm:w-auto"
       >
         Study this now
       </Link>

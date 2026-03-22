@@ -100,7 +100,7 @@ export default function AnswerInput({
           placeholder="Type your answer..."
           disabled={inputDisabled || isLoading}
           rows={5}
-          className="w-full rounded-md border border-clara-border bg-clara-elevated px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted focus:border-clara-warm focus:outline-none focus:ring-1 focus:ring-clara-warm/40 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-sm border border-clara-highlight bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
         />
         <Button
           variant="primary"
@@ -127,10 +127,10 @@ export default function AnswerInput({
           {options.map((opt) => (
             <label
               key={opt.id}
-              className={`flex cursor-pointer items-center gap-3 rounded-md border px-3 py-2 transition-colors ${
+              className={`flex cursor-pointer items-center gap-3 rounded-sm border px-3 py-2 transition-colors ${
                 selectedId === opt.id
                   ? "border-clara-primary bg-clara-highlight/30"
-                  : "border-clara-border bg-clara-elevated hover:border-clara-highlight"
+                  : "border-clara-highlight bg-clara-bg hover:border-clara-highlight"
               }`}
             >
               <input
@@ -140,7 +140,7 @@ export default function AnswerInput({
                 checked={selectedId === opt.id}
                 onChange={() => setSelectedId(opt.id)}
                 disabled={inputDisabled || isLoading}
-                className="h-4 w-4 border-clara-border text-clara-primary focus:ring-clara-warm/40"
+                className="h-4 w-4 border-clara-highlight text-clara-accent focus:ring-clara-accent/40"
               />
               <span className="text-clara-deep">
                 {String.fromCharCode(96 + options.indexOf(opt) + 1)}. {opt.text}
@@ -185,7 +185,7 @@ export default function AnswerInput({
                   }))
                 }
                 disabled={inputDisabled || isLoading}
-                className="flex-1 rounded-md border border-clara-border bg-clara-elevated px-3 py-2 text-sm text-clara-deep focus:border-clara-warm focus:outline-none focus:ring-1 focus:ring-clara-warm/40 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex-1 rounded-sm border border-clara-highlight bg-clara-bg px-3 py-2 text-sm text-clara-deep focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="">Select match...</option>
                 {rightItems.map((right) => (
@@ -224,7 +224,7 @@ export default function AnswerInput({
           onChange={(e) => setAnswer(e.target.value)}
           placeholder="Type your answer..."
           disabled={inputDisabled || isLoading}
-          className="w-full rounded-md border border-clara-border bg-clara-elevated px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted focus:border-clara-warm focus:outline-none focus:ring-1 focus:ring-clara-warm/40 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-sm border border-clara-highlight bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
         />
         <Button
           variant="primary"
@@ -252,7 +252,7 @@ export default function AnswerInput({
         placeholder="Type your answer..."
         disabled={inputDisabled || isLoading}
         rows={5}
-        className="w-full rounded-md border border-clara-border bg-clara-elevated px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted focus:border-clara-warm focus:outline-none focus:ring-1 focus:ring-clara-warm/40 disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-full rounded-sm border border-clara-highlight bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
       />
       <Button
         variant="primary"

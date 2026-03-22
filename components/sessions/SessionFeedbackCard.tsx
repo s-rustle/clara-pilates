@@ -78,7 +78,7 @@ export default function SessionFeedbackCard({
               <button
                 type="button"
                 onClick={() => setFlagsOpen((o) => !o)}
-                className="text-xs text-clara-primary hover:underline"
+                className="text-xs text-clara-accent hover:underline"
               >
                 {flagsOpen ? "Hide list" : "Show flags"}
               </button>
@@ -103,7 +103,7 @@ export default function SessionFeedbackCard({
               <button
                 type="button"
                 onClick={() => setVolumeOpen((o) => !o)}
-                className="text-xs text-clara-primary hover:underline"
+                className="text-xs text-clara-accent hover:underline"
               >
                 {volumeOpen ? "Hide flagged" : "Show flagged"}
               </button>
@@ -131,7 +131,7 @@ export default function SessionFeedbackCard({
               <button
                 type="button"
                 onClick={() => setGapsOpen((o) => !o)}
-                className="text-xs text-clara-primary hover:underline"
+                className="text-xs text-clara-accent hover:underline"
               >
                 {gapsOpen ? "Hide gaps" : "Show gaps"}
               </button>
@@ -158,7 +158,7 @@ export default function SessionFeedbackCard({
         />
       </dl>
 
-      <div className="rounded-lg bg-clara-surface p-4 text-sm leading-relaxed shadow-inner">
+      <div className="rounded-sm border border-clara-highlight bg-clara-surface p-4 text-sm leading-relaxed">
         <MarkdownBody>{feedback.overall}</MarkdownBody>
       </div>
 

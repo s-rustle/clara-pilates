@@ -146,10 +146,10 @@ export default function CuesPage() {
                   <button
                     type="button"
                     onClick={() => setActiveId(entry.id)}
-                    className={`w-full rounded-md border px-4 py-3 text-left text-sm transition-colors ${
+                    className={`w-full rounded-sm border px-4 py-3 text-left text-sm transition-colors ${
                       isActive
-                        ? "border-clara-warm bg-clara-elevated ring-1 ring-clara-warm/30"
-                        : "border-clara-border bg-clara-surface hover:bg-clara-elevated"
+                        ? "border-clara-accent bg-clara-bg ring-1 ring-clara-accent/30"
+                        : "border-clara-highlight bg-clara-surface hover:bg-clara-bg"
                     }`}
                   >
                     <div className="font-bold text-clara-strong">

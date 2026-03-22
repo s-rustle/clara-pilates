@@ -10,10 +10,10 @@ interface BadgeProps {
 
 const variantStyles: Record<BadgeVariant, string> = {
   green: "bg-clara-primary text-white",
-  yellow: "bg-amber-600/90 text-amber-950",
-  red: "bg-[#8F3D32] text-white",
-  grey: "bg-clara-border/60 text-clara-deep",
-  blue: "bg-[#5E4A42] text-white",
+  yellow: "bg-clara-highlight text-clara-deep",
+  red: "bg-clara-accent text-white",
+  grey: "border border-clara-highlight bg-clara-bg text-clara-deep",
+  blue: "bg-clara-rock text-white",
 };
 
 export default function Badge({
@@ -24,7 +24,7 @@ export default function Badge({
   return (
     <span
       className={clsx(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+        "inline-flex items-center rounded-sm px-2.5 py-0.5 text-xs font-medium",
         variantStyles[variant],
         className
       )}

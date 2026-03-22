@@ -29,7 +29,7 @@ export default function DashboardShell({
       <Sidebar />
       <div className="min-w-0 max-w-full pl-56">
         <TopBar title={title} />
-        <main className="min-h-[calc(100vh-4rem)] min-w-0 max-w-full overflow-x-auto overflow-y-auto p-4 sm:p-6 md:p-10">
+        <main className="min-h-[calc(100vh-4rem)] min-w-0 max-w-full overflow-x-auto overflow-y-auto bg-clara-bg p-4 sm:p-6 md:p-10">
           {children}
         </main>
       </div>

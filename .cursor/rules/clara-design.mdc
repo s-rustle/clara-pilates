@@ -1,5 +1,5 @@
 ---
-description: Visual design for Clara — warm terracotta & whitewash. Apply when editing layout, Tailwind, or components.
+description: Visual design for Clara — Red Rocks earthy brutalist palette. Apply when editing layout, Tailwind, or components.
 globs:
   - "**/*.tsx"
   - "**/*.css"
@@ -8,38 +8,36 @@ globs:
 
 # Clara visual design
 
-**Direction:** **Roman whitewash + terracotta — warm, grounded, earthy.** Canvas is limewash pink-beige (`clara-bg`); cards are soft earthen cream (`clara-surface`); navigation is warm stone / mud (`clara-sidebar`). Primary actions are **terracotta / burnt orange-red** (`clara-primary`), not green or cool charcoal.
+**Direction:** **Red Rocks — earthy brutalist.** Sand and stone neutrals, umber primary, terracotta accent, deeper rock red-brown for destructive / strong secondary emphasis. **Flat** surfaces — borders and typography carry structure, not shadows.
 
 ## Mood
 
-- Burnt sienna, red ochre, fired clay, sun-warmed plaster.
-- Avoid stark `#fff`, cool gray-50, or clinical blue-green accents.
+- Desert stone, fired clay, architectural planes, warm minimalism.
 
 ## Typography
 
-- **UI / body:** Inter (`font-sans` / `--font-inter`).
-- **Headings:** Inter Bold, `text-clara-strong`.
-- **Wordmark:** SR = `text-clara-strong`; Clara = `text-clara-primary`.
+- **UI / body:** Inter (`font-sans` / `--font-inter`) — weights 300 / 400 / 700 / 900 as needed.
+- **Headings:** `text-clara-strong`.
+- **Wordmark:** **SR** = `text-clara-strong` + `font-black`; **Clara** = `text-clara-accent` + `font-light`.
 
 ## Tokens (`clara-*` in `tailwind.config.ts`)
 
-- `bg` — Whitewash canvas.
-- `sidebar` — Deeper warm strip for nav.
-- `surface` / `elevated` — Panels and inputs; never pure white.
-- `border` / `highlight` — Dusty clay borders; rose-tan hovers.
-- `primary` / `accent` — Terracotta CTAs and hover states.
-- `strong` / `deep` / `ink` — Sienna headings and umber body text.
-- `muted` — Dusty brown secondary text.
-- `warm` — Focus rings (`focus:ring-clara-warm/40`).
+- `bg` — page background.
+- `surface` — cards, panels, sidebar.
+- `highlight` — borders, hovers, active nav background, dividers.
+- `primary` — primary buttons (white text), positive badges.
+- `accent` — links, CTAs, active nav text, progress fill, spinner ring.
+- `rock` — destructive buttons, strong warning / info badge variant.
+- `strong` / `deep` / `muted` — text hierarchy.
 
 ## Layout
 
-- **Sidebar:** `bg-clara-sidebar`, border-r `clara-border`.
-- **Active nav:** `bg-clara-highlight` + bold label, `text-clara-strong`.
-- **Cards:** `bg-clara-surface`, `shadow-card` (umber-tinted shadow).
+- **Sidebar:** `bg-clara-surface`, `border-r border-clara-highlight`.
+- **Active nav:** `bg-clara-highlight`, `text-clara-accent`, bold.
+- **Cards:** `bg-clara-surface`, `border border-clara-highlight`, `rounded-sm`, **no** shadow.
 
 ## Do / don’t
 
-- **Do** use `clara-*` tokens for all surfaces and text hierarchy.
-- **Do** keep error states in a **warm** red-rose family (terracotta-tinted), not icy alert red.
-- **Don’t** reintroduce the old green palette or neutral-cool grays for large surfaces.
+- **Do** use `border-clara-highlight` instead of shadows for elevation.
+- **Do** keep primary button hover on `bg-clara-accent` with white text.
+- **Don’t** add drop shadows to cards or buttons — keep the brutalist flat look.

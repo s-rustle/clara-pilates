@@ -159,7 +159,7 @@ export default function ReadinessCard() {
             const recs = parseRecommendations(snapshot.recommendations);
             if (recs.length === 0) return null;
             return (
-              <div className="rounded-lg bg-clara-surface p-4 shadow-card">
+              <div className="rounded-sm border border-clara-highlight bg-clara-surface p-4">
                 <p className="mb-2 text-sm font-bold text-clara-strong">Recommendations</p>
                 <ol className="list-decimal space-y-2 pl-5 text-sm text-clara-deep">
                   {recs.map((line, i) => (

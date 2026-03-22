@@ -74,6 +74,8 @@ export default function SessionsPage() {
   const [linkLoading, setLinkLoading] = useState(false);
 
   const [error, setError] = useState("");
+  const [hourDatesError, setHourDatesError] = useState("");
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [logSessions, setLogSessions] = useState<SessionPlan[]>([]);
   const [hourLogsLoaded, setHourLogsLoaded] = useState(false);
   const [loggedDates, setLoggedDates] = useState<string[]>([]);
@@ -337,7 +339,7 @@ export default function SessionsPage() {
           </SessionPlannerForm>
 
           {mode === "log" && (
-            <div className="mt-4 border-t border-clara-border pt-4">
+            <div className="mt-4 border-t border-clara-highlight pt-4">
               <Button
                 type="button"
                 variant="primary"
@@ -351,10 +353,19 @@ export default function SessionsPage() {
           )}
 
           {mode === "log" && (
-            <SessionHistory
-              sessions={logSessions}
-              onView={(s) => setViewSession(s)}
-            />
+            <div className="mt-4 space-y-3 border-t border-clara-highlight pt-4">
+              {historyLoading ? (
+                <div className="flex items-center justify-center gap-2 py-6 text-clara-deep">
+                  <LoadingSpinner size="sm" />
+                  <span className="text-sm">Loading session history…</span>
+                </div>
+              ) : (
+                <SessionHistory
+                  sessions={logSessions}
+                  onView={(s) => setViewSession(s)}
+                />
+              )}
+            </div>
           )}
         </Card>
 
@@ -389,14 +400,14 @@ export default function SessionsPage() {
         >
           <button
             type="button"
-            className="absolute inset-0 bg-clara-ink/40"
+            className="absolute inset-0 bg-clara-deep/40"
             aria-label="Close"
             onClick={() => {
               setHourModalOpen(false);
               setHourModalSessionId(null);
             }}
           />
-          <Card className="relative z-10 max-h-[90vh] w-full max-w-md overflow-y-auto shadow-login">
+          <Card className="relative z-10 max-h-[90vh] w-full max-w-md overflow-y-auto">
             <div className="mb-4 flex items-start justify-between gap-2">
               <h2
                 id="hour-link-title"

@@ -67,7 +67,7 @@ export default function HoursSummaryCard() {
         </h2>
         <Link
           href="/hours"
-          className="text-sm font-medium text-clara-primary underline-offset-2 hover:underline"
+          className="text-sm font-medium text-clara-accent underline-offset-2 hover:underline"
         >
           Log hours
         </Link>

@@ -69,7 +69,7 @@ interface FeedbackCardProps {
 function DimensionRow({ label, dim }: { label: string; dim: CueDimension }) {
   const variant = scoreBadgeVariant(dim.score);
   return (
-    <div className="flex flex-col gap-1 border-b border-clara-border/60 py-3 last:border-b-0 last:pb-0 first:pt-0">
+    <div className="flex flex-col gap-1 border-b border-clara-highlight/60 py-3 last:border-b-0 last:pb-0 first:pt-0">
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-sm font-bold text-clara-strong">{label}</span>
         <Badge variant={variant}>{formatScoreLabel(dim.score)}</Badge>
@@ -96,7 +96,7 @@ export default function FeedbackCard({ feedback, onTryAgain }: FeedbackCardProps
         </div>
       ) : null}
 
-      <div className="mt-4 rounded-md bg-clara-surface p-4 ring-1 ring-clara-border/80">
+      <div className="mt-4 rounded-sm bg-clara-surface p-4 ring-1 ring-clara-highlight/80">
         <p className="mb-2 text-sm font-bold text-clara-strong">
           Here is a better version:
         </p>

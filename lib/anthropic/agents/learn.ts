@@ -97,7 +97,14 @@ function pickManualImageFromChunks(
 const RAG_ERROR =
   "No curriculum material found for this topic. Please ingest relevant materials first.";
 
-const EXERCISE_FROM_CHUNK = /\*\*([^*]{2,72})\*\*/g;
+/** Explicit tags from ingestion (PDF / vision). */
+const EXERCISE_TAGGED =
+  /\*\*EXERCISE:\s*\[([^\]\*]+)\]\*\*/gi;
+const EXERCISE_TAGGED_UNBRACKETED =
+  /\*\*EXERCISE:\s*([^*\n]+?)\*\*/gi;
+
+/** Legacy: other bold spans (exercise names often bolded in manuals). */
+const BOLD_SPAN = /\*\*([^*]{2,100})\*\*/g;
 
 const TITLE_STOP = new Set([
   "the",
@@ -116,31 +123,177 @@ const TITLE_STOP = new Set([
   "note",
 ]);
 
+/** Full-line (normalized) all-caps headers to skip — not exercise titles. */
+const IGNORE_ALL_CAPS_LINES = new Set(
+  [
+    "STARTING POSITION",
+    "MOVEMENT SEQUENCE",
+    "ARM VARIATIONS",
+    "REPS",
+    "ADVANCED",
+    "BEGINNER",
+    "INTERMEDIATE",
+    "PRECAUTIONS",
+    "NOTES",
+    "TIPS",
+    "INHALE",
+    "EXHALE",
+    "HANDWRITTEN NOTE",
+  ].map((s) => s.toUpperCase())
+);
+
+/**
+ * If every token on the line is one of these, treat as non-title (section junk).
+ * Single-word lines like "SIDE" still need at least one non-ignore token for multi-word titles.
+ */
+const IGNORE_ALL_CAPS_TOKENS = new Set(
+  [
+    "STARTING",
+    "POSITION",
+    "MOVEMENT",
+    "SEQUENCE",
+    "ARM",
+    "VARIATIONS",
+    "REPS",
+    "REP",
+    "ADVANCED",
+    "BEGINNER",
+    "INTERMEDIATE",
+    "PRECAUTIONS",
+    "NOTES",
+    "TIPS",
+    "INHALE",
+    "EXHALE",
+    "HANDWRITTEN",
+    "NOTE",
+    "THE",
+    "AND",
+    "OR",
+    "OF",
+    "TO",
+    "IN",
+    "FOR",
+    "A",
+    "AN",
+    "FIG",
+    "FIGURE",
+    "PAGE",
+    "SEE",
+  ].map((s) => s.toUpperCase())
+);
+
+/** EXERCISE NAME followed by level / rep cue (whole-line or substring). */
+const LEVEL_SUFFIX =
+  /\s+(ADVANCED|BEGINNER|INTERMEDIATE|(\d+\s*[-–]\s*\d+\s*REPS?))\s*$/i;
+
 function plausibleExerciseTitle(s: string): boolean {
   const t = s.trim();
-  if (t.length < 2 || t.length > 72) return false;
+  if (t.length < 2 || t.length > 100) return false;
   if (/^\d+$/.test(t)) return false;
   const lower = t.toLowerCase();
   if (TITLE_STOP.has(lower)) return false;
   if (/^chunk\s*\d/i.test(t)) return false;
+  if (/^exercise:\s*/i.test(t)) return false;
   return true;
+}
+
+function normalizeSpaces(s: string): string {
+  return s.replace(/\s+/g, " ").trim();
+}
+
+function isAllCapsLine(line: string): boolean {
+  const t = line.trim();
+  if (t.length < 2 || t.length > 88) return false;
+  if (!/[A-Z]/.test(t)) return false;
+  if (/[a-z]/.test(t)) return false;
+  return /^[A-Z0-9'’\s.,&\-–—]+$/u.test(t);
+}
+
+function shouldSkipAllCapsLine(line: string): boolean {
+  const u = normalizeSpaces(line).toUpperCase();
+  if (IGNORE_ALL_CAPS_LINES.has(u)) return true;
+  const tokens = u.split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return true;
+  if (tokens.every((tok) => IGNORE_ALL_CAPS_TOKENS.has(tok))) return true;
+  return false;
+}
+
+function stripLevelSuffix(s: string): string {
+  let t = normalizeSpaces(s);
+  let prev = "";
+  while (t !== prev) {
+    prev = t;
+    t = t.replace(LEVEL_SUFFIX, "").trim();
+  }
+  return t;
+}
+
+function extractFromExerciseLevelPattern(text: string, seen: Set<string>, out: string[]): void {
+  const re =
+    /(^|\n)\s*([A-Z][A-Z0-9'’\s\-–—]{1,70}?)\s+(ADVANCED|BEGINNER|INTERMEDIATE|\d+\s*[-–]\s*\d+\s*REPS?)\s*(?=\n|$)/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    const raw = normalizeSpaces(m[2]);
+    if (raw.length < 2) continue;
+    const base = stripLevelSuffix(raw);
+    if (base.length < 2 || shouldSkipAllCapsLine(base)) continue;
+    const key = base.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(base);
+  }
 }
 
 function extractExerciseNamesFromContents(contents: string[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
+
+  const pushTitle = (raw: string) => {
+    const name = normalizeSpaces(raw);
+    if (!plausibleExerciseTitle(name)) return;
+    const key = name.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push(name);
+  };
+
   for (const text of contents) {
-    EXERCISE_FROM_CHUNK.lastIndex = 0;
+    if (!text) continue;
+
+    EXERCISE_TAGGED.lastIndex = 0;
     let m: RegExpExecArray | null;
-    while ((m = EXERCISE_FROM_CHUNK.exec(text)) !== null) {
-      const name = m[1].replace(/\s+/g, " ").trim();
-      if (!plausibleExerciseTitle(name)) continue;
-      const key = name.toLowerCase();
-      if (seen.has(key)) continue;
-      seen.add(key);
-      out.push(name);
+    while ((m = EXERCISE_TAGGED.exec(text)) !== null) {
+      pushTitle(m[1]);
+    }
+
+    EXERCISE_TAGGED_UNBRACKETED.lastIndex = 0;
+    while ((m = EXERCISE_TAGGED_UNBRACKETED.exec(text)) !== null) {
+      const inner = m[1].trim();
+      const unbracket = inner.replace(/^\[|\]$/g, "").trim();
+      pushTitle(unbracket);
+    }
+
+    extractFromExerciseLevelPattern(text, seen, out);
+
+    const lines = text.split(/\n/);
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!isAllCapsLine(trimmed)) continue;
+      if (shouldSkipAllCapsLine(trimmed)) continue;
+      const base = stripLevelSuffix(trimmed);
+      if (base.length >= 2 && isAllCapsLine(base) && !shouldSkipAllCapsLine(base)) {
+        pushTitle(base);
+      }
+    }
+
+    BOLD_SPAN.lastIndex = 0;
+    while ((m = BOLD_SPAN.exec(text)) !== null) {
+      const inner = m[1].trim();
+      if (/^exercise:\s*/i.test(inner)) continue;
+      pushTitle(inner);
     }
   }
+
   out.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
   return out.slice(0, 200);
 }

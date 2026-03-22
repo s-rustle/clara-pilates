@@ -7,11 +7,11 @@ export default function ErrorMessage({ message }: ErrorMessageProps) {
 
   return (
     <div
-      className="flex items-start gap-2 rounded-lg border border-[#D4A59A] bg-[#FDF0EC] p-3 text-[#6B2E24]"
+      className="flex items-start gap-2 rounded-sm border border-clara-highlight bg-clara-surface p-3 text-clara-deep"
       role="alert"
     >
       <svg
-        className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#B8482E]"
+        className="mt-0.5 h-5 w-5 flex-shrink-0 text-clara-accent"
         fill="currentColor"
         viewBox="0 0 20 20"
         aria-hidden

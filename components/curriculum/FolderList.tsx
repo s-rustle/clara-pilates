@@ -286,7 +286,7 @@ export default function FolderList() {
             If Google Drive was disconnected or your session expired,{" "}
             <a
               href="#drive-connect"
-              className="font-medium text-clara-primary underline"
+              className="font-medium text-clara-accent underline"
             >
               reconnect Google Drive
             </a>{" "}

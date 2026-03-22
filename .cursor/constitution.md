@@ -104,38 +104,36 @@ No client data, no Lumenalta data, no third-party information of any kind touche
 
 ## 6. Visual Identity
 
-Clara’s UI is **warm, grounded, and earthy** — Roman whitewash walls, red-ochre mud, terracotta, and burnt orange/sienna. Nothing clinical or cool-gray; everything reads as sun-warmed plaster and fired clay.
+Clara’s UI is **Red Rocks — earthy brutalist**: warm sand and stone neutrals, **umber brown** structure, **terracotta** accent (`accent`), and a deeper **rock** red-brown for secondary emphasis (e.g. destructive actions, “info” badges). Surfaces are **flat** — no drop shadows; structure comes from **1px borders** in `highlight` and generous spacing. Nothing clinical or neon.
 
 ### 6.1 Color Palette
 
 | Token | Hex | Usage |
 |---|---|---|
-| Background (`bg`) | `#F4EDE6` | Page canvas — limewash / roman whitewash |
-| Surface | `#EBE3D9` | Cards, panels — soft earthen cream |
-| Elevated | `#F7F1EA` | Inputs, slightly lifted fields |
-| Sidebar | `#D4C4B8` | Navigation strip — warm stone / mud |
-| Highlight | `#E5D5CA` | Hovers, selected rows, soft emphasis |
-| Border | `#C9B3A4` | Dividers — dusty clay |
-| Muted | `#8A7268` | Secondary text, timestamps |
-| Ink | `#3D2E28` | Strong UI text, chrome |
-| Deep | `#4A352C` | Body copy — burnt umber |
-| Strong | `#5C2E24` | Headings — deep terracotta / sienna |
-| Accent | `#C45F3D` | Link hover, brighter burnt orange |
-| Primary | `#B8482E` | Primary buttons, key links, progress fill |
-| Warm | `#A65D45` | Focus rings, subtle warm accents |
+| Background (`bg`) | `#E8E0D5` | Page canvas |
+| Surface | `#DDD5C8` | Cards, panels, sidebar |
+| Highlight | `#C9BFB0` | Borders, hovers, selected rows, active nav background |
+| Accent | `#C4522A` | Links, CTAs, active nav text, wordmark “Clara”, progress fill, loading spinner ring |
+| Primary | `#5C4A32` | Primary buttons (with white text), positive badges |
+| Strong | `#3D3128` | Headings, strong labels, wordmark “SR” |
+| Deep | `#1C1610` | Body copy |
+| Muted | `#8A7F74` | Captions, metadata, secondary lines |
+| Rock | `#A63D1F` | Destructive / strong warning emphasis, secondary accent (e.g. focus outlines on destructive controls) |
 
 ### 6.2 Typography
 - **Font:** Inter (web; substitute for FK Grotesk)
-- **Headings:** Bold, `Strong` (`#5C2E24`)
-- **Body:** Regular, `Deep` (`#4A352C`)
-- **Captions / metadata:** Medium, `Muted` or `Primary` as appropriate
+- **Headings:** Bold, `text-clara-strong`
+- **Body:** Regular, `text-clara-deep`
+- **Captions / metadata:** `text-clara-muted`
+- **Wordmark:** **SR** — Inter Black (`font-black`), `text-clara-strong`; **Clara** — Inter Light (`font-light`), `text-clara-accent`
 
 ### 6.3 Aesthetic Principles
-- **Grounded warmth** — whitewash and terracotta, not stark white or corporate green
-- Generous whitespace; calm, uncluttered layouts
-- Light, soft shadows tinted toward umber (no heavy drop shadows)
+- **Flat architecture** — cards and buttons use **no shadow**; `rounded-sm` at most; cards use `border border-clara-highlight` on `bg-clara-surface`
+- **Primary buttons:** `bg-clara-primary`, white text, hover `bg-clara-accent`
+- **Progress bars:** track `bg-clara-highlight`, fill `bg-clara-accent`
+- **Sidebar:** `bg-clara-surface`, `border-r border-clara-highlight`; active item `bg-clara-highlight` + `text-clara-accent`
+- Generous whitespace; calm layouts
 - No dark mode (Phase 1)
-- **Wordmark:** initials **SR** in Inter Bold, `Strong`; **Clara** in Inter Bold, `Primary`
 
 ### 6.4 Voice
 - Direct and precise — no filler language

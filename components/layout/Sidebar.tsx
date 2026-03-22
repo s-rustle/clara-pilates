@@ -47,7 +47,7 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-56 flex-col border-r border-clara-border/80 bg-clara-sidebar">
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-56 flex-col border-r border-clara-highlight bg-clara-surface">
       <div className="px-5 py-6">
         <Wordmark size="sm" />
       </div>
@@ -61,10 +61,10 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
+              className={`flex items-center gap-2 rounded-sm px-3 py-2 text-sm transition-colors ${
                 isActive
-                  ? "bg-clara-highlight font-bold text-clara-strong"
-                  : "text-clara-deep hover:bg-clara-highlight/70 hover:text-clara-strong"
+                  ? "bg-clara-highlight font-bold text-clara-accent"
+                  : "text-clara-deep hover:bg-clara-highlight/70 hover:text-clara-accent"
               }`}
             >
               <Icon className="h-4 w-4 shrink-0" />
@@ -79,11 +79,11 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="border-t border-clara-border p-2">
+      <div className="border-t border-clara-highlight p-2">
         <button
           type="button"
           onClick={handleSignOut}
-          className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-clara-muted transition-colors hover:bg-clara-highlight hover:text-clara-strong"
+          className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm text-clara-muted transition-colors hover:bg-clara-highlight hover:text-clara-accent"
         >
           <LogOut className="h-4 w-4 shrink-0" />
           <span>Sign out</span>

@@ -9,7 +9,7 @@ A personal web application that serves as the complete study and certification t
 
 ### 1.1 Visual identity
 
-The product UI follows **Constitution §6 — Visual Identity**: warm Roman whitewash and terracotta tones (burnt orange, sienna, red-ochre mud), never cool clinical grays or brand-greens. Implementation uses Tailwind `clara-*` tokens as defined in **Planning §10** and `tailwind.config.ts`.
+The product UI follows **Constitution §6 — Visual Identity**: Red Rocks earthy brutalist palette — sand/stone neutrals, **umber** primary actions, **terracotta** accent for links and progress, **rock** for strong secondary/destructive emphasis; flat surfaces with highlight borders (`rounded-sm` max, no drop shadows). Implementation uses Tailwind `clara-*` tokens in **Planning §10** and `tailwind.config.ts`.
 
 ---
 

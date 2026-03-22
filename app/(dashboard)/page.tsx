@@ -1,13 +1,13 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
 import ReadinessCard from "@/components/dashboard/ReadinessCard";
 import HoursSummaryCard from "@/components/dashboard/HoursSummaryCard";
 import WeakSpotCard from "@/components/dashboard/WeakSpotCard";
 import type { QuizSession } from "@/types";
 
 const quickActionClass =
-  "inline-flex items-center justify-center rounded-md bg-clara-primary px-4 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-clara-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-primary";
+  "w-full rounded-sm py-2.5 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-rock";
 
 function formatCompletedAt(iso: string | null) {
   if (!iso) return "";
@@ -62,18 +62,18 @@ export default async function DashboardPage() {
           Quick actions
         </h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Link href="/study" className={quickActionClass}>
+          <Button href="/study" variant="primary" className={quickActionClass}>
             Study
-          </Link>
-          <Link href="/quiz" className={quickActionClass}>
+          </Button>
+          <Button href="/quiz" variant="primary" className={quickActionClass}>
             Quiz
-          </Link>
-          <Link href="/sessions" className={quickActionClass}>
+          </Button>
+          <Button href="/sessions" variant="primary" className={quickActionClass}>
             Sessions
-          </Link>
-          <Link href="/hours" className={quickActionClass}>
+          </Button>
+          <Button href="/hours" variant="primary" className={quickActionClass}>
             Log hours
-          </Link>
+          </Button>
         </div>
       </Card>
 
@@ -86,7 +86,7 @@ export default async function DashboardPage() {
             No completed quiz sessions yet. Finish a quiz to see it here.
           </p>
         ) : (
-          <ul className="divide-y divide-clara-border text-sm text-clara-deep">
+          <ul className="divide-y divide-clara-highlight text-sm text-clara-deep">
             {recentSessions.map((s) => {
               const label = [s.apparatus, s.topic].filter(Boolean).join(" · ");
               const score =

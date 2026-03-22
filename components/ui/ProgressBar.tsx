@@ -12,14 +12,14 @@ export default function ProgressBar({ value, label, sublabel }: ProgressBarProps
       {label && (
         <div className="mb-1 text-sm font-medium text-clara-deep">{label}</div>
       )}
-      <div className="h-2 w-full overflow-hidden rounded-full bg-clara-highlight">
+      <div className="h-2 w-full overflow-hidden rounded-sm bg-clara-highlight">
         <div
-          className="h-full rounded-full bg-clara-primary transition-all duration-300"
+          className="h-full rounded-sm bg-clara-accent transition-all duration-300"
           style={{ width: `${clampedValue}%` }}
         />
       </div>
       {sublabel && (
-        <div className="mt-1 text-xs text-clara-deep/80">{sublabel}</div>
+        <div className="mt-1 text-xs text-clara-muted">{sublabel}</div>
       )}
     </div>
   );

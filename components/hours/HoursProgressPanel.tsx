@@ -101,7 +101,7 @@ export default function HoursProgressPanel({ logs }: HoursProgressPanelProps) {
       </Card>
 
       {scheduledHours > 0 && (
-        <p className="text-sm text-clara-primary">
+        <p className="text-sm text-clara-muted">
           You have {formatHours(scheduledHours)} hours scheduled — not yet
           counted toward progress.
         </p>

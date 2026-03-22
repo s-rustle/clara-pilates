@@ -66,7 +66,7 @@ export default function SessionPlannerForm({
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-0 rounded-md border border-clara-border bg-clara-elevated p-0.5">
+      <div className="flex gap-0 rounded-sm border border-clara-highlight bg-clara-bg p-0.5">
         {(["plan", "log"] as const).map((m) => (
           <button
             key={m}

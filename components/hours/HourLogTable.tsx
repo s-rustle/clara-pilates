@@ -149,7 +149,7 @@ export default function HourLogTable({ logs, onStatusUpdate }: HourLogTableProps
 
   return (
     <div className="space-y-4">
-      <div className="overflow-x-auto rounded-lg border border-clara-highlight">
+      <div className="overflow-x-auto rounded-sm border border-clara-highlight">
         <table className="w-full min-w-[600px]">
           <thead className="border-b border-clara-highlight bg-clara-surface">
             <tr>
@@ -218,7 +218,7 @@ export default function HourLogTable({ logs, onStatusUpdate }: HourLogTableProps
             type="button"
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={currentPage === 1}
-            className="text-clara-primary disabled:cursor-not-allowed disabled:opacity-50 hover:underline"
+            className="text-clara-accent disabled:cursor-not-allowed disabled:opacity-50 hover:underline"
           >
             Previous
           </button>
@@ -231,7 +231,7 @@ export default function HourLogTable({ logs, onStatusUpdate }: HourLogTableProps
               setCurrentPage((p) => Math.min(totalPages, p + 1))
             }
             disabled={currentPage === totalPages}
-            className="text-clara-primary disabled:cursor-not-allowed disabled:opacity-50 hover:underline"
+            className="text-clara-accent disabled:cursor-not-allowed disabled:opacity-50 hover:underline"
           >
             Next
           </button>

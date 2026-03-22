@@ -54,14 +54,14 @@ export default function SessionHistory({ sessions, onView }: SessionHistoryProps
         Session history
       </h2>
       {sessions.length === 0 ? (
-        <p className="rounded-md border border-dashed border-clara-border bg-clara-elevated/50 px-3 py-6 text-center text-sm text-clara-deep">
+        <p className="rounded-sm border border-dashed border-clara-highlight bg-clara-bg/50 px-3 py-6 text-center text-sm text-clara-deep">
           No sessions logged yet.
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-clara-border bg-clara-surface shadow-card">
+        <div className="overflow-x-auto rounded-sm border border-clara-highlight bg-clara-surface">
           <table className="w-full min-w-[520px] text-left text-sm">
             <thead>
-              <tr className="border-b border-clara-border bg-clara-elevated/80">
+              <tr className="border-b border-clara-highlight bg-clara-bg/80">
                 <th className="px-3 py-2 font-medium text-clara-strong">Date</th>
                 <th className="px-3 py-2 font-medium text-clara-strong">
                   Apparatus
@@ -77,7 +77,7 @@ export default function SessionHistory({ sessions, onView }: SessionHistoryProps
               {sessions.map((row) => (
                 <tr
                   key={row.id}
-                  className="border-b border-clara-border/80 last:border-0"
+                  className="border-b border-clara-highlight/80 last:border-0"
                 >
                   <td className="px-3 py-2 text-clara-deep">
                     {formatDate(row.session_date)}
@@ -131,11 +131,11 @@ export function SessionReadOnlyModal({
     >
       <button
         type="button"
-        className="absolute inset-0 bg-clara-ink/40"
+        className="absolute inset-0 bg-clara-deep/40"
         aria-label="Close"
         onClick={onClose}
       />
-      <Card className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto shadow-login">
+      <Card className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto">
         <div className="mb-4 flex items-start justify-between gap-2">
           <h2
             id="session-view-title"
@@ -156,7 +156,7 @@ export function SessionReadOnlyModal({
         <ReadOnlyDetails session={session} />
 
         {feedback ? (
-          <div className="mt-4 border-t border-clara-border pt-4">
+          <div className="mt-4 border-t border-clara-highlight pt-4">
             <SessionFeedbackCard feedback={feedback} />
           </div>
         ) : (

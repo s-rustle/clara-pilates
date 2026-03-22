@@ -182,7 +182,7 @@ export default function CalendarPicker({
               {hasLogs && (
                 <span
                   className={`absolute bottom-0.5 h-1 w-1 rounded-full ${
-                    isSelected ? "bg-clara-elevated" : "bg-clara-highlight"
+                    isSelected ? "bg-clara-bg" : "bg-clara-highlight"
                   }`}
                 />
               )}

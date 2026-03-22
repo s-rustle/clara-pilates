@@ -1,6 +1,6 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-**Clara** — Balanced Body study companion. **Visual identity** is warm and earthy: Roman whitewash / limewash backgrounds, terracotta and burnt sienna accents, red-ochre mud tones — implemented as Tailwind `clara-*` colors in `tailwind.config.ts` and documented in `.cursor/constitution.md` (§6 Visual Identity).
+**Clara** — Balanced Body study companion. **Visual identity** is muted earth: warm browns and limestone neutrals, dusty terracotta accent, sage/moss greens for positive UI — see `tailwind.config.ts` and `.cursor/constitution.md` (§6).
 
 ## Getting Started
 

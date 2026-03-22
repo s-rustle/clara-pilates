@@ -2,8 +2,8 @@
 @config "../tailwind.config.ts";
 
 :root {
-  --background: #f4ede6;
-  --foreground: #4a352c;
+  --background: #e8e0d5;
+  --foreground: #1c1610;
 }
 
 @theme inline {
