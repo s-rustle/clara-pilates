@@ -1,7 +1,13 @@
 import { anthropic } from "@/lib/anthropic/client";
 import { queryRAG } from "../rag";
 import { OUT_OF_SCOPE_INSTRUCTION } from "./boundaries";
-import type { CurriculumResponse, RagChunk } from "@/types";
+import type {
+  CurriculumResponse,
+  RagChunk,
+  SourceDocument,
+  SourceFigure,
+  SourceImage,
+} from "@/types";
 
 const CURRICULUM_MODEL = "claude-sonnet-4-20250514";
 
@@ -25,6 +31,88 @@ function formatChunksForPrompt(chunks: RagChunk[]): string {
     .join("\n\n---\n\n");
 }
 
+const MAX_FIGURES = 6;
+
+/**
+ * Surfaces diagram chunks and [DIAGRAM: ...] passages from RAG chunks for the Study UI.
+ * (Curriculum ingest stores figures as text descriptions, not image binaries.)
+ */
+function extractFiguresFromChunks(chunks: RagChunk[]): SourceFigure[] {
+  const out: SourceFigure[] = [];
+  const seen = new Set<string>();
+
+  const push = (
+    file_name: string,
+    description: string,
+    content_type: "diagram" | "text",
+    drive_file_id?: string | null
+  ) => {
+    const d = description.trim();
+    if (!d) return;
+    const key = `${file_name}|${d.slice(0, 120)}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push({ file_name, description: d, content_type, drive_file_id: drive_file_id ?? null });
+  };
+
+  for (const c of chunks) {
+    if (c.content_type === "diagram") {
+      push(c.file_name, c.content, "diagram", c.drive_file_id);
+    }
+
+    const diagramTag = /\[DIAGRAM:\s*([\s\S]*?)\]/gi;
+    let m: RegExpExecArray | null;
+    const content = c.content;
+    diagramTag.lastIndex = 0;
+    while ((m = diagramTag.exec(content)) !== null) {
+      push(c.file_name, m[1], "text", c.drive_file_id);
+    }
+  }
+
+  return out.slice(0, MAX_FIGURES);
+}
+
+const MAX_SOURCE_IMAGES = 8;
+
+function extractSourceImages(chunks: RagChunk[]): SourceImage[] {
+  const seen = new Set<string>();
+  const out: SourceImage[] = [];
+  for (const c of chunks) {
+    const id = c.drive_file_id;
+    const mime = c.source_mime_type;
+    if (!id || !mime || !mime.startsWith("image/")) continue;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push({
+      drive_file_id: id,
+      file_name: c.file_name,
+      mime_type: mime,
+    });
+  }
+  return out.slice(0, MAX_SOURCE_IMAGES);
+}
+
+const MAX_SOURCE_DOCS = 5;
+
+function extractSourceDocuments(chunks: RagChunk[]): SourceDocument[] {
+  const seen = new Set<string>();
+  const out: SourceDocument[] = [];
+  for (const c of chunks) {
+    const id = c.drive_file_id;
+    const mime = c.source_mime_type;
+    if (!id || !mime) continue;
+    if (mime.startsWith("image/")) continue;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push({
+      drive_file_id: id,
+      file_name: c.file_name,
+      mime_type: mime,
+    });
+  }
+  return out.slice(0, MAX_SOURCE_DOCS);
+}
+
 export async function askCurriculum(
   query: string,
   userId: string,
@@ -39,9 +127,15 @@ export async function askCurriculum(
       confidence: "not_found",
       source_folder: folderFilter ?? null,
       chunks_used: 0,
+      figures: [],
+      source_images: [],
+      source_documents: [],
     };
   }
 
+  const figures = extractFiguresFromChunks(chunks);
+  const source_images = extractSourceImages(chunks);
+  const source_documents = extractSourceDocuments(chunks);
   const formattedChunks = formatChunksForPrompt(chunks);
   const userMessage = `${query}\n\n--- Source material ---\n\n${formattedChunks}`;
 
@@ -70,5 +164,8 @@ export async function askCurriculum(
     confidence,
     source_folder: sourceFolder,
     chunks_used: chunks.length,
+    figures,
+    source_images,
+    source_documents,
   };
 }

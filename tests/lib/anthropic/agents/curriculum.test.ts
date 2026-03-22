@@ -37,6 +37,9 @@ describe("Curriculum Agent", () => {
     expect(result.answer).toMatch(/couldn't find|not.*(in|found).*materials/i);
     expect(result.chunks_used).toBe(0);
     expect(result.source_folder).toBeNull();
+    expect(result.figures).toEqual([]);
+    expect(result.source_images).toEqual([]);
+    expect(result.source_documents).toEqual([]);
   });
 
   it("returns not found when chunks array is empty", async () => {
@@ -47,6 +50,9 @@ describe("Curriculum Agent", () => {
 
     expect(result.confidence).toBe("not_found");
     expect(result.chunks_used).toBe(0);
+    expect(result.figures).toEqual([]);
+    expect(result.source_images).toEqual([]);
+    expect(result.source_documents).toEqual([]);
   });
 
   it("returns answer and chunks_used when chunks found", async () => {
@@ -70,5 +76,8 @@ describe("Curriculum Agent", () => {
     expect(result.answer).toMatch(/Barrels|supine|Hundred/i);
     expect(result.chunks_used).toBe(1);
     expect(result.source_folder).toBe("Barrels");
+    expect(result.figures).toEqual([]);
+    expect(result.source_images).toEqual([]);
+    expect(result.source_documents).toEqual([]);
   });
 });

@@ -2,21 +2,18 @@
 @config "../tailwind.config.ts";
 
 :root {
-  --background: #F8F9F7;
-  --foreground: #1E4644;
+  --background: #d6d0c5;
+  --foreground: #2a2622;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter), var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
-
-/* Phase 1: No dark mode — Clara palette only */
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), system-ui, sans-serif;
 }

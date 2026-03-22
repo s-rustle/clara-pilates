@@ -7,27 +7,22 @@ interface WordmarkProps {
   className?: string;
 }
 
-const sizeStyles: Record<
-  WordmarkSize,
-  { initials: string; clara: string }
-> = {
-  sm: { initials: "text-lg", clara: "text-xs" },
-  md: { initials: "text-2xl", clara: "text-sm" },
-  lg: { initials: "text-4xl", clara: "text-base" },
+const sizeStyles: Record<WordmarkSize, { initials: string; clara: string }> = {
+  sm: { initials: "text-xs font-medium", clara: "text-lg leading-tight" },
+  md: { initials: "text-sm font-medium", clara: "text-2xl leading-tight" },
+  lg: { initials: "text-base font-medium", clara: "text-4xl leading-tight" },
 };
 
 export default function Wordmark({ size = "md", className }: WordmarkProps) {
   const styles = sizeStyles[size];
 
   return (
-    <div className={clsx("flex flex-col", className)}>
-      <span
-        className={clsx("font-bold text-clara-strong", styles.initials)}
-      >
+    <div className={clsx("flex flex-col gap-0.5", className)}>
+      <span className={clsx("font-medium text-clara-muted", styles.initials)}>
         SR
       </span>
       <span
-        className={clsx("font-normal text-clara-primary", styles.clara)}
+        className={clsx("font-display font-normal text-clara-ink", styles.clara)}
       >
         Clara
       </span>

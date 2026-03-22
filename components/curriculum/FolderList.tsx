@@ -118,6 +118,18 @@ export default function FolderList() {
     };
   }, []);
 
+  /** Refresh while any folder is ingesting so the table updates when the job completes */
+  useEffect(() => {
+    const anyProcessing = uploads.some((u) => u.status === "processing");
+    if (!anyProcessing) return;
+
+    const id = window.setInterval(() => {
+      void fetchData();
+    }, 10_000);
+
+    return () => window.clearInterval(id);
+  }, [uploads, fetchData]);
+
   const getUploadForFolder = (folderName: string): CurriculumUpload | null => {
     return (
       uploads.find(
@@ -326,7 +338,7 @@ export default function FolderList() {
                               upload.drive_folder_id
                             )
                           }
-                          disabled={isIngesting || status === "processing"}
+                          disabled={isIngesting}
                         >
                           {isIngesting ? (
                             <span className="inline-flex items-center">

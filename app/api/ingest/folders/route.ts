@@ -1,6 +1,13 @@
+/**
+ * Lists Google Drive folders for the curriculum folder picker.
+ * File-level ingestion and deduplication (skip if chunks already exist for
+ * upload_id + file_name) live in `app/api/ingest/route.ts` (POST).
+ */
 import { createClient } from "@/lib/supabase/server";
 import { listFolders, listFoldersInFolder } from "@/lib/google/drive";
 import type { DriveFolder } from "@/types";
+
+export const maxDuration = 60;
 
 function jsonResponse(data: unknown, status = 200) {
   return Response.json(data, { status });

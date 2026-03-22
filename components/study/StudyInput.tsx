@@ -24,11 +24,18 @@ interface StudyInputProps {
   onSubmit: (query: string, folderFilter?: string) => void;
   isLoading: boolean;
   initialQuery?: string;
+  folderFilter: string;
+  onFolderFilterChange: (value: string) => void;
 }
 
-export default function StudyInput({ onSubmit, isLoading, initialQuery = "" }: StudyInputProps) {
+export default function StudyInput({
+  onSubmit,
+  isLoading,
+  initialQuery = "",
+  folderFilter,
+  onFolderFilterChange,
+}: StudyInputProps) {
   const [query, setQuery] = useState(initialQuery);
-  const [folderFilter, setFolderFilter] = useState("");
   useEffect(() => {
     setQuery(initialQuery);
   }, [initialQuery]);
@@ -49,13 +56,13 @@ export default function StudyInput({ onSubmit, isLoading, initialQuery = "" }: S
         placeholder="Ask Clara a study question..."
         rows={4}
         disabled={isLoading}
-        className="w-full resize-y rounded-lg border border-clara-highlight bg-clara-surface px-3 py-2 text-clara-deep placeholder:text-clara-primary/60 focus:border-clara-strong focus:outline-none focus:ring-1 focus:ring-clara-strong disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-full resize-y rounded-md border border-clara-border bg-clara-elevated px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted/80 focus:border-clara-warm focus:outline-none focus:ring-1 focus:ring-clara-warm/40 disabled:cursor-not-allowed disabled:opacity-50"
       />
       <div className="flex flex-wrap items-center gap-3">
         <Select
           options={FILTER_OPTIONS}
           value={folderFilter}
-          onChange={(e) => setFolderFilter(e.target.value)}
+          onChange={(e) => onFolderFilterChange(e.target.value)}
           disabled={isLoading}
           className="w-48"
         />

@@ -13,11 +13,11 @@ interface ButtonProps {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-clara-primary text-white hover:bg-clara-accent focus:ring-2 focus:ring-clara-primary focus:ring-offset-2",
+    "bg-clara-primary text-[#F5F2EB] hover:bg-clara-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-primary",
   secondary:
-    "bg-clara-surface text-clara-deep hover:bg-clara-highlight focus:ring-2 focus:ring-clara-strong focus:ring-offset-2",
+    "border border-clara-border bg-clara-surface text-clara-ink shadow-sm hover:bg-clara-elevated focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-warm/50",
   destructive:
-    "bg-red-600 text-white hover:bg-red-700 focus:ring-2 focus:ring-red-600 focus:ring-offset-2",
+    "bg-red-600 text-white hover:bg-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600",
 };
 
 export default function Button({
@@ -34,9 +34,9 @@ export default function Button({
       onClick={onClick}
       disabled={disabled}
       className={clsx(
-        "inline-flex items-center justify-center rounded-lg px-4 py-2 font-medium transition-colors",
+        "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors",
         variantStyles[variant],
-        disabled && "cursor-not-allowed pointer-events-none opacity-50",
+        disabled && "pointer-events-none cursor-not-allowed opacity-50",
         className
       )}
     >

@@ -34,7 +34,7 @@ export default async function CurriculumPage() {
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-bold text-clara-strong">
+      <h1 className="mb-4 font-display text-2xl font-semibold tracking-tight text-clara-strong">
         Curriculum Manager
       </h1>
 

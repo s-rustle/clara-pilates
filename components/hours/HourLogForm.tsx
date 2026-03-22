@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { HourLog } from "@/types";
 import Select from "@/components/ui/Select";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
@@ -9,7 +10,7 @@ import ErrorMessage from "@/components/ui/ErrorMessage";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import CalendarPicker from "./CalendarPicker";
 
-const CATEGORY_OPTIONS = [
+export const HOUR_CATEGORY_OPTIONS = [
   { value: "Anatomy", label: "Anatomy" },
   { value: "Movement Principles", label: "Movement Principles" },
   { value: "Mat 1", label: "Mat 1" },
@@ -22,6 +23,8 @@ const CATEGORY_OPTIONS = [
   { value: "Chair", label: "Chair" },
   { value: "Barrels", label: "Barrels" },
 ];
+
+const CATEGORY_OPTIONS = HOUR_CATEGORY_OPTIONS;
 
 const SUB_TYPE_OPTIONS = [
   { value: "Theory", label: "Theory" },
@@ -52,16 +55,36 @@ function getStatusFromDate(dateStr: string): "logged" | "scheduled" {
 
 interface HourLogFormProps {
   onSuccess?: () => void;
+  /** Called with the created row after a successful POST (e.g. link session plan to hours). */
+  onCreated?: (log: HourLog) => void;
   loggedDates?: string[];
+  initialCategory?: string;
+  initialSubType?: string;
+  initialSessionDate?: string;
+  initialNotes?: string;
 }
 
-export default function HourLogForm({ onSuccess, loggedDates = [] }: HourLogFormProps) {
-  const [category, setCategory] = useState(CATEGORY_OPTIONS[0].value);
-  const [subType, setSubType] = useState(SUB_TYPE_OPTIONS[0].value);
-  const [sessionDate, setSessionDate] = useState(getTodayISO());
+export default function HourLogForm({
+  onSuccess,
+  onCreated,
+  loggedDates = [],
+  initialCategory,
+  initialSubType,
+  initialSessionDate,
+  initialNotes,
+}: HourLogFormProps) {
+  const [category, setCategory] = useState(
+    () => initialCategory ?? CATEGORY_OPTIONS[0].value
+  );
+  const [subType, setSubType] = useState(
+    () => initialSubType ?? SUB_TYPE_OPTIONS[0].value
+  );
+  const [sessionDate, setSessionDate] = useState(
+    () => initialSessionDate ?? getTodayISO()
+  );
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState(() => initialNotes ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -109,6 +132,10 @@ export default function HourLogForm({ onSuccess, loggedDates = [] }: HourLogForm
         setError(data.error ?? "Failed to log hours");
         setLoading(false);
         return;
+      }
+
+      if (data.success && data.data) {
+        onCreated?.(data.data as HourLog);
       }
 
       setSuccessMessage("Hours logged successfully");

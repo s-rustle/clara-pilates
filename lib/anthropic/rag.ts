@@ -57,6 +57,8 @@ export async function queryRAG(
       file_name: string;
       chunk_index: number;
       similarity: number;
+      drive_file_id: string | null;
+      source_mime_type: string | null;
     }>;
 
     const chunks: RagChunk[] = typedChunks
@@ -70,6 +72,8 @@ export async function queryRAG(
         folder_name: c.folder_name,
         file_name: c.file_name,
         similarity: c.similarity,
+        drive_file_id: c.drive_file_id,
+        source_mime_type: c.source_mime_type,
       }));
 
     if (chunks.length === 0) {

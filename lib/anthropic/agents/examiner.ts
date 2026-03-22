@@ -1,76 +1,510 @@
+import { anthropic } from "@/lib/anthropic/client";
 import { queryRAG } from "../rag";
 import { OUT_OF_SCOPE_INSTRUCTION } from "./boundaries";
+import { createServiceClient } from "@/lib/supabase/server";
+import type { RagChunk } from "@/types";
+import type { McOption, MatchingPair } from "@/types";
 
-export const EXAMINER_SYSTEM_PROMPT = `You are the Examiner Agent. Generate exam-style questions and evaluate answers. Ground all content in source material. Be precise; do not accept vague answers.
+const EXAMINER_MODEL = "claude-sonnet-4-20250514";
+
+const FORMAT_INSTRUCTIONS: Record<string, string> = {
+  open_ended: `Return ONLY valid JSON: {"format": "open_ended", "question": "string", "expected_answer_elements": ["string"]}
+In the question string, wrap exercise names from the source in **like this**.`,
+  multiple_choice: `Return ONLY valid JSON: {"format": "multiple_choice", "question": "string", "options": [{"id": "a", "text": "Option A"}, {"id": "b", "text": "Option B"}, {"id": "c", "text": "Option C"}, {"id": "d", "text": "Option D"}], "correct_id": "a"}
+Use 3-5 plausible options. IDs should be "a", "b", "c", "d". One correct, others plausible distractors. In the question string, wrap exercise names from the source in **like this**.`,
+  fill_blank: `Return ONLY valid JSON: {"format": "fill_blank", "question": "string with _____ for the blank", "correct_answer": "string", "expected_answer_elements": ["string"]}
+Use a single _____ for one key term. Provide correct_answer and expected_answer_elements for flexible matching. Wrap exercise names in **.`,
+  matching: `Return ONLY valid JSON: {"format": "matching", "question": "string", "pairs": [{"left": "term A", "right": "definition A"}, {"left": "term B", "right": "definition B"}, ...], "left_items": ["term A", "term B", ...], "right_items": ["definition A", "definition B", ...]}
+Provide 3-5 pairs. Shuffle right_items in your output so they are not in matching order. Wrap exercise names in the question in **.`,
+  diagram_matching: `Return ONLY valid JSON: {"format": "diagram_matching", "question": "string", "pairs": [{"left": "region/label A", "right": "structure name"}, ...], "left_items": [...], "right_items": [...]}
+The question must be: "Looking at the diagram, identify the muscle/structure indicated by [description of location]." or similar. Create 3-5 pairs matching labeled regions/descriptions to anatomy terms from the source. Shuffle right_items.`,
+};
+
+const GENERATE_SYSTEM_PROMPT = `You are a Balanced Body Comprehensive exam examiner.
+Generate one exam-style question grounded exclusively in the provided source material.
+Difficulty levels:
+- Foundational: recall and identification
+- Intermediate: application and explanation
+- Exam-Ready: synthesis, contraindications, edge cases
+CRITICAL: You must NOT repeat or closely paraphrase any question in the previousQuestions list. Each new question must ask about a different fact, concept, exercise, or angle. If a topic was already asked, choose a different topic. This is mandatory.
+EXERCISE NAMES: Only use exercise names that appear explicitly in the source material (often bolded there). Never invent, paraphrase, or infer exercise titles. If you cannot find an exact exercise name in the chunks, ask about a concept or apparatus instead. When the question mentions an exercise, wrap the exact exercise title in **double asterisks** (e.g., "What is the starting position for **the Hundred**?") so it displays bold—matching how titles appear in the source.
+Question types: anatomy identification, starting position, cueing language, contraindications/precautions, spring settings, exercise sequencing.
 
 ${OUT_OF_SCOPE_INSTRUCTION}`;
 
-export interface QuestionResult {
+const EVALUATE_SYSTEM_PROMPT = `You are a Balanced Body Comprehensive exam examiner evaluating written answers.
+Evaluate whether the user answered what the question asked. Do NOT require word-for-word matches or extra descriptive detail.
+- Mark 'correct' when the user correctly identifies or addresses what the question asks for (e.g., if asked for "two main components" and they name both, that is correct — do not require supplementary details like "rounded surface" or "wooden uprights" unless the question explicitly asked for those).
+- Mark 'partial' only when the answer is incomplete for what was explicitly asked (e.g., asked for two things but only got one, or key safety/technique elements were explicitly asked and are missing).
+- Mark 'incorrect' only when the answer is wrong, contradicts the source material, or misses the main concept entirely.
+Do NOT penalize for omitting descriptive elaboration that the question did not ask for.
+If isRetry is false and result is 'partial': return encouraging feedback without revealing the answer.
+If isRetry is true OR result is 'incorrect': reveal the correct answer with full explanation grounded in the source material. EXPLAIN WHY—help the learner understand the rationale, not just the correct answer. For matching questions: point out which pairings they got wrong and explain why each correct pairing matters (e.g., which movement pattern causes that precaution).
+Return ONLY valid JSON: {"result": "correct"|"partial"|"incorrect", "feedback": "string", "correct_answer": "string|null"}
+correct_answer is null when result is 'partial' and isRetry is false.
+Do not include any other text, markdown, or explanation.
+
+${OUT_OF_SCOPE_INSTRUCTION}`;
+
+const MATCHING_FEEDBACK_PROMPT = `You are a Balanced Body exam examiner. The user got a matching question wrong. They need to LEARN, not just see the answer.
+Given the correct pairs and their incorrect attempts, write 2–4 sentences of explanatory feedback that:
+1. Briefly note which pairings were wrong
+2. Explain WHY each correct pairing matters (e.g., what about Corkscrew makes it a neck precaution? Why does Roll Back relate to pregnancy/osteoporosis?)
+3. Help them remember for next time
+Return ONLY valid JSON: {"feedback": "string"}
+Keep feedback concise but educational. Ground explanations in Pilates/Anatomy reasoning.`;
+
+function formatChunksForPrompt(chunks: RagChunk[]): string {
+  return chunks
+    .map(
+      (c, i) =>
+        `[Chunk ${i + 1} — ${c.folder_name} / ${c.file_name}]\n${c.content}`
+    )
+    .join("\n\n---\n\n");
+}
+
+export interface GenerateQuestionSuccess {
+  format: "open_ended" | "multiple_choice" | "fill_blank" | "matching" | "diagram_matching";
   question: string;
   expected_answer_elements: string[];
+  source_chunks_used: RagChunk[];
+  options?: McOption[];
+  correct_id?: string;
+  correct_answer?: string;
+  pairs?: MatchingPair[];
+  left_items?: string[];
+  right_items?: string[];
+  image_file_name?: string;
+  folder_name?: string;
 }
+
+export interface GenerateQuestionError {
+  error: string;
+}
+
+export type GenerateQuestionResult =
+  | GenerateQuestionSuccess
+  | GenerateQuestionError;
 
 export interface EvaluationResult {
   result: "correct" | "partial" | "incorrect";
   feedback: string;
+  correct_answer: string | null;
+}
+
+const EXPLAIN_CORRECT_PROMPT = `You are a Balanced Body exam examiner. The user got the question right. They've clicked "Explain why" to deepen their understanding.
+In 2–4 sentences, explain WHY the answer is correct. Add context that helps them retain the concept: what principle it illustrates, how it connects to other Pilates concepts, or why it matters for teaching. Be concise and educational.
+Return ONLY valid JSON: {"explanation": "string"}`;
+
+export interface ExplainCorrectOptions {
+  format?: "open_ended" | "multiple_choice" | "fill_blank" | "matching" | "diagram_matching";
   correct_answer?: string;
+  correct_id?: string;
+  options?: McOption[];
+  pairs?: MatchingPair[];
+  expected_elements?: string[];
+}
+
+export async function explainCorrectAnswer(
+  question: string,
+  options: ExplainCorrectOptions
+): Promise<string> {
+  const format = options.format ?? "open_ended";
+  let context = "";
+
+  if (format === "multiple_choice" && options.correct_id && options.options) {
+    const opt = options.options.find((o) => o.id === options.correct_id);
+    context = `Correct answer: ${opt?.text ?? options.correct_answer ?? options.correct_id}`;
+  } else if ((format === "matching" || format === "diagram_matching") && options.pairs?.length) {
+    context = `Correct pairs:\n${options.pairs.map((p) => `${p.left} → ${p.right}`).join("\n")}`;
+  } else if (options.correct_answer) {
+    context = `Correct answer: ${options.correct_answer}`;
+  } else if (options.expected_elements?.length) {
+    context = `Expected key elements: ${options.expected_elements.join(", ")}`;
+  } else if (options.format === "open_ended" && !context) {
+    context = "The user's answer was correct (open-ended).";
+  }
+
+  const response = await anthropic.messages.create({
+    model: EXAMINER_MODEL,
+    max_tokens: 512,
+    system: EXPLAIN_CORRECT_PROMPT,
+    messages: [
+      {
+        role: "user",
+        content: `Question: ${question}\n\n${context}\n\nExplain why this is correct.`,
+      },
+    ],
+  });
+
+  const text =
+    response.content
+      .filter((block) => block.type === "text")
+      .map((block) => ("text" in block ? (block as { text: string }).text : ""))
+      .join("") ?? "";
+
+  try {
+    const parsed = parseJsonFromResponse<{ explanation: string }>(text);
+    if (typeof parsed.explanation === "string" && parsed.explanation.trim()) {
+      return parsed.explanation.trim();
+    }
+  } catch {
+    /* fallback */
+  }
+  return "Explanation unavailable.";
+}
+
+function parseJsonFromResponse<T>(text: string): T {
+  const trimmed = text.trim();
+  const jsonMatch = trimmed.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    throw new Error("Claude response did not contain valid JSON");
+  }
+  try {
+    return JSON.parse(jsonMatch[0]) as T;
+  } catch {
+    throw new Error("Failed to parse Claude response as JSON");
+  }
+}
+
+const FORMATS: Array<"open_ended" | "multiple_choice" | "fill_blank" | "matching"> = [
+  "open_ended",
+  "multiple_choice",
+  "fill_blank",
+  "matching",
+];
+
+async function getAnatomyDiagramChunks(
+  userId: string
+): Promise<Array<{ file_name: string }>> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from("curriculum_chunks")
+    .select("file_name")
+    .eq("user_id", userId)
+    .eq("folder_name", "Anatomy")
+    .eq("content_type", "diagram");
+  if (!data || data.length === 0) return [];
+  const seen = new Set<string>();
+  return data
+    .filter((r) => {
+      if (seen.has(r.file_name)) return false;
+      seen.add(r.file_name);
+      return true;
+    })
+    .map((r) => ({ file_name: r.file_name }));
 }
 
 export async function generateQuestion(
   apparatus: string,
   topic: string | null,
-  _difficulty: string,
-  _previousQuestions: string[],
-  userId: string
-): Promise<QuestionResult> {
-  const { chunks } = await queryRAG(
-    `${apparatus} ${topic ?? ""}`.trim(),
-    userId
-  );
+  difficulty: string,
+  previousQuestions: string[],
+  userId: string,
+  formatPreference: "mixed" | "open_ended" | "multiple_choice" | "fill_blank" | "matching" = "mixed"
+): Promise<GenerateQuestionResult> {
+  const isAnatomy = apparatus === "Anatomy" || topic === "Anatomy";
+  const wantsMatching =
+    formatPreference === "matching" ||
+    (formatPreference === "mixed" && Math.random() < 0.25);
 
-  if (chunks.length === 0) {
+  let diagramChunks: Array<{ file_name: string }> = [];
+  if (isAnatomy && wantsMatching) {
+    diagramChunks = await getAnatomyDiagramChunks(userId);
+  }
+
+  const query = `${apparatus} ${topic ?? ""}`.trim();
+  const { chunks, notFound } = await queryRAG(query, userId, isAnatomy ? "Anatomy" : undefined);
+
+  if (notFound || chunks.length === 0) {
     return {
-      question: "No source material found for this topic.",
-      expected_answer_elements: [],
+      error:
+        "No curriculum material found for this topic. Please ingest relevant materials first.",
     };
   }
 
-  return {
-    question: "What is the starting position for the Hundred on the mat?",
-    expected_answer_elements: ["supine", "knees bent", "feet on mat"],
+  let format: "open_ended" | "multiple_choice" | "fill_blank" | "matching" | "diagram_matching";
+  let imageFileName: string | undefined;
+  let folderName: string | undefined;
+
+  if (diagramChunks.length > 0 && wantsMatching) {
+    format = "diagram_matching";
+    const picked = diagramChunks[Math.floor(Math.random() * diagramChunks.length)];
+    imageFileName = picked.file_name;
+    folderName = "Anatomy";
+  } else {
+    format =
+      formatPreference === "mixed"
+        ? FORMATS[Math.floor(Math.random() * FORMATS.length)]
+        : formatPreference;
+  }
+
+  const formatInstruction = FORMAT_INSTRUCTIONS[format] ?? FORMAT_INSTRUCTIONS.open_ended;
+
+  const formattedChunks = formatChunksForPrompt(chunks);
+  const prevList =
+    previousQuestions.length > 0
+      ? `\n\nDO NOT ask any of these again (each was already used in this quiz):\n${previousQuestions.map((q, i) => `${i + 1}. ${q}`).join("\n")}\n`
+      : "";
+
+  const userMessage = `Source material:
+---
+${formattedChunks}
+---
+
+Parameters:
+- Apparatus: ${apparatus}
+- Topic: ${topic ?? "All"}
+- Difficulty: ${difficulty}
+- Question format: ${format}
+${prevList}
+Generate one NEW ${format.replace("_", " ")} question that is different from all of the above. ${formatInstruction}`;
+
+  const response = await anthropic.messages.create({
+    model: EXAMINER_MODEL,
+    max_tokens: 1024,
+    system: GENERATE_SYSTEM_PROMPT,
+    messages: [{ role: "user", content: userMessage }],
+  });
+
+  const text =
+    response.content
+      .filter((block) => block.type === "text")
+      .map((block) => ("text" in block ? (block as { text: string }).text : ""))
+      .join("") ?? "";
+
+  const parsed = parseJsonFromResponse<Record<string, unknown>>(text);
+
+  if (!parsed.question || typeof parsed.question !== "string") {
+    throw new Error("Claude did not return a valid question");
+  }
+
+  const elements = Array.isArray(parsed.expected_answer_elements)
+    ? (parsed.expected_answer_elements as string[])
+    : [];
+
+  const base: GenerateQuestionSuccess = {
+    format: (parsed.format as GenerateQuestionSuccess["format"]) ?? "open_ended",
+    question: parsed.question,
+    expected_answer_elements: elements,
+    source_chunks_used: chunks,
   };
+
+  if (parsed.format === "multiple_choice" && Array.isArray(parsed.options)) {
+    const options = parsed.options as McOption[];
+    if (options.length > 0 && parsed.correct_id) {
+      return { ...base, options, correct_id: String(parsed.correct_id) };
+    }
+  }
+
+  if (parsed.format === "fill_blank" && parsed.correct_answer) {
+    return {
+      ...base,
+      correct_answer: String(parsed.correct_answer),
+    };
+  }
+
+  if (
+    (parsed.format === "matching" || parsed.format === "diagram_matching") &&
+    Array.isArray(parsed.pairs) &&
+    Array.isArray(parsed.left_items) &&
+    Array.isArray(parsed.right_items)
+  ) {
+    const isDiagram = format === "diagram_matching";
+    return {
+      ...base,
+      format: isDiagram ? "diagram_matching" : "matching",
+      pairs: parsed.pairs as MatchingPair[],
+      left_items: parsed.left_items as string[],
+      right_items: parsed.right_items as string[],
+      image_file_name: isDiagram ? imageFileName : undefined,
+      folder_name: isDiagram ? folderName : undefined,
+    };
+  }
+
+  return base;
+}
+
+export interface EvaluateAnswerOptions {
+  format?: "open_ended" | "multiple_choice" | "fill_blank" | "matching" | "diagram_matching";
+  correct_id?: string;
+  correct_answer?: string;
+  pairs?: MatchingPair[];
+  options?: McOption[];
 }
 
 export async function evaluateAnswer(
   question: string,
   userAnswer: string,
   expectedElements: string[],
-  _isRetry: boolean,
-  _userId: string
+  isRetry: boolean,
+  _userId: string,
+  options?: EvaluateAnswerOptions
 ): Promise<EvaluationResult> {
-  const answerLower = userAnswer.toLowerCase();
-  const matches = expectedElements.filter((el) =>
-    answerLower.includes(el.toLowerCase())
-  );
+  const format = options?.format ?? "open_ended";
 
-  if (matches.length === expectedElements.length && expectedElements.length > 0) {
+  if (format === "multiple_choice" && options?.correct_id !== undefined) {
+    const correct = options.correct_id.trim().toLowerCase();
+    const user = userAnswer.trim().toLowerCase();
+    const isCorrect = user === correct;
+    const optionText =
+      options.options?.find((o) => o.id.toLowerCase() === correct)?.text ?? options.correct_id;
+    const userOptionText =
+      options.options?.find((o) => o.id.toLowerCase() === user)?.text;
+
+    if (isCorrect) {
+      return {
+        result: "correct",
+        feedback: "Correct.",
+        correct_answer: null,
+      };
+    }
+
+    const mcFeedbackResponse = await anthropic.messages.create({
+      model: EXAMINER_MODEL,
+      max_tokens: 384,
+      system: `You are a Balanced Body exam examiner. The user got a multiple choice question wrong. They need to LEARN why the correct answer is right. In 1–3 sentences, explain why the correct answer is correct and what they might have misunderstood. Be concise and educational. Return ONLY valid JSON: {"feedback": "string"}`,
+      messages: [
+        {
+          role: "user",
+          content: `Question: ${question}\nCorrect answer: ${optionText}\nUser chose: ${userOptionText ?? userAnswer}\nExplain why the correct answer is right.`,
+        },
+      ],
+    });
+    const mcFeedbackText =
+      mcFeedbackResponse.content
+        .filter((block) => block.type === "text")
+        .map((block) => ("text" in block ? (block as { text: string }).text : ""))
+        .join("") ?? "";
+    let mcExplanatoryFeedback = `Incorrect. The correct answer is: ${optionText}`;
+    try {
+      const parsed = parseJsonFromResponse<{ feedback: string }>(mcFeedbackText);
+      if (typeof parsed.feedback === "string" && parsed.feedback.trim()) {
+        mcExplanatoryFeedback = parsed.feedback.trim();
+      }
+    } catch {
+      /* use fallback */
+    }
+
     return {
-      result: "correct",
-      feedback: "Correct. Your answer covers the key points.",
+      result: "incorrect",
+      feedback: mcExplanatoryFeedback,
+      correct_answer: optionText,
     };
   }
 
-  if (matches.length > 0) {
+  if (
+    (format === "matching" || format === "diagram_matching") &&
+    options?.pairs &&
+    options.pairs.length > 0
+  ) {
+    let userPairs: [string, string][];
+    try {
+      userPairs = JSON.parse(userAnswer) as [string, string][];
+    } catch {
+      return {
+        result: "incorrect",
+        feedback: "Invalid matching format.",
+        correct_answer: options.pairs
+          .map((p) => `${p.left} → ${p.right}`)
+          .join("; "),
+      };
+    }
+    const correctMap = new Map(
+      options.pairs.map((p) => [p.left.trim().toLowerCase(), p.right.trim().toLowerCase()])
+    );
+    const allCorrect = userPairs.every(
+      ([left, right]) => correctMap.get(left.trim().toLowerCase()) === right.trim().toLowerCase()
+    );
+    const correctAnswerStr = options.pairs
+      .map((p) => `${p.left} → ${p.right}`)
+      .join("; ");
+
+    if (allCorrect) {
+      return {
+        result: "correct",
+        feedback: "Correct.",
+        correct_answer: null,
+      };
+    }
+
+    const userPairsStr = userPairs
+      .map(([l, r]) => `${l} → ${r}`)
+      .join("; ");
+    const correctPairsStr = options.pairs
+      .map((p) => `${p.left} → ${p.right}`)
+      .join("; ");
+    const feedbackResponse = await anthropic.messages.create({
+      model: EXAMINER_MODEL,
+      max_tokens: 512,
+      system: MATCHING_FEEDBACK_PROMPT,
+      messages: [
+        {
+          role: "user",
+          content: `Question: ${question}\n\nCorrect pairs:\n${correctPairsStr}\n\nUser's answer:\n${userPairsStr}\n\nWrite explanatory feedback.`,
+        },
+      ],
+    });
+    const feedbackText =
+      feedbackResponse.content
+        .filter((block) => block.type === "text")
+        .map((block) => ("text" in block ? (block as { text: string }).text : ""))
+        .join("") ?? "";
+    let explanatoryFeedback = "One or more matches are incorrect.";
+    try {
+      const parsed = parseJsonFromResponse<{ feedback: string }>(feedbackText);
+      if (typeof parsed.feedback === "string" && parsed.feedback.trim()) {
+        explanatoryFeedback = parsed.feedback.trim();
+      }
+    } catch {
+      /* use fallback */
+    }
+
     return {
-      result: "partial",
-      feedback: "Partially correct. Consider adding more detail.",
-      correct_answer: expectedElements.join(", "),
+      result: "incorrect",
+      feedback: explanatoryFeedback,
+      correct_answer: correctAnswerStr,
     };
   }
+
+  const userMessage = `Question: ${question}
+
+Expected answer elements: ${JSON.stringify(expectedElements)}
+
+User's answer: ${userAnswer}
+
+Is this a retry attempt? ${isRetry ? "Yes" : "No"}
+
+Evaluate and return JSON only.`;
+
+  const response = await anthropic.messages.create({
+    model: EXAMINER_MODEL,
+    max_tokens: 1024,
+    system: EVALUATE_SYSTEM_PROMPT,
+    messages: [{ role: "user", content: userMessage }],
+  });
+
+  const text =
+    response.content
+      .filter((block) => block.type === "text")
+      .map((block) => ("text" in block ? (block as { text: string }).text : ""))
+      .join("") ?? "";
+
+  const parsed = parseJsonFromResponse<{
+    result: "correct" | "partial" | "incorrect";
+    feedback: string;
+    correct_answer: string | null;
+  }>(text);
+
+  const validResults = ["correct", "partial", "incorrect"] as const;
+  const result = validResults.includes(parsed.result)
+    ? parsed.result
+    : "incorrect";
 
   return {
-    result: "incorrect",
-    feedback: "Incorrect. Review the source material.",
-    correct_answer: expectedElements.join(", "),
+    result,
+    feedback: typeof parsed.feedback === "string" ? parsed.feedback : "",
+    correct_answer:
+      parsed.correct_answer != null ? String(parsed.correct_answer) : null,
   };
 }

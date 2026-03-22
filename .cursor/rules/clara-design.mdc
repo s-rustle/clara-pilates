@@ -1,0 +1,36 @@
+---
+description: Visual design for Clara — minimal neutral UI. Apply when editing layout, Tailwind, or components.
+globs:
+  - "**/*.tsx"
+  - "**/*.css"
+  - "**/tailwind.config.ts"
+---
+
+# Clara visual design (reset)
+
+**Direction:** **Warm greige — not white.** Canvas is mid warm taupe (`#D6D0C5`); cards are cream (`#F0EBE3`); text is warm brown-black. Sidebar is a step darker (`#C9C2B5`). Primary actions: warm charcoal (`#3A342C`).
+
+## Typography
+
+- **UI / body:** Source Sans 3 (`font-sans` / `--font-body`).
+- **Titles / wordmark “Clara”:** Fraunces (`font-display`).
+
+## Tokens (`clara-*` in `tailwind.config.ts`)
+
+- `bg` — Main canvas (warm greige).
+- `sidebar` — Slightly darker strip for nav.
+- `surface` / `elevated` — Cream panels; avoid `#ffffff`.
+- `border` / `highlight` — Warm taupe borders and hovers.
+- `primary` / `ink` — Warm dark brown / charcoal, not pure black.
+- `warm` — Muted accent for focus rings (`focus:ring-clara-warm/40`).
+
+## Layout
+
+- **Sidebar:** `bg-clara-sidebar`, border-r.
+- **Active nav:** `bg-clara-highlight` + `font-medium`.
+- **Cards:** `shadow-card` (soft brown-tinted shadow).
+
+## Do / don’t
+
+- **Do** use warm focus rings on inputs (`clara-warm`).
+- **Don’t** use stark white backgrounds or cool gray-50 for large surfaces.

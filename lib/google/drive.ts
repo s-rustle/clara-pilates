@@ -5,6 +5,11 @@ import {
   refreshAccessToken,
 } from "@/lib/google/auth";
 
+export type DriveFileMetadata = {
+  mimeType: string;
+  name: string;
+};
+
 const SUPPORTED_FILE_MIME_TYPES = [
   "image/jpeg",
   "image/png",
@@ -192,6 +197,43 @@ export async function listFilesInFolder(
     return {
       error: "Drive API listFilesInFolder failed: token refresh failed",
     };
+  }
+}
+
+/**
+ * Returns Drive file metadata (mime type, name). Used for Content-Type when proxying files.
+ */
+export async function getFileMetadata(
+  accessToken: string,
+  fileId: string,
+  refreshToken?: string
+): Promise<DriveFileMetadata> {
+  const run = async (token: string): Promise<DriveFileMetadata> => {
+    const auth = getAuthenticatedClient(token);
+    const drive = google.drive({ version: "v3", auth });
+
+    const { data, status, statusText } = await drive.files.get({
+      fileId,
+      fields: "mimeType, name",
+    });
+
+    if (status !== 200 || !data.mimeType) {
+      throw new Error(
+        `Drive API getFileMetadata failed for fileId ${fileId}: ${status} ${statusText}`
+      );
+    }
+
+    return { mimeType: data.mimeType, name: data.name ?? "" };
+  };
+
+  try {
+    return await run(accessToken);
+  } catch (err) {
+    if (!is401Error(err)) throw err;
+    if (!refreshToken) throw err;
+
+    const newToken = await refreshAccessToken(refreshToken);
+    return run(newToken);
   }
 }
 

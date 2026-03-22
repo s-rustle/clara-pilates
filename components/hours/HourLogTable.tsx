@@ -114,16 +114,16 @@ export default function HourLogTable({ logs, onStatusUpdate }: HourLogTableProps
 
   function SortHeader({
     label,
-    key,
+    columnKey,
   }: {
     label: string;
-    key: SortKey;
+    columnKey: SortKey;
   }) {
-    const isActive = sortKey === key;
+    const isActive = sortKey === columnKey;
     return (
       <button
         type="button"
-        onClick={() => handleSort(key)}
+        onClick={() => handleSort(columnKey)}
         className="flex items-center gap-1 font-medium text-clara-deep hover:text-clara-strong"
       >
         {label}
@@ -154,22 +154,22 @@ export default function HourLogTable({ logs, onStatusUpdate }: HourLogTableProps
           <thead className="border-b border-clara-highlight bg-clara-surface">
             <tr>
               <th className="px-4 py-3 text-left">
-                <SortHeader label="Date" key="session_date" />
+                <SortHeader label="Date" columnKey="session_date" />
               </th>
               <th className="px-4 py-3 text-left">
-                <SortHeader label="Category" key="category" />
+                <SortHeader label="Category" columnKey="category" />
               </th>
               <th className="px-4 py-3 text-left">
-                <SortHeader label="Sub-type" key="sub_type" />
+                <SortHeader label="Sub-type" columnKey="sub_type" />
               </th>
               <th className="px-4 py-3 text-left">
-                <SortHeader label="Duration" key="duration_minutes" />
+                <SortHeader label="Duration" columnKey="duration_minutes" />
               </th>
               <th className="px-4 py-3 text-left">
-                <SortHeader label="Status" key="status" />
+                <SortHeader label="Status" columnKey="status" />
               </th>
               <th className="px-4 py-3 text-left">
-                <SortHeader label="Notes" key="notes" />
+                <SortHeader label="Notes" columnKey="notes" />
               </th>
             </tr>
           </thead>

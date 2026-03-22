@@ -1,3 +1,38 @@
+export type QuizDifficulty = "Foundational" | "Intermediate" | "Exam-Ready";
+export type QuizResult = "correct" | "partial" | "incorrect";
+export type QuizStatus = "in_progress" | "complete";
+
+export type QuizQuestionFormat =
+  | "open_ended"
+  | "multiple_choice"
+  | "fill_blank"
+  | "matching";
+
+export interface McOption {
+  id: string;
+  text: string;
+}
+
+export interface MatchingPair {
+  left: string;
+  right: string;
+}
+
+export interface CueDimension {
+  score: string;
+  note: string;
+}
+
+export interface CueFeedback {
+  anatomical_accuracy: CueDimension;
+  starting_position: CueDimension;
+  breath_cue: CueDimension;
+  precaution_language: CueDimension;
+  client_accessibility: CueDimension;
+  overall: string;
+  better_version: string;
+}
+
 export interface ExtractedContent {
   printed_text: string;
   diagrams: string[];
@@ -13,6 +48,9 @@ export interface ContentChunk {
   folder_name: string;
   file_name: string;
   chunk_index: number;
+  /** Google Drive file id for this source (same for all chunks from one file) */
+  drive_file_id?: string | null;
+  source_mime_type?: string | null;
 }
 
 export interface DriveFolder {
@@ -72,6 +110,10 @@ export interface QuizQuestion {
   created_at: string;
 }
 
+export type SessionMode = "plan" | "log";
+export type SessionType = "teaching" | "personal";
+export type SessionStatus = "draft" | "complete";
+
 export interface WarmUpMove {
   move_name: string;
   sets: number;
@@ -88,8 +130,8 @@ export interface ExerciseItem {
 export interface SessionPlan {
   id: string;
   user_id: string;
-  mode: string;
-  session_type: string;
+  mode: SessionMode;
+  session_type: SessionType;
   apparatus: string;
   client_level: string | null;
   warm_up: WarmUpMove[];
@@ -97,8 +139,29 @@ export interface SessionPlan {
   feedback: Record<string, unknown> | null;
   linked_hour_log_id: string | null;
   session_date: string | null;
-  status: string;
+  status: SessionStatus;
   created_at: string;
+}
+
+export interface SessionFeedback {
+  progression_logic: { score: string; note: string };
+  contraindication_flags: {
+    score: string;
+    flags: Array<{
+      exercise_name: string;
+      flag: string;
+      recommendation: string;
+    }>;
+  };
+  volume_assessment: {
+    score: string;
+    note: string;
+    flagged_exercises: string[];
+  };
+  muscle_group_balance: { score: string; note: string; gaps: string[] };
+  sequence_alignment: { score: string; note: string };
+  overall: string;
+  suggested_adjustments: string[];
 }
 
 export interface ReadinessSnapshot {
@@ -125,11 +188,39 @@ export interface CurriculumUpload {
   created_at: string;
 }
 
+/** Diagram / illustration text from retrieved chunks (no binary images stored in RAG). */
+export interface SourceFigure {
+  file_name: string;
+  description: string;
+  content_type: "diagram" | "text";
+  drive_file_id?: string | null;
+}
+
+/** Image file from your Drive linked to a matched chunk (shown in Study). */
+export interface SourceImage {
+  drive_file_id: string;
+  file_name: string;
+  mime_type: string;
+}
+
+/** PDF (or other non-image) source file for “open in Drive” links. */
+export interface SourceDocument {
+  drive_file_id: string;
+  file_name: string;
+  mime_type: string;
+}
+
 export interface CurriculumResponse {
   answer: string;
   confidence: "confident" | "partial" | "not_found";
   source_folder: string | null;
   chunks_used: number;
+  /** Excerpts from textbook figures/diagrams found in source chunks */
+  figures?: SourceFigure[];
+  /** Image files from Drive tied to retrieved chunks (requires re-ingest after migration) */
+  source_images?: SourceImage[];
+  /** PDFs and other documents matched in RAG (open in Google Drive) */
+  source_documents?: SourceDocument[];
 }
 
 export interface RagChunk {
@@ -138,6 +229,8 @@ export interface RagChunk {
   folder_name: string;
   file_name: string;
   similarity: number;
+  drive_file_id?: string | null;
+  source_mime_type?: string | null;
 }
 
 export interface RAGResult {
@@ -155,6 +248,8 @@ export interface CurriculumChunk {
   content: string;
   content_type: string | null;
   embedding: number[] | null;
+  drive_file_id?: string | null;
+  source_mime_type?: string | null;
   created_at: string;
 }
 
@@ -166,10 +261,20 @@ export interface WeakSpotItem {
   recommended_action: string;
 }
 
+/** Runtime result from analyzeWeakSpots / API (not necessarily a persisted row). */
+export interface WeakSpotResult {
+  insufficient_data: boolean;
+  sessions_needed?: number;
+  top_three?: WeakSpotItem[];
+  sessions_analyzed?: number;
+}
+
 export interface WeakSpotAnalysis {
   id: string;
   user_id: string;
   top_three: WeakSpotItem[];
   sessions_analyzed: number;
+  insufficient_data: boolean;
+  sessions_needed: number | null;
   created_at: string;
 }

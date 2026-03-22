@@ -37,18 +37,6 @@ async function generateEmbedding(text: string): Promise<number[]> {
 
 const VISION_MODEL = "claude-sonnet-4-20250514";
 
-const PDF_EXTRACTION_SYSTEM_PROMPT = `You are extracting content from PDF text of a Pilates curriculum manual.
-
-Extract all printed text faithfully and completely.
-Describe any anatomical diagrams or movement illustrations in detail — prefix with [DIAGRAM:]. Include muscle names, body positions, movement directions.
-Extract handwritten annotations — prefix with [HANDWRITTEN:].
-Preserve all exercise names, spring settings, anatomical terms, and rep counts exactly as written.
-
-Return ONLY a valid JSON object with no markdown, no backticks, no explanation.
-Format: {"printed_text": "all extracted content here as a single string"}
-Include all text, diagram descriptions prefixed with [DIAGRAM:], and handwritten notes prefixed with [HANDWRITTEN:].
-Escape quotes (\\"), backslashes (\\\\), and newlines (\\n) inside the string.`;
-
 const IMAGE_EXTRACTION_SYSTEM_PROMPT = `You are extracting content from a photographed page of a Pilates curriculum manual.
 
 Extract all printed text faithfully and completely.
@@ -86,24 +74,18 @@ export type ProcessImageSuccess = ExtractedContent;
 export type ProcessImageError = { error: string; fileName: string };
 export type ProcessImageResult = ProcessImageSuccess | ProcessImageError;
 
-const PDF_CHUNK_MAX_CHARS = 6000;
-
 /**
- * Unescapes a JSON string value (handles \n, \", \\, etc.).
+ * Parses Claude vision JSON: {"printed_text": "..."}. Used by processImage only.
  */
-function unescapeJsonString(s: string): string {
-  try {
-    return JSON.parse('"' + s.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"') as string;
-  } catch {
-    return s.replace(/\\n/g, "\n").replace(/\\r/g, "\r").replace(/\\"/g, '"').replace(/\\\\/g, "\\");
-  }
-}
+function parseImageExtractionResponse(text: string): string | null {
+  const unescapeJsonString = (s: string): string => {
+    try {
+      return JSON.parse('"' + s.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"') as string;
+    } catch {
+      return s.replace(/\\n/g, "\n").replace(/\\r/g, "\r").replace(/\\"/g, '"').replace(/\\\\/g, "\\");
+    }
+  };
 
-/**
- * Parses PDF extraction response. Simple format: {"printed_text": "..."}.
- * Tries JSON.parse first; on failure, uses multiple fallbacks including truncated output.
- */
-function parsePdfResponse(text: string): string | null {
   const stripMarkdown = (s: string) =>
     s.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/g, "").trim();
   const stripped = stripMarkdown(text);
@@ -118,20 +100,16 @@ function parsePdfResponse(text: string): string | null {
     return null;
   };
 
-  // 1. Direct parse
   let result = tryParse(stripped);
   if (result !== null) return result;
 
-  // 2. Repair trailing commas and retry
   const repaired = stripped.replace(/,(\s*[}\]])/g, "$1").trim();
   result = tryParse(repaired);
   if (result !== null) return result;
 
-  // 3. Regex: full match for "printed_text":"...".
   const regexMatch = stripped.match(/"printed_text"\s*:\s*"((?:[^"\\]|\\.)*)"/);
   if (regexMatch) return unescapeJsonString(regexMatch[1]);
 
-  // 4. Extract printed_text value by walking the string (handles truncation)
   const key = '"printed_text"';
   const idx = stripped.indexOf(key);
   if (idx === -1) return null;
@@ -180,14 +158,9 @@ export async function processPdf(
   folderName: string
 ): Promise<ProcessImageResult> {
   try {
-    const { extractText, getDocumentProxy } = await import("unpdf");
-    const pdf = await getDocumentProxy(new Uint8Array(pdfBuffer));
-    const { text: pageTexts } = await extractText(pdf, { mergePages: true });
-
-    const fullText =
-      typeof pageTexts === "string"
-        ? pageTexts.trim()
-        : (Array.isArray(pageTexts) ? pageTexts : []).join("\n\n").trim();
+    const pdfParse = (await import("pdf-parse")).default;
+    const pdfData = await pdfParse(pdfBuffer);
+    const fullText = pdfData.text.trim();
 
     if (!fullText) {
       return {
@@ -196,54 +169,7 @@ export async function processPdf(
       };
     }
 
-    const chunks: string[] = [];
-    for (let i = 0; i < fullText.length; i += PDF_CHUNK_MAX_CHARS) {
-      chunks.push(fullText.slice(i, i + PDF_CHUNK_MAX_CHARS));
-    }
-
-    const combined: string[] = [];
-
-    for (let i = 0; i < chunks.length; i++) {
-      const chunkText = chunks[i];
-      const chunkLabel = chunks.length > 1 ? ` (chunk ${i + 1}/${chunks.length})` : "";
-
-      const response = await anthropic.messages.create({
-        model: VISION_MODEL,
-        max_tokens: 4096,
-        system: PDF_EXTRACTION_SYSTEM_PROMPT,
-        messages: [
-          {
-            role: "user",
-            content: `Structure this extracted PDF content${chunkLabel} into the required format. File: ${fileName}, Folder: ${folderName}.\n\n--- PDF content ---\n\n${chunkText}`,
-          },
-        ],
-      });
-
-      const text =
-        response.content
-          .filter((block) => block.type === "text")
-          .map((block) => ("text" in block ? (block as { text: string }).text : ""))
-          .join("") ?? "";
-
-      if (!text.trim()) {
-        return {
-          error: `Claude returned empty response for chunk ${i + 1}`,
-          fileName,
-        };
-      }
-
-      const parsed = parsePdfResponse(text);
-      if (!parsed) {
-        return {
-          error: `Claude returned invalid JSON for chunk ${i + 1}`,
-          fileName,
-        };
-      }
-
-      if (parsed.trim()) combined.push(parsed.trim());
-    }
-
-    return toExtractedContent(combined.join("\n\n"), fileName, folderName);
+    return toExtractedContent(fullText, fileName, folderName);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return {
@@ -253,10 +179,6 @@ export async function processPdf(
   }
 }
 
-/**
- * Sends image to Claude vision API and extracts structured content.
- * On failure returns { error, fileName }.
- */
 export async function processImage(
   imageBuffer: Buffer,
   fileName: string,
@@ -300,7 +222,7 @@ export async function processImage(
       };
     }
 
-    const parsed = parsePdfResponse(text);
+    const parsed = parseImageExtractionResponse(text);
     if (!parsed) {
       return {
         error: "Claude returned invalid JSON structure",
@@ -326,10 +248,19 @@ export function chunkContent(
   extractedContent: ExtractedContent,
   uploadId: string,
   folderName: string,
-  fileName: string
+  fileName: string,
+  sourceMeta?: { driveFileId: string; mimeType: string }
 ): ContentChunk[] {
   const chunks: ContentChunk[] = [];
   let chunkIndex = 0;
+
+  const src =
+    sourceMeta != null
+      ? {
+          drive_file_id: sourceMeta.driveFileId,
+          source_mime_type: sourceMeta.mimeType,
+        }
+      : { drive_file_id: null as string | null, source_mime_type: null as string | null };
 
   const { printed_text, diagrams, handwritten_notes } = extractedContent;
 
@@ -350,6 +281,7 @@ export function chunkContent(
           folder_name: folderName,
           file_name: fileName,
           chunk_index: chunkIndex++,
+          ...src,
         });
         const overlap = currentChunk.slice(-Math.min(OVERLAP_CHARS, currentChunk.length));
         currentChunk = overlap + "\n\n" + para;
@@ -368,6 +300,7 @@ export function chunkContent(
         folder_name: folderName,
         file_name: fileName,
         chunk_index: chunkIndex++,
+        ...src,
       });
     }
   }
@@ -381,6 +314,7 @@ export function chunkContent(
         folder_name: folderName,
         file_name: fileName,
         chunk_index: chunkIndex++,
+        ...src,
       });
     }
   }
@@ -397,6 +331,7 @@ export function chunkContent(
         folder_name: folderName,
         file_name: fileName,
         chunk_index: chunkIndex++,
+        ...src,
       });
     }
   }
@@ -440,6 +375,8 @@ export async function embedAndStore(
           content: chunk.content,
           content_type: chunk.content_type,
           embedding,
+          drive_file_id: chunk.drive_file_id ?? null,
+          source_mime_type: chunk.source_mime_type ?? null,
         });
 
         if (error) {
@@ -468,18 +405,46 @@ export async function embedAndStore(
       ? `${errors.length} of ${chunks.length} chunks failed: ${errors.slice(0, 3).join("; ")}${errors.length > 3 ? "..." : ""}`
       : null;
 
-  const { error: updateError } = await supabase
-    .from("curriculum_uploads")
-    .update({
-      status: allFailed ? "failed" : "complete",
-      last_ingested_at: new Date().toISOString(),
-      file_count: chunks_stored,
-      error_message: allFailed ? errorSummary : null,
-    })
-    .eq("id", uploadId);
+  const finalPayload = {
+    status: allFailed ? ("failed" as const) : ("complete" as const),
+    last_ingested_at: new Date().toISOString(),
+    file_count: chunks_stored,
+    error_message: allFailed ? errorSummary : null,
+  };
+
+  let updateError: { message: string } | null = null;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const { error } = await supabase
+      .from("curriculum_uploads")
+      .update(finalPayload)
+      .eq("id", uploadId);
+    if (!error) {
+      updateError = null;
+      break;
+    }
+    updateError = error;
+    if (attempt < 3) {
+      await delay(300 * (attempt + 1));
+    }
+  }
 
   if (updateError) {
-    errors.push(`Failed to update curriculum_uploads: ${updateError.message}`);
+    errors.push(
+      `Failed to update curriculum_uploads after retries: ${updateError.message}`
+    );
+    const { error: fallbackErr } = await supabase
+      .from("curriculum_uploads")
+      .update({
+        status: "failed",
+        error_message: `Ingest finished but could not save final status (${updateError.message}). Re-ingest if needed.`,
+      })
+      .eq("id", uploadId);
+
+    if (fallbackErr) {
+      throw new Error(
+        `curriculum_uploads could not be updated: ${updateError.message}`
+      );
+    }
   }
 
   return {
@@ -487,4 +452,25 @@ export async function embedAndStore(
     chunks_stored,
     errors,
   };
+}
+
+/**
+ * Counts existing rows in curriculum_chunks for this upload + file name.
+ * Used before ingest to skip files that are already fully processed (additive ingest).
+ */
+export async function countChunksForUploadFile(
+  uploadId: string,
+  fileName: string
+): Promise<number> {
+  const supabase = createServiceClient();
+  const { count, error } = await supabase
+    .from("curriculum_chunks")
+    .select("*", { count: "exact", head: true })
+    .eq("upload_id", uploadId)
+    .eq("file_name", fileName);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  return count ?? 0;
 }
