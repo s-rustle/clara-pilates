@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { generateQuestion, evaluateAnswer } from "@/lib/anthropic/agents/examiner";
 
 vi.mock("@/lib/anthropic/rag", () => ({
-  queryRAG: vi.fn(),
+  queryRAGWithContext: vi.fn(),
 }));
 
 vi.mock("@/lib/anthropic/client", () => ({
@@ -16,8 +16,8 @@ vi.mock("@/lib/anthropic/client", () => ({
 describe("Examiner Agent", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
-    const { queryRAG } = await import("@/lib/anthropic/rag");
-    vi.mocked(queryRAG).mockResolvedValue({
+    const { queryRAGWithContext } = await import("@/lib/anthropic/rag");
+    vi.mocked(queryRAGWithContext).mockResolvedValue({
       chunks: [
         {
           content: "The Hundred - supine, knees bent, feet on mat",
@@ -41,8 +41,8 @@ describe("Examiner Agent", () => {
   });
 
   it("returns error when no curriculum material found", async () => {
-    const { queryRAG } = await import("@/lib/anthropic/rag");
-    vi.mocked(queryRAG).mockResolvedValue({ chunks: [], notFound: true });
+    const { queryRAGWithContext } = await import("@/lib/anthropic/rag");
+    vi.mocked(queryRAGWithContext).mockResolvedValue({ chunks: [], notFound: true });
 
     const result = await generateQuestion(
       "Mat",
@@ -147,5 +147,29 @@ describe("Examiner Agent", () => {
     );
 
     expect(result.result).toBe("incorrect");
+  });
+
+  it("evaluates anatomy_multiple_choice by exact string match without Claude", async () => {
+    const ok = await evaluateAnswer(
+      "Which muscle is indicated?",
+      "Psoas major",
+      [],
+      false,
+      "user-1",
+      { format: "anatomy_multiple_choice", correct_answer: "Psoas major" }
+    );
+    expect(ok.result).toBe("correct");
+    expect(ok.correct_answer).toBeNull();
+
+    const bad = await evaluateAnswer(
+      "Which muscle is indicated?",
+      "Gluteus maximus",
+      [],
+      false,
+      "user-1",
+      { format: "anatomy_multiple_choice", correct_answer: "Psoas major" }
+    );
+    expect(bad.result).toBe("incorrect");
+    expect(bad.correct_answer).toBe("Psoas major");
   });
 });

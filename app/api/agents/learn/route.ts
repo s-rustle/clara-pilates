@@ -28,8 +28,11 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const exercises = await getExerciseList(apparatus.trim(), user.id);
-    return jsonResponse({ success: true, data: { exercises } });
+    const { exercises, chunkCount } = await getExerciseList(
+      apparatus.trim(),
+      user.id
+    );
+    return jsonResponse({ success: true, data: { exercises, chunkCount } });
   } catch (err) {
     console.error("[api/agents/learn GET]", err);
     return jsonResponse(

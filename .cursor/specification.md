@@ -99,20 +99,26 @@ Auth is required from first load. No anonymous access.
 ### 4.2 Ingestion Flow
 1. User connects Google Drive account (OAuth, one-time setup)
 2. User selects folder(s) to ingest from the app
-3. App pulls image files from selected folders via Google Drive API
-4. Each image is processed through Claude vision — handles:
+3. App pulls files from selected folders via Google Drive API (images and PDFs)
+4. **Images** — Claude vision extraction:
    - Printed text and diagrams (standard extraction)
+   - **Orientation:** transcribe as if the page were upright when the photo/scan is rotated (including upside down)
    - Anatomical illustrations (described and indexed)
    - Handwritten notes (extracted as supplementary annotations, flagged as handwritten)
-5. Extracted content is chunked by topic/exercise
-6. Chunks are embedded and stored in Supabase pgvector with metadata:
+5. **PDFs** — text is extracted with **orientation-aware per-page layout** (compares reading-order candidates and prefers the layout that best matches readable manual Latin text, mitigating upside-down pages and odd stream order). A Claude pass then inserts structured exercise tags into the stored text.
+6. **Balanced Body exercise header model** (manual layout to preserve in tags and chunks):
+   - **Title line:** large ALL CAPS exercise name (e.g. SWAN DIVE, SHORT BOX ABDOMINAL SERIES).
+   - **Metadata line:** smaller ALL CAPS — program level, middle dot or bullet (•), rep range (e.g. `INTERMEDIATE • 4-6 REPS`).
+   - Ingestion prompts map these into inline tags: `**EXERCISE: [name]**`, `**LEVEL: [...]**`, `**REPS: [...]**` (plus PURPOSE, STARTING POSITION, MOVEMENT, etc. when present). This metadata is required for accurate **Learn** tutorials and **Examiner** questions about level and reps.
+7. Extracted content is chunked by topic/exercise
+8. Chunks are embedded and stored in Supabase pgvector with metadata:
    - Source folder (maps to curriculum category)
    - File name
    - Ingestion date
    - Chunk index
-7. Ingestion status displayed per folder — pending / processing / complete / failed
-8. User can re-ingest a folder when new material is added
-9. Explicit error message if any file fails processing
+9. Ingestion status displayed per folder — pending / processing / complete / failed
+10. User can re-ingest a folder when new material is added
+11. Explicit error message if any file fails processing
 
 ### 4.3 Source Integrity Rule
 All study-facing agents query the pgvector store first. If relevant content is not found, the agent responds: *"I couldn't find this in your uploaded materials. Consider adding relevant pages from your [Category] manual."* No external knowledge used as substitute.

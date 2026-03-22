@@ -47,12 +47,12 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-56 flex-col border-r border-clara-highlight bg-clara-surface">
-      <div className="px-5 py-6">
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-60 flex-col border-r border-clara-highlight/80 bg-gradient-to-b from-clara-surface to-[#e3dfd4] shadow-clara-soft">
+      <div className="flex min-h-[5.25rem] flex-col justify-end px-4 pb-5 pt-4">
         <Wordmark size="sm" />
       </div>
 
-      <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2">
+      <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2.5">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
@@ -61,10 +61,10 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-2 rounded-sm px-3 py-2 text-sm transition-colors ${
+              className={`flex items-center gap-2.5 rounded-full px-3 py-2.5 text-sm transition-colors ${
                 isActive
-                  ? "bg-clara-highlight font-bold text-clara-accent"
-                  : "text-clara-deep hover:bg-clara-highlight/70 hover:text-clara-accent"
+                  ? "bg-clara-highlight/90 font-semibold text-clara-primary shadow-sm"
+                  : "text-clara-deep hover:bg-clara-highlight/55 hover:text-clara-primary"
               }`}
             >
               <Icon className="h-4 w-4 shrink-0" />
@@ -79,11 +79,11 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="border-t border-clara-highlight p-2">
+      <div className="border-t border-clara-highlight/80 p-2">
         <button
           type="button"
           onClick={handleSignOut}
-          className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm text-clara-muted transition-colors hover:bg-clara-highlight hover:text-clara-accent"
+          className="flex w-full items-center gap-2 rounded-full px-3 py-2.5 text-sm text-clara-muted transition-colors hover:bg-clara-highlight/50 hover:text-clara-primary"
         >
           <LogOut className="h-4 w-4 shrink-0" />
           <span>Sign out</span>

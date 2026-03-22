@@ -74,7 +74,7 @@ Analyzes quiz history over time. Surfaces patterns — not just missed questions
 Accepts a planned or completed session — pre-Pilates warm-up (pelvic floor engagement, breathing, stretching) plus full exercise sequence with sets, reps, and apparatus — and evaluates it against Balanced Body methodology. Assesses progression logic, contraindication risk, volume appropriateness (standard 8-12 rep range), muscle group balance, and sequence alignment with Balanced Body curriculum. Supports both planning mode (feedback before teaching/practicing) and logging mode (record what was actually done, feeds hour tracking). Reasons exclusively over uploaded source materials.
 
 ### 4.8 Learn Agent
-Accepts apparatus + either a specific exercise name OR a body part/muscle group. Searches the RAG layer for relevant curriculum chunks and manual page images. Structures tutorial content from source material only — one exercise at a time covering starting position, movement description, breath cues, spring settings, and precautions. Never invents information not present in uploaded materials. Phase 2 adds audio narration via Whisper.
+Accepts apparatus + either a specific exercise name OR a body part/muscle group. Searches the RAG layer for relevant curriculum chunks and manual page images. Structures tutorial content from source material only — one exercise at a time covering **program level** and **recommended rep range** when the manual header states them (e.g. Intermediate • 4-6 REPS), plus starting position, movement description, breath cues, spring settings, and precautions. Never invents information not present in uploaded materials. Phase 2 adds audio narration via Whisper.
 
 ### 4.9 Readiness Synthesizer Agent
 Produces a readiness score anchored to three dimensions: curriculum coverage (% of uploaded material queried and demonstrated), quiz performance (rolling accuracy score by domain), and hour completion (% of required hours logged). Generates a plain-language readiness brief with recommended next study actions.
@@ -85,7 +85,7 @@ Produces a readiness score anchored to three dimensions: curriculum coverage (% 
 
 ### 5.1 RAG Layer
 - Source: Google Drive folder of photographed manual pages and uploaded course documents
-- Ingestion: Claude vision processes images → text extracted → chunked → embedded via Supabase pgvector
+- Ingestion: Claude vision processes images → text extracted → chunked → embedded via Supabase pgvector. PDFs use text extraction with **orientation-aware page assembly** (correcting common upside-down or scrambled reading order before tagging). Structured tags in stored text include **EXERCISE**, **LEVEL**, **REPS**, and section labels so agents can teach and quiz from header metadata.
 - Ingestion is a manual trigger (user initiates when new material is added)
 - All queries from study-facing agents search this vector store first
 

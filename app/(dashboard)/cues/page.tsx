@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import Card from "@/components/ui/Card";
+import CueEducationPanel from "@/components/cues/CueEducationPanel";
 import CueInput from "@/components/cues/CueInput";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import FeedbackCard from "@/components/cues/FeedbackCard";
@@ -106,6 +107,7 @@ export default function CuesPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <CueEducationPanel />
       <Card>
         <CueInput
           onSubmit={submitCue}

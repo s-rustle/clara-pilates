@@ -142,7 +142,7 @@ export default function WeakSpotCard() {
       </p>
       <Link
         href={studyHref}
-        className="inline-flex w-full items-center justify-center rounded-sm bg-clara-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-clara-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-rock sm:w-auto"
+        className="inline-flex w-full items-center justify-center rounded-sm bg-clara-primary px-4 py-2 text-sm font-medium text-white shadow-clara-soft transition-colors hover:bg-clara-rock focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-forest sm:w-auto"
       >
         Study this now
       </Link>

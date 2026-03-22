@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
-import Input from "@/components/ui/Input";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import Select from "@/components/ui/Select";
 
@@ -40,9 +40,49 @@ export default function CueInput({
   const [cue, setCue] = useState("");
   const [apparatus, setApparatus] = useState(APPARATUS_OPTIONS[0]?.value ?? "Mat");
   const [exerciseName, setExerciseName] = useState("");
+  const [exerciseOptions, setExerciseOptions] = useState<string[]>([]);
+  const [listLoading, setListLoading] = useState(false);
+  const [listError, setListError] = useState<string | null>(null);
   const [clientLevel, setClientLevel] = useState(
     CLIENT_LEVEL_OPTIONS[0]?.value ?? "Beginner"
   );
+
+  const fetchExercises = useCallback(async (app: string) => {
+    setListLoading(true);
+    setListError(null);
+    try {
+      const res = await fetch(
+        `/api/agents/learn?apparatus=${encodeURIComponent(app)}`,
+        { credentials: "same-origin" }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        setExerciseOptions([]);
+        setListError(
+          typeof data.error === "string"
+            ? data.error
+            : "Could not load exercises."
+        );
+        return;
+      }
+      if (data.success && Array.isArray(data.data?.exercises)) {
+        const names = data.data.exercises as string[];
+        setExerciseOptions([...names].sort((a, b) => a.localeCompare(b)));
+      } else {
+        setExerciseOptions([]);
+      }
+    } catch {
+      setExerciseOptions([]);
+      setListError("Could not load exercises.");
+    } finally {
+      setListLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    setExerciseName("");
+    void fetchExercises(apparatus);
+  }, [apparatus, fetchExercises]);
 
   useEffect(() => {
     if (resetCueNonce > 0) {
@@ -53,10 +93,26 @@ export default function CueInput({
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const trimmedCue = cue.trim();
-    const trimmedExercise = exerciseName.trim();
-    if (!trimmedCue || !trimmedExercise || isLoading) return;
-    onSubmit(trimmedCue, apparatus, trimmedExercise, clientLevel);
+    if (!trimmedCue || !exerciseName || isLoading || listLoading) return;
+    onSubmit(trimmedCue, apparatus, exerciseName, clientLevel);
   };
+
+  const exerciseSelectOptions = [
+    {
+      value: "",
+      label: listLoading
+        ? "Loading exercises…"
+        : listError
+          ? "Could not load list"
+          : exerciseOptions.length === 0
+            ? "No exercises in curriculum"
+            : "Select an exercise…",
+    },
+    ...exerciseOptions.map((name) => ({ value: name, label: name })),
+  ];
+
+  const canPickExercise =
+    !listLoading && !listError && exerciseOptions.length > 0;
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -65,7 +121,9 @@ export default function CueInput({
           label="Apparatus"
           options={APPARATUS_OPTIONS}
           value={apparatus}
-          onChange={(e) => setApparatus(e.target.value)}
+          onChange={(e) => {
+            setApparatus(e.target.value);
+          }}
           disabled={isLoading}
         />
         <Select
@@ -76,13 +134,31 @@ export default function CueInput({
           disabled={isLoading}
         />
       </div>
-      <Input
-        label="Exercise name"
-        placeholder="e.g. The Hundred"
-        value={exerciseName}
-        onChange={(e) => setExerciseName(e.target.value)}
-        disabled={isLoading}
-      />
+      <div>
+        <Select
+          label="Exercise name"
+          options={exerciseSelectOptions}
+          value={exerciseName}
+          onChange={(e) => setExerciseName(e.target.value)}
+          disabled={isLoading || !canPickExercise}
+        />
+        {listError ? (
+          <p className="mt-1.5 text-xs text-clara-rock">{listError}</p>
+        ) : null}
+        {!listLoading && !listError && exerciseOptions.length === 0 ? (
+          <p className="mt-1.5 text-xs text-clara-muted">
+            No exercise names were found for this apparatus in your curriculum.
+            Check the Curriculum manager or try{" "}
+            <Link
+              href="/learn"
+              className="font-bold text-clara-accent underline-offset-2 hover:underline"
+            >
+              Learn
+            </Link>{" "}
+            after uploading manual content.
+          </p>
+        ) : null}
+      </div>
       <div>
         <label className="mb-1.5 block text-sm font-medium text-clara-deep">
           Your cue
@@ -97,7 +173,10 @@ export default function CueInput({
         />
       </div>
       <div>
-        <Button type="submit" disabled={isLoading}>
+        <Button
+          type="submit"
+          disabled={isLoading || listLoading || !exerciseName.trim()}
+        >
           {isLoading ? (
             <span className="inline-flex items-center gap-2">
               <LoadingSpinner size="sm" />

@@ -1,5 +1,5 @@
 import { anthropic } from "@/lib/anthropic/client";
-import { queryRAG } from "../rag";
+import { queryRAGWithContext } from "../rag";
 import { OUT_OF_SCOPE_INSTRUCTION } from "./boundaries";
 import type {
   ExerciseItem,
@@ -15,6 +15,11 @@ const SESSIONS_MODEL = "claude-sonnet-4-20250514";
 const SESSION_EVALUATOR_SYSTEM = `You are a Balanced Body Comprehensive session evaluator
 Evaluate the session across five dimensions grounded in source material
 Standard rep range reference: 8-12 reps
+
+When the source chunks describe program levels (Mat 1 / Mat 2 / Mat 3, Reformer 1 / 2 / 3), prerequisites, recommended order, movement patterns, session templates, or specific exercise progression tables, use them to judge progression_logic and sequence_alignment—not from general knowledge.
+
+For progression_logic specifically, check whether: (1) warm-up progresses logically into the main sequence; (2) exercises are ordered by difficulty (easier → harder) where the material implies levels; (3) the sequence matches a known Balanced Body session template for the stated client level (Beginner, Intermediate, Advanced, Prenatal, etc.) when templates appear in the chunks; (4) muscle groups or themes are concentrated and built upon progressively. If the chunks include a matching session template (e.g. "Advanced Session"), name it explicitly in your feedback.
+
 Return ONLY valid JSON — no markdown, no preamble:
 
 {
@@ -286,11 +291,25 @@ export async function evaluateSession(
   const input = parseSessionEvaluationInput(sessionData);
 
   const exerciseNames = input.exercise_sequence.map((e) => e.exercise_name);
-  const ragQuery = exerciseNames.length
-    ? `${input.apparatus} ${exerciseNames.join(" ")}`.trim()
-    : input.apparatus;
+  const ragQuery = [
+    input.apparatus,
+    exerciseNames.join(" "),
+    "Balanced Body sequencing progression order muscle groups",
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
 
-  const { chunks } = await queryRAG(ragQuery, userId);
+  const { chunks } = await queryRAGWithContext(
+    ragQuery,
+    userId,
+    [
+      "specific exercise progressions sequence order difficulty",
+      "session template beginner intermediate advanced prenatal",
+      "purpose muscles strengthen stretch",
+    ],
+    { folderFilter: null, minSimilarity: 0.42 }
+  );
   const sourceBlock =
     chunks.length > 0
       ? formatChunksForPrompt(chunks)

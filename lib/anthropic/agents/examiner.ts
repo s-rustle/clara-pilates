@@ -1,5 +1,5 @@
 import { anthropic } from "@/lib/anthropic/client";
-import { queryRAG } from "../rag";
+import { queryRAGWithContext } from "../rag";
 import { OUT_OF_SCOPE_INSTRUCTION } from "./boundaries";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { RagChunk } from "@/types";
@@ -18,6 +18,9 @@ Use a single _____ for one key term. Provide correct_answer and expected_answer_
 Provide 3-5 pairs. Shuffle right_items in your output so they are not in matching order. Wrap exercise names in the question in **.`,
   diagram_matching: `Return ONLY valid JSON: {"format": "diagram_matching", "question": "string", "pairs": [{"left": "region/label A", "right": "structure name"}, ...], "left_items": [...], "right_items": [...]}
 The question must be: "Looking at the diagram, identify the muscle/structure indicated by [description of location]." or similar. Create 3-5 pairs matching labeled regions/descriptions to anatomy terms from the source. Shuffle right_items.`,
+  anatomy_multiple_choice: `Return ONLY valid JSON: {"format": "anatomy_multiple_choice", "question": "string", "options": ["string","string","string","string"], "correct_option": "string", "expected_answer_elements": ["string"]}
+options must contain exactly four distinct strings. correct_option must equal exactly one of the four options (same spelling and casing). expected_answer_elements should be a single-element array containing correct_option.
+For anatomy questions, generate four multiple choice options. One must be correct. Three must be plausible but incorrect — drawn from related anatomy terms and structures that appear in the source material. Never invent anatomy not present in the materials.`,
 };
 
 const GENERATE_SYSTEM_PROMPT = `You are a Balanced Body Comprehensive exam examiner.
@@ -28,7 +31,16 @@ Difficulty levels:
 - Exam-Ready: synthesis, contraindications, edge cases
 CRITICAL: You must NOT repeat or closely paraphrase any question in the previousQuestions list. Each new question must ask about a different fact, concept, exercise, or angle. If a topic was already asked, choose a different topic. This is mandatory.
 EXERCISE NAMES: Only use exercise names that appear explicitly in the source material (often bolded there). Never invent, paraphrase, or infer exercise titles. If you cannot find an exact exercise name in the chunks, ask about a concept or apparatus instead. When the question mentions an exercise, wrap the exact exercise title in **double asterisks** (e.g., "What is the starting position for **the Hundred**?") so it displays bold—matching how titles appear in the source.
-Question types: anatomy identification, starting position, cueing language, contraindications/precautions, spring settings, exercise sequencing.
+SOURCE SCOPE: Chunks may come from any ingested manual folder. Anatomy, alignment, and muscle actions described inside an apparatus chapter (e.g. Barrels) are valid material—use them for anatomy and biomechanics questions when they appear in those chunks. Respect the user's apparatus/topic focus when choosing what to ask, but do not assume anatomy lives only in a separate "Anatomy" folder.
+PROGRESSION: If the source discusses exercise order, prerequisites, levels (Mat 1 vs 2 vs 3, Reformer 1 vs 2 vs 3), or sequencing principles, you may ask about flow, progressions, or teaching order—only when the chunks support it.
+Question types (when supported by the chunks):
+- Starting position, cueing language, spring settings, exercise sequencing
+- Program level and recommended rep ranges from exercise headers (e.g. Intermediate, 4-6 reps) when explicitly present in the source
+- Muscle / anatomy identification from Purpose or muscle-target sections embedded in apparatus materials
+- Precaution scenarios (e.g. a client condition and which exercises to avoid or modify — only from stated contraindications in source)
+- Progression questions (e.g. what prepares a client for another exercise; ordering in progression tables)
+- Session sequencing (e.g. which session template or level fits a client profile — only if templates appear in source)
+When the requested format is anatomy_multiple_choice: follow the anatomy MC JSON schema exactly; options are four muscle/structure names from the source; the question should reference the diagram or region being tested.
 
 ${OUT_OF_SCOPE_INSTRUCTION}`;
 
@@ -64,13 +76,23 @@ function formatChunksForPrompt(chunks: RagChunk[]): string {
 }
 
 export interface GenerateQuestionSuccess {
-  format: "open_ended" | "multiple_choice" | "fill_blank" | "matching" | "diagram_matching";
+  format:
+    | "open_ended"
+    | "multiple_choice"
+    | "fill_blank"
+    | "matching"
+    | "diagram_matching"
+    | "anatomy_multiple_choice";
   question: string;
   expected_answer_elements: string[];
   source_chunks_used: RagChunk[];
   options?: McOption[];
   correct_id?: string;
   correct_answer?: string;
+  /** Four labels for anatomy MC (string[]); distinct from options (McOption[]) */
+  anatomy_options?: string[];
+  /** Correct label — must match one of anatomy_options exactly */
+  correct_option?: string;
   pairs?: MatchingPair[];
   left_items?: string[];
   right_items?: string[];
@@ -97,9 +119,16 @@ In 2–4 sentences, explain WHY the answer is correct. Add context that helps th
 Return ONLY valid JSON: {"explanation": "string"}`;
 
 export interface ExplainCorrectOptions {
-  format?: "open_ended" | "multiple_choice" | "fill_blank" | "matching" | "diagram_matching";
+  format?:
+    | "open_ended"
+    | "multiple_choice"
+    | "fill_blank"
+    | "matching"
+    | "diagram_matching"
+    | "anatomy_multiple_choice";
   correct_answer?: string;
   correct_id?: string;
+  correct_option?: string;
   options?: McOption[];
   pairs?: MatchingPair[];
   expected_elements?: string[];
@@ -115,6 +144,11 @@ export async function explainCorrectAnswer(
   if (format === "multiple_choice" && options.correct_id && options.options) {
     const opt = options.options.find((o) => o.id === options.correct_id);
     context = `Correct answer: ${opt?.text ?? options.correct_answer ?? options.correct_id}`;
+  } else if (
+    format === "anatomy_multiple_choice" &&
+    (options.correct_option || options.correct_answer)
+  ) {
+    context = `Correct answer: ${options.correct_option ?? options.correct_answer}`;
   } else if ((format === "matching" || format === "diagram_matching") && options.pairs?.length) {
     context = `Correct pairs:\n${options.pairs.map((p) => `${p.left} → ${p.right}`).join("\n")}`;
   } else if (options.correct_answer) {
@@ -174,6 +208,25 @@ const FORMATS: Array<"open_ended" | "multiple_choice" | "fill_blank" | "matching
   "matching",
 ];
 
+const IMAGE_EXT = /\.(png|jpe?g|gif|webp|bmp|tif)$/i;
+
+function pickDiagramImageFromChunks(
+  chunks: RagChunk[]
+): { file_name: string; folder_name: string } | null {
+  for (const c of chunks) {
+    if (c.content_type === "diagram") {
+      return { file_name: c.file_name, folder_name: c.folder_name };
+    }
+    if (c.drive_file_id) {
+      const mime = c.source_mime_type?.toLowerCase() ?? "";
+      if (mime.startsWith("image/") || IMAGE_EXT.test(c.file_name)) {
+        return { file_name: c.file_name, folder_name: c.folder_name };
+      }
+    }
+  }
+  return null;
+}
+
 async function getAnatomyDiagramChunks(
   userId: string
 ): Promise<Array<{ file_name: string }>> {
@@ -213,8 +266,34 @@ export async function generateQuestion(
     diagramChunks = await getAnatomyDiagramChunks(userId);
   }
 
-  const query = `${apparatus} ${topic ?? ""}`.trim();
-  const { chunks, notFound } = await queryRAG(query, userId, isAnatomy ? "Anatomy" : undefined);
+  /**
+   * Search across all ingested folders. Do not pass folder_filter for "Anatomy" —
+   * anatomy for barrel/mat/reformer moves often lives inside those apparatus chunks,
+   * and SQL uses strict equality on folder_name (Barrels ≠ Anatomy).
+   */
+  const query = [
+    apparatus,
+    topic ?? "",
+    "Balanced Body Comprehensive",
+    isAnatomy
+      ? "anatomy muscles bones alignment movement"
+      : "exercise sequencing precautions cueing spring settings",
+    "progression teaching",
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  const { chunks, notFound } = await queryRAGWithContext(
+    query,
+    userId,
+    [
+      "purpose muscles strengthen stretch",
+      "precautions avoid contraindications",
+      "progressions sequence difficulty",
+    ],
+    { folderFilter: null, minSimilarity: 0.42 }
+  );
 
   if (notFound || chunks.length === 0) {
     return {
@@ -223,11 +302,25 @@ export async function generateQuestion(
     };
   }
 
-  let format: "open_ended" | "multiple_choice" | "fill_blank" | "matching" | "diagram_matching";
+  const anatomyPrimarySource =
+    chunks[0] &&
+    String(chunks[0].folder_name ?? "")
+      .trim()
+      .toLowerCase() === "anatomy";
+  const useAnatomyMultipleChoice = isAnatomy || Boolean(anatomyPrimarySource);
+
+  let format: GenerateQuestionSuccess["format"];
   let imageFileName: string | undefined;
   let folderName: string | undefined;
 
-  if (diagramChunks.length > 0 && wantsMatching) {
+  if (useAnatomyMultipleChoice) {
+    format = "anatomy_multiple_choice";
+    const pick = pickDiagramImageFromChunks(chunks);
+    if (pick) {
+      imageFileName = pick.file_name;
+      folderName = pick.folder_name;
+    }
+  } else if (diagramChunks.length > 0 && wantsMatching) {
     format = "diagram_matching";
     const picked = diagramChunks[Math.floor(Math.random() * diagramChunks.length)];
     imageFileName = picked.file_name;
@@ -247,6 +340,11 @@ export async function generateQuestion(
       ? `\n\nDO NOT ask any of these again (each was already used in this quiz):\n${previousQuestions.map((q, i) => `${i + 1}. ${q}`).join("\n")}\n`
       : "";
 
+  const diagramNote =
+    format === "anatomy_multiple_choice" && imageFileName && folderName
+      ? `\nA diagram image from the learner's materials will be shown with this question (file: ${imageFileName}, folder: ${folderName}). Write the question so it refers to identifying a muscle or structure that can be tested with that diagram.\n`
+      : "";
+
   const userMessage = `Source material:
 ---
 ${formattedChunks}
@@ -257,8 +355,8 @@ Parameters:
 - Topic: ${topic ?? "All"}
 - Difficulty: ${difficulty}
 - Question format: ${format}
-${prevList}
-Generate one NEW ${format.replace("_", " ")} question that is different from all of the above. ${formatInstruction}`;
+${diagramNote}${prevList}
+Generate one NEW ${format.replace(/_/g, " ")} question that is different from all of the above. ${formatInstruction}`;
 
   const response = await anthropic.messages.create({
     model: EXAMINER_MODEL,
@@ -284,11 +382,38 @@ Generate one NEW ${format.replace("_", " ")} question that is different from all
     : [];
 
   const base: GenerateQuestionSuccess = {
-    format: (parsed.format as GenerateQuestionSuccess["format"]) ?? "open_ended",
+    format,
     question: parsed.question,
     expected_answer_elements: elements,
     source_chunks_used: chunks,
   };
+
+  if (format === "anatomy_multiple_choice") {
+    if (Array.isArray(parsed.options) && parsed.options.length === 4) {
+      const opts = (parsed.options as unknown[]).map((x) => String(x).trim()).filter(Boolean);
+      const correctOpt =
+        typeof parsed.correct_option === "string" ? parsed.correct_option.trim() : "";
+      if (
+        opts.length === 4 &&
+        correctOpt &&
+        opts.some((o) => o === correctOpt)
+      ) {
+        return {
+          ...base,
+          format: "anatomy_multiple_choice",
+          anatomy_options: opts,
+          correct_option: correctOpt,
+          correct_answer: correctOpt,
+          expected_answer_elements: [correctOpt],
+          image_file_name: imageFileName,
+          folder_name: folderName,
+        };
+      }
+    }
+    throw new Error(
+      "Invalid anatomy multiple choice: expected four string options and correct_option matching exactly one of them."
+    );
+  }
 
   if (parsed.format === "multiple_choice" && Array.isArray(parsed.options)) {
     const options = parsed.options as McOption[];
@@ -326,7 +451,13 @@ Generate one NEW ${format.replace("_", " ")} question that is different from all
 }
 
 export interface EvaluateAnswerOptions {
-  format?: "open_ended" | "multiple_choice" | "fill_blank" | "matching" | "diagram_matching";
+  format?:
+    | "open_ended"
+    | "multiple_choice"
+    | "fill_blank"
+    | "matching"
+    | "diagram_matching"
+    | "anatomy_multiple_choice";
   correct_id?: string;
   correct_answer?: string;
   pairs?: MatchingPair[];
@@ -342,6 +473,23 @@ export async function evaluateAnswer(
   options?: EvaluateAnswerOptions
 ): Promise<EvaluationResult> {
   const format = options?.format ?? "open_ended";
+
+  if (format === "anatomy_multiple_choice" && options?.correct_answer) {
+    const correct = options.correct_answer.trim();
+    const user = userAnswer.trim();
+    if (user === correct) {
+      return {
+        result: "correct",
+        feedback: "Correct. That label matches the structure described in your anatomy materials.",
+        correct_answer: null,
+      };
+    }
+    return {
+      result: "incorrect",
+      feedback: `Incorrect. The correct answer is: ${correct}. Review the labeled muscles and structures in your ingested anatomy diagrams and text.`,
+      correct_answer: correct,
+    };
+  }
 
   if (format === "multiple_choice" && options?.correct_id !== undefined) {
     const correct = options.correct_id.trim().toLowerCase();

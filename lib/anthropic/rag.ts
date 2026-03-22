@@ -10,6 +10,67 @@ const EMBEDDING_MODEL = "text-embedding-ada-002";
 const SIMILARITY_THRESHOLD = 0.5;
 const MATCH_COUNT = 5;
 
+/** Optional tuning per call site (e.g. quiz needs more context across mixed folders). */
+export type QueryRagOptions = {
+  matchCount?: number;
+  minSimilarity?: number;
+};
+
+export type QueryRagContextOptions = QueryRagOptions & {
+  folderFilter?: string | null;
+};
+
+function chunkDedupeKey(c: RagChunk): string {
+  return `${c.folder_name}\0${c.file_name}\0${c.content}`;
+}
+
+/**
+ * Primary semantic search plus additional queries (purpose, precautions, progressions, etc.).
+ * Merges chunks deduplicated by folder + file + content; returns up to 10 by highest similarity.
+ */
+export async function queryRAGWithContext(
+  primaryQuery: string,
+  userId: string,
+  contextQueries: string[],
+  options?: QueryRagContextOptions
+): Promise<RAGResult> {
+  const folderFilter = options?.folderFilter ?? null;
+  const minSimilarity = options?.minSimilarity ?? SIMILARITY_THRESHOLD;
+  const seen = new Set<string>();
+  const merged: RagChunk[] = [];
+
+  const addChunks = (chunks: RagChunk[]) => {
+    for (const c of chunks) {
+      const key = chunkDedupeKey(c);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      merged.push(c);
+    }
+  };
+
+  const primaryRes = await queryRAG(primaryQuery, userId, folderFilter, {
+    matchCount: 6,
+    minSimilarity,
+  });
+  addChunks(primaryRes.chunks);
+
+  for (const cq of contextQueries) {
+    const r = await queryRAG(cq, userId, folderFilter, {
+      matchCount: 4,
+      minSimilarity,
+    });
+    addChunks(r.chunks);
+  }
+
+  merged.sort((a, b) => b.similarity - a.similarity);
+  const top = merged.slice(0, 10);
+
+  if (top.length === 0) {
+    return { chunks: [], notFound: true };
+  }
+  return { chunks: top, notFound: false };
+}
+
 async function generateEmbedding(text: string): Promise<number[]> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -32,9 +93,13 @@ export type { RagChunk, RAGResult };
 export async function queryRAG(
   userQuery: string,
   userId: string,
-  folderFilter?: string
+  folderFilter?: string | null,
+  options?: QueryRagOptions
 ): Promise<RAGResult> {
   try {
+    const matchCount = options?.matchCount ?? MATCH_COUNT;
+    const minSimilarity = options?.minSimilarity ?? SIMILARITY_THRESHOLD;
+
     const queryEmbedding = await generateEmbedding(userQuery);
     const supabase = createServiceClient();
 
@@ -42,7 +107,7 @@ export async function queryRAG(
       query_embedding: queryEmbedding,
       target_user_id: userId,
       folder_filter: folderFilter ?? null,
-      match_count: MATCH_COUNT,
+      match_count: matchCount,
     });
 
     if (error) {
@@ -62,7 +127,7 @@ export async function queryRAG(
     }>;
 
     const chunks: RagChunk[] = typedChunks
-      .filter((c) => c.similarity >= SIMILARITY_THRESHOLD)
+      .filter((c) => c.similarity >= minSimilarity)
       .map((c) => ({
         content: c.content,
         content_type:

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { evaluateSession } from "@/lib/anthropic/agents/sessions";
 
 vi.mock("@/lib/anthropic/rag", () => ({
-  queryRAG: vi.fn(),
+  queryRAGWithContext: vi.fn(),
 }));
 
 vi.mock("@/lib/anthropic/client", () => ({
@@ -41,8 +41,8 @@ const validFeedbackJson = {
 describe("Session Planner Agent", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
-    const { queryRAG } = await import("@/lib/anthropic/rag");
-    vi.mocked(queryRAG).mockResolvedValue({
+    const { queryRAGWithContext } = await import("@/lib/anthropic/rag");
+    vi.mocked(queryRAGWithContext).mockResolvedValue({
       chunks: [
         {
           content: "The Hundred — supine, breathing pattern",

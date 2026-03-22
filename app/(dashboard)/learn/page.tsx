@@ -57,6 +57,7 @@ export default function LearnPage() {
   const [apparatus, setApparatus] = useState("All");
   const [browseMode, setBrowseMode] = useState<BrowseMode>("exercise");
   const [exerciseList, setExerciseList] = useState<string[]>([]);
+  const [listChunkCount, setListChunkCount] = useState<number | null>(null);
   const [listLoading, setListLoading] = useState(false);
   const [exerciseFilter, setExerciseFilter] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -82,16 +83,21 @@ export default function LearnPage() {
       const data = await res.json();
       if (!res.ok) {
         setExerciseList([]);
+        setListChunkCount(null);
         setError(data.error ?? "Could not load exercises.");
         return;
       }
       if (data.success && Array.isArray(data.data?.exercises)) {
         setExerciseList(data.data.exercises as string[]);
+        const n = data.data?.chunkCount;
+        setListChunkCount(typeof n === "number" ? n : null);
       } else {
         setExerciseList([]);
+        setListChunkCount(null);
       }
     } catch {
       setExerciseList([]);
+      setListChunkCount(null);
       setError("Could not load exercises.");
     } finally {
       setListLoading(false);
@@ -285,7 +291,13 @@ export default function LearnPage() {
               <ul className="absolute left-0 right-0 top-full z-20 mt-1 max-h-52 overflow-y-auto rounded-sm border border-clara-highlight bg-clara-surface py-1">
                 {filteredExercises.length === 0 ? (
                   <li className="px-3 py-2 text-sm text-clara-muted">
-                    No matches — try another apparatus or ingest materials.
+                    {exerciseList.length > 0
+                      ? "No matches for your search — clear the box or pick another exercise."
+                      : listChunkCount !== null && listChunkCount > 0
+                        ? "No exercise titles found in your text for this apparatus. Re-ingest PDFs (tagged extraction) or try All."
+                        : listChunkCount === 0
+                          ? "No curriculum for this apparatus yet. Ingest materials or try All."
+                          : "No exercises loaded — try another apparatus or ingest materials."}
                   </li>
                 ) : (
                   filteredExercises.slice(0, 80).map((ex) => (
@@ -362,6 +374,16 @@ export default function LearnPage() {
             <h2 className="text-2xl font-bold tracking-tight text-clara-strong md:text-3xl">
               {tutorial.exercise_name}
             </h2>
+            {(tutorial.difficulty_level?.trim() || tutorial.rep_range?.trim()) && (
+              <p className="mt-1 text-sm text-clara-deep">
+                {[
+                  tutorial.difficulty_level?.trim(),
+                  tutorial.rep_range?.trim(),
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+            )}
             <div className="mt-2">
               <SourceBadge folderName={folderForBadge} variant="from" />
             </div>

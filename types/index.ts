@@ -6,7 +6,9 @@ export type QuizQuestionFormat =
   | "open_ended"
   | "multiple_choice"
   | "fill_blank"
-  | "matching";
+  | "matching"
+  | "diagram_matching"
+  | "anatomy_multiple_choice";
 
 export interface McOption {
   id: string;
@@ -220,12 +222,20 @@ export interface SourceDocument {
 export interface TutorialContent {
   exercise_name: string;
   apparatus: string;
+  /** Program level from manual header (e.g. Intermediate) when stated */
+  difficulty_level: string;
+  /** Recommended rep range from exercise header (e.g. 4-6) when stated */
+  rep_range: string | null;
   starting_position: string;
   movement_description: string;
   breath_cues: string;
   spring_settings: string | null;
   precautions: string;
   teaching_tips: string;
+  /** Muscle groups / goals from Purpose sections in source material */
+  muscle_groups: string;
+  /** Prior/next exercises in Balanced Body progressions when documented */
+  progressions: string | null;
   source_folder: string;
   error?: string;
   /** First curriculum image chunk from RAG (Drive), when available */

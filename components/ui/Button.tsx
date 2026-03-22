@@ -16,11 +16,11 @@ interface ButtonProps {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-clara-primary text-white hover:bg-clara-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-rock",
+    "bg-clara-primary text-white shadow-clara-soft hover:bg-clara-rock focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-forest",
   secondary:
-    "border border-clara-highlight bg-clara-bg text-clara-deep hover:bg-clara-highlight focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-accent/50",
+    "border border-clara-highlight bg-clara-bg text-clara-deep shadow-sm hover:bg-clara-highlight/80 hover:border-clara-highlight focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-primary/40",
   destructive:
-    "bg-clara-rock text-white hover:bg-clara-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-deep",
+    "bg-clara-alert text-white hover:bg-clara-rock focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-deep",
 };
 
 export default function Button({

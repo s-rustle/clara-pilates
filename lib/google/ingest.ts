@@ -2,49 +2,79 @@ import OpenAI from "openai";
 import { anthropic } from "@/lib/anthropic/client";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { ExtractedContent, ContentChunk } from "@/types";
+import { extractPdfTextOrientationAware } from "@/lib/google/pdfTextExtract";
 
 const EMBEDDING_MODEL = "text-embedding-ada-002";
 const EMBEDDING_DIM = 1536;
-const BATCH_SIZE = 10;
-const BATCH_DELAY_MS = 200;
+/** Chunks per OpenAI embeddings API call (was 1 request/chunk — major ingest speedup). */
+const EMBEDDING_BATCH_SIZE = 48;
+/** Brief pause between embedding batches to stay under TPM burst limits. */
+const EMBEDDING_BATCH_DELAY_MS = 50;
 
 async function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
- * Generates a 1536-dimensional embedding via OpenAI text-embedding-ada-002.
- * Compatible with pgvector vector(1536).
+ * One OpenAI call for many chunk texts — order matches input (by `index` on each item).
  */
-async function generateEmbedding(text: string): Promise<number[]> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new Error("OPENAI_API_KEY is not set — cannot generate embeddings");
-  }
-  const openai = new OpenAI({ apiKey });
+async function createEmbeddingsBatch(
+  openai: OpenAI,
+  texts: string[]
+): Promise<number[][]> {
+  if (texts.length === 0) return [];
   const response = await openai.embeddings.create({
     model: EMBEDDING_MODEL,
-    input: text,
+    input: texts,
   });
-  const embedding = response.data[0]?.embedding;
-  if (!embedding || embedding.length !== EMBEDDING_DIM) {
-    throw new Error(
-      `Embedding returned unexpected length: expected ${EMBEDDING_DIM}, got ${embedding?.length ?? 0}`
-    );
+  const byIndex = new Map<number, number[]>();
+  for (const item of response.data) {
+    if (item.embedding?.length === EMBEDDING_DIM) {
+      byIndex.set(item.index, item.embedding);
+    }
   }
-  return embedding;
+  const out: number[][] = [];
+  for (let i = 0; i < texts.length; i++) {
+    const emb = byIndex.get(i);
+    if (!emb) {
+      throw new Error(`Embedding batch missing index ${i}`);
+    }
+    out.push(emb);
+  }
+  return out;
 }
 
 const VISION_MODEL = "claude-sonnet-4-20250514";
 
-const IMAGE_EXTRACTION_SYSTEM_PROMPT = `You are extracting content from a photographed page of a Pilates curriculum manual.
+const IMAGE_EXTRACTION_SYSTEM_PROMPT = `You are extracting content from a photographed page of a Balanced Body Pilates curriculum manual.
+
+ORIENTATION: If the page appears rotated (including upside down), mentally correct to normal reading orientation before transcribing — output text as if the page were upright.
+
+MANUAL EXERCISE HEADERS (typical layout):
+- Line 1: large ALL CAPS exercise title (e.g. SWAN DIVE, SHORT BOX ABDOMINAL SERIES).
+- Line 2: smaller ALL CAPS metadata: program level, a middle dot or bullet (•), and rep range (e.g. INTERMEDIATE • 4-6 REPS). Map these into **LEVEL:** and **REPS:** below.
 
 Extract all printed text faithfully and completely.
 Describe any anatomical diagrams or movement illustrations in detail — prefix with [DIAGRAM:].
 Extract handwritten annotations — prefix with [HANDWRITTEN:].
-Preserve all exercise names, spring settings, anatomical terms, and rep counts exactly as written.
+Preserve exercise names, spring settings, anatomical terms, and rep counts exactly as written.
 
-Return ONLY a valid JSON object with no markdown, no backticks, no explanation.
+When you identify a distinct exercise entry on the page, structure that entry using these lines (omit a line if not present on the page):
+**EXERCISE: [name]**
+**LEVEL: [Beginner / Intermediate / Advanced — from header or body; use manual wording]**
+**REPS: [recommended rep range from header if shown, e.g. 4-6 or 3-5; omit if not stated]**
+**PURPOSE: [muscles and goals]**
+**STARTING POSITION: [description]**
+**MOVEMENT: [sequence]**
+**BREATH: [cues]**
+**PRECAUTIONS: [contraindications]**
+**PROGRESSIONS: [next or prior exercises if listed]**
+**SPRING SETTINGS: [if applicable]**
+
+For a progression table: **PROGRESSION TABLE: [movement category]** then **LEVEL 1:**, **LEVEL 2:**, **LEVEL 3:** with exercises per level.
+For a session template: **SESSION TEMPLATE: [level/population]** then **SEQUENCE:** with an ordered exercise list.
+
+Return ONLY a valid JSON object with no markdown fences, no explanation.
 Format: {"printed_text": "all extracted content here as a single string"}
 Include all text, diagram descriptions prefixed with [DIAGRAM:], and handwritten notes prefixed with [HANDWRITTEN:].
 Escape quotes (\\"), backslashes (\\\\), and newlines (\\n) inside the string.`;
@@ -54,13 +84,34 @@ const PDF_TEXT_MODEL = "claude-sonnet-4-20250514";
 /** Full rewrite with inline tags — only for short PDFs that fit in model output. */
 const PDF_EXERCISE_TAGGING_SYSTEM = `You are formatting raw text extracted from a Balanced Body Pilates certification manual (PDF).
 
+SOURCE ORIENTATION: Extracted text may have come from pages that were visually upside down in the scan; infer correct reading order so exercise blocks read top-to-bottom like an upright manual.
+
+MANUAL EXERCISE HEADERS (recognize and tag):
+- First line: large ALL CAPS exercise title.
+- Next line: smaller ALL CAPS line with program level, often a middle dot (•), then rep range (e.g. INTERMEDIATE • 4-6 REPS). Map level into **LEVEL:** and the numeric rep range into **REPS:** (e.g. **REPS: 4-6**).
+
 Requirements:
 1. Preserve the complete source text: every instruction, bullet, precaution, rep count, spring setting, and heading. Do not summarize, condense, or drop substantive content.
-2. Identify each distinct exercise name exactly as it appears in the text (manuals often use ALL CAPS for exercise titles).
-3. For each exercise you identify, ensure it is tagged using exactly this format (Markdown bold, with square brackets around the name):
-**EXERCISE: [EXERCISE NAME]**
-   The substring inside the brackets must match the manual's spelling and capitalization. Place each tag on its own line, typically where that exercise is first introduced in a section. Do not repeat the same tag for every mention of the same exercise.
-4. Tag only names that clearly appear in the source — never invent exercises.
+2. When you find a distinct exercise entry, insert (or wrap) structured lines immediately before or at the start of that entry — use exactly these labels (Markdown bold). Only include lines that appear in the source; use "Not stated" only when the manual explicitly leaves a subsection empty, otherwise omit the line.
+**EXERCISE: [name]**  (name must match the manual; square brackets around the name)
+**LEVEL: [Beginner / Intermediate / Advanced when stated in header or body]**
+**REPS: [recommended rep range from exercise header when shown, e.g. 4-6; omit if absent]**
+**PURPOSE: [muscles and goals]**
+**STARTING POSITION: [description]**
+**MOVEMENT: [sequence]**
+**BREATH: [cues]**
+**PRECAUTIONS: [contraindications]**
+**PROGRESSIONS: [next exercises if listed]**
+**SPRING SETTINGS: [if applicable]**
+3. When you find a progression table, structure it as:
+**PROGRESSION TABLE: [movement category]**
+**LEVEL 1: [exercises]**
+**LEVEL 2: [exercises]**
+**LEVEL 3: [exercises]**
+4. When you find a session template, structure it as:
+**SESSION TEMPLATE: [level/population]**
+**SEQUENCE: [ordered exercise list]**
+5. Tag only content that clearly appears in the source — never invent exercises or templates.
 
 Return ONLY valid JSON (no markdown code fences, no commentary):
 {"printed_text":"..."}
@@ -69,11 +120,35 @@ The printed_text value must be a single JSON string. Escape double quotes and ne
 /** For long PDFs: emit tags only; we prepend to raw text so chunks still contain **EXERCISE: [name]** markers. */
 const PDF_EXERCISE_LIST_SYSTEM = `You are reading text extracted from a Balanced Body Pilates certification manual (PDF).
 
-Find every distinct exercise name that appears, spelled exactly as in the manual (often ALL CAPS). Do not treat these as exercises if they appear only as section headers: STARTING POSITION, MOVEMENT SEQUENCE, ARM VARIATIONS, PRECAUTIONS, NOTES, TIPS, INHALE, EXHALE, HANDWRITTEN NOTE, or the words REPS, ADVANCED, BEGINNER, INTERMEDIATE alone.
+Find every distinct exercise and any progression tables or session templates visible in this excerpt.
+
+For each exercise, output a block (separate blocks with a blank line — use \\n\\n in the JSON string) using these lines only when the source supports them:
+**EXERCISE: [EXERCISE NAME]**
+**LEVEL: [...]** (from ALL CAPS header line before the rep cue, e.g. INTERMEDIATE)
+**REPS: [...]** (numeric range from header, e.g. 4-6, when shown as "4-6 REPS" or after •)
+**PURPOSE: [...]**
+**STARTING POSITION: [...]**
+**MOVEMENT: [...]**
+**BREATH: [...]**
+**PRECAUTIONS: [...]**
+**PROGRESSIONS: [...]**
+**SPRING SETTINGS: [...]**
+
+For progression tables in the excerpt:
+**PROGRESSION TABLE: [movement category]**
+**LEVEL 1: [exercises]**
+**LEVEL 2: [exercises]**
+**LEVEL 3: [exercises]**
+
+For session templates in the excerpt:
+**SESSION TEMPLATE: [level/population]**
+**SEQUENCE: [ordered exercise list]**
+
+Do not treat section headers alone as exercises: STARTING POSITION, MOVEMENT SEQUENCE, PURPOSE, PRECAUTIONS, NOTES, TIPS, INHALE, EXHALE, HANDWRITTEN NOTE alone. (INTERMEDIATE / BEGINNER / ADVANCED / rep lines are metadata for the exercise above them, not standalone exercises.)
 
 Return ONLY valid JSON:
-{"exercise_tags":"**EXERCISE: [NAME]**\\n**EXERCISE: [NAME]**\\n..."}
-Each line in exercise_tags must be exactly **EXERCISE: [EXERCISE NAME]** with square brackets around the name. One exercise per line. Use \\n between lines inside the JSON string. If none, use {"exercise_tags":""}.`;
+{"exercise_tags":"...all blocks concatenated..."}
+The exercise_tags value is one JSON string; use \\n for newlines and \\n\\n between exercise blocks. If none, use {"exercise_tags":""}.`;
 
 const CHARS_PER_TOKEN = 4;
 const OVERLAP_CHARS = 50 * CHARS_PER_TOKEN;
@@ -249,9 +324,8 @@ export async function processPdf(
   folderName: string
 ): Promise<ProcessImageResult> {
   try {
-    const pdfParse = (await import("pdf-parse")).default;
-    const pdfData = await pdfParse(pdfBuffer);
-    const fullText = pdfData.text.trim();
+    const { text: extracted } = await extractPdfTextOrientationAware(pdfBuffer);
+    const fullText = extracted.trim();
 
     if (!fullText) {
       return {
@@ -510,9 +584,7 @@ export type EmbedAndStoreResult = {
 
 /**
  * Embeds chunks and stores them in curriculum_chunks.
- * Processes in batches of 10 with 200ms delay between batches to avoid rate limits.
- * Uses Supabase service role client for database writes.
- * Every error is captured and returned — no silent failures.
+ * Uses batched OpenAI embeddings (many chunks per request) + multi-row insert when possible.
  */
 export async function embedAndStore(
   chunks: ContentChunk[],
@@ -522,43 +594,69 @@ export async function embedAndStore(
   const errors: string[] = [];
   let chunks_stored = 0;
   const supabase = createServiceClient();
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return {
+      success: false,
+      chunks_stored: 0,
+      errors: ["OPENAI_API_KEY is not set — cannot generate embeddings"],
+    };
+  }
+  const openai = new OpenAI({ apiKey });
 
-  for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
-    const batch = chunks.slice(i, i + BATCH_SIZE);
+  async function insertRowsWithFallback(
+    batch: ContentChunk[],
+    embeddings: number[][]
+  ): Promise<void> {
+    const rows = batch.map((chunk, j) => ({
+      user_id: userId,
+      upload_id: uploadId,
+      folder_name: chunk.folder_name,
+      file_name: chunk.file_name,
+      chunk_index: chunk.chunk_index,
+      content: chunk.content,
+      content_type: chunk.content_type,
+      embedding: embeddings[j],
+      drive_file_id: chunk.drive_file_id ?? null,
+      source_mime_type: chunk.source_mime_type ?? null,
+    }));
 
-    for (const chunk of batch) {
-      try {
-        const embedding = await generateEmbedding(chunk.content);
-        const { error } = await supabase.from("curriculum_chunks").insert({
-          user_id: userId,
-          upload_id: uploadId,
-          folder_name: chunk.folder_name,
-          file_name: chunk.file_name,
-          chunk_index: chunk.chunk_index,
-          content: chunk.content,
-          content_type: chunk.content_type,
-          embedding,
-          drive_file_id: chunk.drive_file_id ?? null,
-          source_mime_type: chunk.source_mime_type ?? null,
-        });
+    const { error: bulkErr } = await supabase.from("curriculum_chunks").insert(rows);
+    if (!bulkErr) {
+      chunks_stored += batch.length;
+      return;
+    }
 
-        if (error) {
-          errors.push(
-            `Chunk ${chunk.chunk_index} (${chunk.file_name}): ${error.message}`
-          );
-        } else {
-          chunks_stored += 1;
-        }
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
+    for (let j = 0; j < batch.length; j++) {
+      const chunk = batch[j];
+      const { error: rowErr } = await supabase.from("curriculum_chunks").insert(rows[j]);
+      if (rowErr) {
         errors.push(
-          `Chunk ${chunk.chunk_index} (${chunk.file_name}): ${message}`
+          `Chunk ${chunk.chunk_index} (${chunk.file_name}): ${rowErr.message} (bulk: ${bulkErr.message})`
         );
+      } else {
+        chunks_stored += 1;
+      }
+    }
+  }
+
+  for (let i = 0; i < chunks.length; i += EMBEDDING_BATCH_SIZE) {
+    const batch = chunks.slice(i, i + EMBEDDING_BATCH_SIZE);
+    try {
+      const embeddings = await createEmbeddingsBatch(
+        openai,
+        batch.map((c) => c.content)
+      );
+      await insertRowsWithFallback(batch, embeddings);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      for (const chunk of batch) {
+        errors.push(`Chunk ${chunk.chunk_index} (${chunk.file_name}): ${message}`);
       }
     }
 
-    if (i + BATCH_SIZE < chunks.length) {
-      await delay(BATCH_DELAY_MS);
+    if (i + EMBEDDING_BATCH_SIZE < chunks.length) {
+      await delay(EMBEDDING_BATCH_DELAY_MS);
     }
   }
 

@@ -85,11 +85,14 @@ export async function POST(request: NextRequest) {
         options: result.options,
         correct_id: result.correct_id,
         correct_answer: result.correct_answer,
+        anatomy_options: result.anatomy_options,
+        correct_option: result.correct_option,
         pairs: result.pairs,
         left_items: result.left_items,
         right_items: result.right_items,
         image_file_name: result.image_file_name,
         folder_name: result.folder_name,
+        image_folder_name: result.folder_name,
       },
     });
   } catch (err) {

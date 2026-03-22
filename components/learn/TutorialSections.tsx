@@ -13,6 +13,16 @@ interface TutorialSectionsProps {
 
 export default function TutorialSections({ tutorial }: TutorialSectionsProps) {
   const sections: { key: string; label: string; value: string | null }[] = [
+    {
+      key: "lv",
+      label: "Level",
+      value: tutorial.difficulty_level ?? "",
+    },
+    {
+      key: "rr",
+      label: "Recommended reps",
+      value: tutorial.rep_range ?? "",
+    },
     { key: "sp", label: "Starting Position", value: tutorial.starting_position },
     {
       key: "md",
@@ -25,14 +35,27 @@ export default function TutorialSections({ tutorial }: TutorialSectionsProps) {
       label: "Spring Settings",
       value: tutorial.spring_settings,
     },
+    {
+      key: "mg",
+      label: "Muscle groups & purpose",
+      value: tutorial.muscle_groups ?? "",
+    },
     { key: "pr", label: "Precautions", value: tutorial.precautions },
     { key: "tt", label: "Teaching Tips", value: tutorial.teaching_tips },
+    {
+      key: "pg",
+      label: "Progressions",
+      value: tutorial.progressions ?? "",
+    },
   ];
 
   return (
     <div className="grid gap-4 sm:grid-cols-1">
       {sections.map(({ key, label, value }) => {
         if (key === "ss" && (value === null || value === "")) {
+          return null;
+        }
+        if (key === "rr" && (value === null || value === "")) {
           return null;
         }
         const body =

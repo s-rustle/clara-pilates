@@ -3,14 +3,37 @@ import type { OAuth2Client } from "google-auth-library";
 
 const DRIVE_READONLY_SCOPE = "https://www.googleapis.com/auth/drive.readonly";
 
+/** Path segment Google redirects to after consent (must match a URI registered in Google Cloud). */
+export const GOOGLE_OAUTH_CALLBACK_PATH = "/api/auth/callback";
+
+/**
+ * OAuth redirect URI: `GOOGLE_REDIRECT_URI` if set, otherwise
+ * `{NEXT_PUBLIC_APP_URL}/api/auth/callback` (trimmed, no trailing slash on the base).
+ * Register every environment’s exact URI in Google Cloud (e.g. localhost + production).
+ */
+export function resolveGoogleRedirectUri(): string {
+  const explicit = process.env.GOOGLE_REDIRECT_URI?.trim();
+  if (explicit) return explicit;
+
+  const base = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "");
+  if (!base) {
+    throw new Error(
+      "Google OAuth: set GOOGLE_REDIRECT_URI to your callback URL, or set NEXT_PUBLIC_APP_URL " +
+        `(callback will be {NEXT_PUBLIC_APP_URL}${GOOGLE_OAUTH_CALLBACK_PATH}). ` +
+        "Register that exact URI in Google Cloud Console for each environment."
+    );
+  }
+  return `${base}${GOOGLE_OAUTH_CALLBACK_PATH}`;
+}
+
 function getOAuth2Client(): OAuth2Client {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI;
+  const redirectUri = resolveGoogleRedirectUri();
 
-  if (!clientId || !clientSecret || !redirectUri) {
+  if (!clientId || !clientSecret) {
     throw new Error(
-      "Missing Google OAuth config: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI must be set"
+      "Missing Google OAuth config: GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set"
     );
   }
 

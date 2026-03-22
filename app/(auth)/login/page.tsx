@@ -43,8 +43,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-clara-bg px-4">
-      <div className="w-full max-w-md rounded-sm border border-clara-highlight bg-clara-surface p-8">
+    <div className="relative z-10 flex min-h-screen items-center justify-center bg-clara-bg px-4">
+      <div className="w-full max-w-md rounded-sm border border-clara-highlight/90 bg-clara-surface p-8 shadow-clara-lift">
         <div className="mb-6 flex justify-center">
           <Wordmark size="md" />
         </div>

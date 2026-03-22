@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { clsx } from "clsx";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ErrorMessage from "@/components/ui/ErrorMessage";
+import Button from "@/components/ui/Button";
 
 interface QuestionCardProps {
   question: string;
@@ -11,6 +13,13 @@ interface QuestionCardProps {
   scoreSoFar: number;
   image_file_name?: string;
   folder_name?: string;
+  /** `anatomy_multiple_choice` shows diagram (if any), question, four options, and submit. */
+  question_type?: string;
+  anatomy_options?: string[];
+  selected_anatomy_option?: string | null;
+  on_select_anatomy_option?: (option: string) => void;
+  on_submit_anatomy?: () => void;
+  anatomy_submit_loading?: boolean;
 }
 
 /** Renders question text with **exercise** marked segments in bold (matches source material style). */
@@ -34,9 +43,11 @@ function QuestionText({ text }: { text: string }) {
 function DiagramImage({
   file_name,
   folder_name,
+  className,
 }: {
   file_name: string;
   folder_name: string;
+  className?: string;
 }) {
   const [src, setSrc] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -82,7 +93,10 @@ function DiagramImage({
       <img
         src={src}
         alt="Anatomy diagram"
-        className="max-h-64 w-auto rounded-sm border border-clara-highlight object-contain"
+        className={
+          className ??
+          "max-h-64 w-auto rounded-sm border border-clara-highlight object-contain"
+        }
       />
     );
   }
@@ -96,7 +110,15 @@ export default function QuestionCard({
   scoreSoFar,
   image_file_name,
   folder_name,
+  question_type,
+  anatomy_options,
+  selected_anatomy_option,
+  on_select_anatomy_option,
+  on_submit_anatomy,
+  anatomy_submit_loading,
 }: QuestionCardProps) {
+  const isAnatomyMc = question_type === "anatomy_multiple_choice";
+
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-clara-deep">
@@ -106,9 +128,59 @@ export default function QuestionCard({
         {scoreSoFar} correct so far
       </p>
       {image_file_name && folder_name && (
-        <DiagramImage file_name={image_file_name} folder_name={folder_name} />
+        <DiagramImage
+          file_name={image_file_name}
+          folder_name={folder_name}
+          className={
+            isAnatomyMc
+              ? "max-h-80 w-auto max-w-full rounded-sm border border-clara-highlight object-contain"
+              : undefined
+          }
+        />
       )}
       <QuestionText text={question} />
+      {isAnatomyMc &&
+        anatomy_options &&
+        anatomy_options.length === 4 &&
+        on_select_anatomy_option &&
+        on_submit_anatomy && (
+          <div className="mt-2 flex flex-col gap-2">
+            {anatomy_options.map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => on_select_anatomy_option(opt)}
+                className={clsx(
+                  "w-full rounded-sm border px-4 py-3 text-left text-sm font-medium transition-colors",
+                  selected_anatomy_option === opt
+                    ? "border-clara-accent bg-clara-accent text-white"
+                    : "border-clara-highlight bg-clara-surface text-clara-deep hover:border-clara-highlight"
+                )}
+              >
+                {opt}
+              </button>
+            ))}
+            <Button
+              variant="primary"
+              type="button"
+              onClick={() => on_submit_anatomy()}
+              disabled={
+                anatomy_submit_loading ||
+                !selected_anatomy_option
+              }
+              className="w-full sm:w-auto"
+            >
+              {anatomy_submit_loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <LoadingSpinner size="sm" />
+                  Evaluating…
+                </span>
+              ) : (
+                "Submit Answer"
+              )}
+            </Button>
+          </div>
+        )}
     </div>
   );
 }

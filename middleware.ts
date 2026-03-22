@@ -20,7 +20,12 @@ function isProtectedPath(pathname: string): boolean {
   if (pathname.startsWith("/api/hours")) return true;
   if (pathname.startsWith("/api/sessions")) return true;
   if (pathname.startsWith("/api/ingest")) return true;
-  if (pathname.startsWith("/api/auth/")) return true;
+  if (pathname.startsWith("/api/curriculum/")) return true;
+  if (pathname.startsWith("/api/drive/")) return true;
+  // OAuth return URL: must not force /login (loses ?code=); handler redirects with error if needed.
+  if (pathname === "/api/auth/drive-url" || pathname === "/api/auth/drive-disconnect") {
+    return true;
+  }
   return false;
 }
 

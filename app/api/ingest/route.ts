@@ -14,6 +14,9 @@ import {
 /** Large folders + many PDFs + Claude + embeddings can exceed default serverless limits */
 export const maxDuration = 300;
 
+/** Process this many Drive files at once (download + Claude + chunk). */
+const FILE_INGEST_CONCURRENCY = 3;
+
 function jsonResponse(data: unknown, status = 200) {
   return Response.json(data, { status });
 }
@@ -148,6 +151,9 @@ async function runIngestion(
       mime === "application/pdf" ||
       name.toLowerCase().endsWith(".pdf");
 
+    type DriveFile = { id: string; name: string; mimeType: string };
+    const filesToIngest: DriveFile[] = [];
+
     for (const file of files) {
       let existingCount = 0;
       try {
@@ -174,32 +180,63 @@ async function runIngestion(
         continue;
       }
 
-      const treatAsPdf = isPdf(file.mimeType, file.name);
-      try {
-        const buffer = await downloadFile(
-          accessToken,
-          file.id,
-          refreshToken
-        );
-        const extracted = treatAsPdf
-          ? await processPdf(buffer, file.name, folder_name)
-          : await processImage(buffer, file.name, folder_name);
+      filesToIngest.push(file);
+    }
 
-        if ("error" in extracted) {
-          console.error("[INGEST] processPdf/processImage failed for", file.name, ":", extracted.error);
-          fileErrors.push(`${file.name}: ${extracted.error}`);
-          continue;
+    for (let i = 0; i < filesToIngest.length; i += FILE_INGEST_CONCURRENCY) {
+      const wave = filesToIngest.slice(i, i + FILE_INGEST_CONCURRENCY);
+      const waveResults = await Promise.all(
+        wave.map(async (file) => {
+          const treatAsPdf = isPdf(file.mimeType, file.name);
+          try {
+            const buffer = await downloadFile(
+              accessToken,
+              file.id,
+              refreshToken
+            );
+            const extracted = treatAsPdf
+              ? await processPdf(buffer, file.name, folder_name)
+              : await processImage(buffer, file.name, folder_name);
+
+            if ("error" in extracted) {
+              console.error(
+                "[INGEST] processPdf/processImage failed for",
+                file.name,
+                ":",
+                extracted.error
+              );
+              return {
+                ok: false as const,
+                name: file.name,
+                message: extracted.error,
+              };
+            }
+
+            const chunks = chunkContent(
+              extracted,
+              uploadId,
+              folder_name,
+              file.name,
+              {
+                driveFileId: file.id,
+                mimeType: file.mimeType,
+              }
+            );
+            return { ok: true as const, name: file.name, chunks };
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            return { ok: false as const, name: file.name, message };
+          }
+        })
+      );
+
+      for (const r of waveResults) {
+        if (r.ok) {
+          allChunks.push(...r.chunks);
+          files_processed += 1;
+        } else {
+          fileErrors.push(`${r.name}: ${r.message}`);
         }
-
-        const chunks = chunkContent(extracted, uploadId, folder_name, file.name, {
-          driveFileId: file.id,
-          mimeType: file.mimeType,
-        });
-        allChunks.push(...chunks);
-        files_processed += 1;
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        fileErrors.push(`${file.name}: ${message}`);
       }
     }
 

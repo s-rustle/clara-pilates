@@ -4,8 +4,8 @@ interface TopBarProps {
 
 export default function TopBar({ title }: TopBarProps) {
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-clara-highlight bg-clara-bg px-4 sm:px-6">
-      <h1 className="truncate text-lg font-bold tracking-tight text-clara-strong sm:text-xl md:text-2xl">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-clara-highlight/80 bg-clara-bg/95 px-4 shadow-sm backdrop-blur-sm sm:px-6">
+      <h1 className="font-display truncate text-lg font-semibold tracking-tight text-clara-strong sm:text-xl md:text-2xl">
         {title}
       </h1>
       <div

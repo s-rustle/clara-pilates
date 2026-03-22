@@ -11,7 +11,7 @@ export default function ErrorMessage({ message }: ErrorMessageProps) {
       role="alert"
     >
       <svg
-        className="mt-0.5 h-5 w-5 flex-shrink-0 text-clara-accent"
+        className="mt-0.5 h-5 w-5 flex-shrink-0 text-clara-alert"
         fill="currentColor"
         viewBox="0 0 20 20"
         aria-hidden

@@ -7,7 +7,13 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import EvaluationCard from "./EvaluationCard";
 import type { McOption, MatchingPair } from "@/types";
 
-type QuestionFormat = "open_ended" | "multiple_choice" | "fill_blank" | "matching" | "diagram_matching";
+type QuestionFormat =
+  | "open_ended"
+  | "multiple_choice"
+  | "fill_blank"
+  | "matching"
+  | "diagram_matching"
+  | "anatomy_multiple_choice";
 
 interface AnswerInputProps {
   format?: QuestionFormat;
@@ -25,6 +31,8 @@ interface AnswerInputProps {
   rightItems?: string[];
   pairs?: MatchingPair[];
   requestExplanation?: () => Promise<string>;
+  /** Plain-text MC options (e.g. anatomy); when used with matching format, prefer dedicated UI in QuestionCard. */
+  option_strings?: string[];
 }
 
 export default function AnswerInput({
@@ -54,6 +62,24 @@ export default function AnswerInput({
       result === "incorrect" ||
       (result === "partial" && !showRetry));
   const inputDisabled = disabled || !!showEvaluation;
+
+  /** Anatomy MC: options + submit live on QuestionCard; only evaluation appears here. */
+  if (format === "anatomy_multiple_choice") {
+    if (showEvaluation && result && feedback !== undefined) {
+      const showCorrectAnswer =
+        result === "incorrect" || (result === "partial" && !showRetry);
+      return (
+        <EvaluationCard
+          result={result}
+          feedback={feedback}
+          correctAnswer={showCorrectAnswer ? correctAnswer ?? undefined : undefined}
+          onNext={onNext}
+          requestExplanation={requestExplanation}
+        />
+      );
+    }
+    return null;
+  }
 
   const handleSubmit = (isRetry: boolean) => {
     if (format === "multiple_choice") {

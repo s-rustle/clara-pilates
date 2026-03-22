@@ -14,18 +14,27 @@ import { useHasIngestedCurriculum } from "@/lib/hooks/useHasIngestedCurriculum";
 type Phase = "setup" | "in_progress" | "complete";
 
 interface CurrentQuestion {
-  format: "open_ended" | "multiple_choice" | "fill_blank" | "matching" | "diagram_matching";
+  format:
+    | "open_ended"
+    | "multiple_choice"
+    | "fill_blank"
+    | "matching"
+    | "diagram_matching"
+    | "anatomy_multiple_choice";
   question: string;
   questionId: string;
   expectedAnswerElements: string[];
   options?: { id: string; text: string }[];
   correctId?: string;
   correctAnswer?: string;
+  anatomyOptions?: string[];
+  correctOption?: string;
   pairs?: { left: string; right: string }[];
   leftItems?: string[];
   rightItems?: string[];
   image_file_name?: string;
   folder_name?: string;
+  image_folder_name?: string;
 }
 
 interface EvaluationState {
@@ -55,6 +64,9 @@ export default function QuizPage() {
   const [evaluation, setEvaluation] = useState<EvaluationState | null>(null);
   const [isLoadingQuestion, setIsLoadingQuestion] = useState(false);
   const [isEvaluating, setIsEvaluating] = useState(false);
+  const [selectedAnatomyOption, setSelectedAnatomyOption] = useState<string | null>(
+    null
+  );
 
   const doFetchQuestion = useCallback(
     async (
@@ -102,14 +114,23 @@ export default function QuizPage() {
           options: d.options,
           correctId: d.correct_id,
           correctAnswer: d.correct_answer,
+          anatomyOptions: Array.isArray(d.anatomy_options) ? d.anatomy_options : undefined,
+          correctOption:
+            typeof d.correct_option === "string"
+              ? d.correct_option
+              : typeof d.correct_answer === "string"
+                ? d.correct_answer
+                : undefined,
           pairs: d.pairs,
           leftItems: d.left_items,
           rightItems: d.right_items,
           image_file_name: d.image_file_name,
-          folder_name: d.folder_name,
+          folder_name: d.folder_name ?? d.image_folder_name,
+          image_folder_name: d.image_folder_name ?? d.folder_name,
         });
         setPreviousQuestions((prev) => [...prev, d.question]);
         setEvaluation(null);
+        setSelectedAnatomyOption(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load question");
       } finally {
@@ -205,7 +226,10 @@ export default function QuizPage() {
             is_retry: isRetry,
             format: currentQuestion.format,
             correct_id: currentQuestion.correctId,
-            correct_answer: currentQuestion.correctAnswer,
+            correct_answer:
+              currentQuestion.format === "anatomy_multiple_choice"
+                ? currentQuestion.correctOption ?? currentQuestion.correctAnswer
+                : currentQuestion.correctAnswer,
             pairs: currentQuestion.pairs,
             options: currentQuestion.options,
           }),
@@ -289,7 +313,10 @@ export default function QuizPage() {
         body: JSON.stringify({
           question: currentQuestion.question,
           format: currentQuestion.format,
-          correct_answer: currentQuestion.correctAnswer,
+          correct_answer:
+            currentQuestion.format === "anatomy_multiple_choice"
+              ? currentQuestion.correctOption ?? currentQuestion.correctAnswer
+              : currentQuestion.correctAnswer,
           correct_id: currentQuestion.correctId,
           options: currentQuestion.options,
           pairs: currentQuestion.pairs,
@@ -363,7 +390,20 @@ export default function QuizPage() {
                   totalCount={questionCount}
                   scoreSoFar={score}
                   image_file_name={currentQuestion.image_file_name}
-                  folder_name={currentQuestion.folder_name}
+                  folder_name={
+                    currentQuestion.folder_name ??
+                    currentQuestion.image_folder_name
+                  }
+                  question_type={currentQuestion.format}
+                  anatomy_options={currentQuestion.anatomyOptions}
+                  selected_anatomy_option={selectedAnatomyOption}
+                  on_select_anatomy_option={setSelectedAnatomyOption}
+                  on_submit_anatomy={() => {
+                    if (selectedAnatomyOption) {
+                      void handleAnswerSubmit(selectedAnatomyOption, false);
+                    }
+                  }}
+                  anatomy_submit_loading={isEvaluating}
                 />
                 <AnswerInput
                   key={currentQuestion.questionId}
@@ -381,6 +421,7 @@ export default function QuizPage() {
                   rightItems={currentQuestion.rightItems}
                   pairs={currentQuestion.pairs}
                   requestExplanation={handleRequestExplanation}
+                  option_strings={currentQuestion.anatomyOptions}
                 />
               </div>
             </Card>
