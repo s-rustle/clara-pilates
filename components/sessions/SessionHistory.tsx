@@ -50,11 +50,11 @@ function formatDate(iso: string | null): string {
 export default function SessionHistory({ sessions, onView }: SessionHistoryProps) {
   return (
     <section className="mt-8 space-y-3">
-      <h2 className="font-display text-lg font-semibold text-clara-strong">
+      <h2 className="text-lg font-bold text-clara-strong">
         Session history
       </h2>
       {sessions.length === 0 ? (
-        <p className="rounded-md border border-dashed border-clara-border bg-clara-elevated/50 px-3 py-6 text-center text-sm text-clara-muted">
+        <p className="rounded-md border border-dashed border-clara-border bg-clara-elevated/50 px-3 py-6 text-center text-sm text-clara-deep">
           No sessions logged yet.
         </p>
       ) : (
@@ -139,7 +139,7 @@ export function SessionReadOnlyModal({
         <div className="mb-4 flex items-start justify-between gap-2">
           <h2
             id="session-view-title"
-            className="font-display text-lg font-semibold text-clara-strong"
+            className="text-lg font-bold text-clara-strong"
           >
             Session
           </h2>

@@ -1,5 +1,6 @@
 import { type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { AUTH_REQUIRED, QUIZ_QUESTION_SAVE_FAILED, STUDY_ASSISTANT_UNAVAILABLE } from "@/lib/api/messages";
 import { evaluateAnswer } from "@/lib/anthropic/agents/examiner";
 
 export async function POST(request: NextRequest) {
@@ -10,7 +11,7 @@ export async function POST(request: NextRequest) {
 
   if (!user) {
     return Response.json(
-      { success: false, error: "Unauthorized" },
+      { success: false, error: AUTH_REQUIRED },
       { status: 401 }
     );
   }
@@ -71,18 +72,28 @@ export async function POST(request: NextRequest) {
       updatePayload.user_answer = userAnswer;
     }
 
-    const { error } = await supabase
+    const { data: updatedRow, error } = await supabase
       .from("quiz_questions")
       .update(updatePayload)
-      .eq("id", questionId);
+      .eq("id", questionId)
+      .select("id")
+      .maybeSingle();
 
     if (error) {
       return Response.json(
+        { success: false, error: QUIZ_QUESTION_SAVE_FAILED },
+        { status: 500 }
+      );
+    }
+
+    if (!updatedRow) {
+      return Response.json(
         {
           success: false,
-          error: `Failed to update question: ${error.message}`,
+          error:
+            "Quiz question not found or you do not have access to update it.",
         },
-        { status: 500 }
+        { status: 404 }
       );
     }
 
@@ -95,12 +106,10 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (err) {
+    console.error("[api/agents/examiner/evaluate]", err);
     return Response.json(
-      {
-        success: false,
-        error: err instanceof Error ? err.message : "Failed to evaluate answer",
-      },
-      { status: 500 }
+      { success: false, error: STUDY_ASSISTANT_UNAVAILABLE },
+      { status: 503 }
     );
   }
 }

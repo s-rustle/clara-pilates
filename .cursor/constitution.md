@@ -104,29 +104,38 @@ No client data, no Lumenalta data, no third-party information of any kind touche
 
 ## 6. Visual Identity
 
+Clara’s UI is **warm, grounded, and earthy** — Roman whitewash walls, red-ochre mud, terracotta, and burnt orange/sienna. Nothing clinical or cool-gray; everything reads as sun-warmed plaster and fired clay.
+
 ### 6.1 Color Palette
 
 | Token | Hex | Usage |
 |---|---|---|
-| Background | `#F9FBF5` | Page background — white with a breath of green |
-| Surface | `#F0F7E6` | Card backgrounds, panels |
-| Highlight | `#DCEDC8` | Hover states, selected states, subtle emphasis |
-| Accent | `#76C442` | CTAs, interactive elements, active states |
-| Primary | `#4CAF50` | Primary buttons, links, progress indicators |
-| Strong | `#2E7D32` | Headings, strong contrast text |
-| Deep | `#1B5E20` | Body text, near-black |
+| Background (`bg`) | `#F4EDE6` | Page canvas — limewash / roman whitewash |
+| Surface | `#EBE3D9` | Cards, panels — soft earthen cream |
+| Elevated | `#F7F1EA` | Inputs, slightly lifted fields |
+| Sidebar | `#D4C4B8` | Navigation strip — warm stone / mud |
+| Highlight | `#E5D5CA` | Hovers, selected rows, soft emphasis |
+| Border | `#C9B3A4` | Dividers — dusty clay |
+| Muted | `#8A7268` | Secondary text, timestamps |
+| Ink | `#3D2E28` | Strong UI text, chrome |
+| Deep | `#4A352C` | Body copy — burnt umber |
+| Strong | `#5C2E24` | Headings — deep terracotta / sienna |
+| Accent | `#C45F3D` | Link hover, brighter burnt orange |
+| Primary | `#B8482E` | Primary buttons, key links, progress fill |
+| Warm | `#A65D45` | Focus rings, subtle warm accents |
 
 ### 6.2 Typography
 - **Font:** Inter (web; substitute for FK Grotesk)
-- **Headings:** Bold, `#2E7D32`
-- **Body:** Regular, `#1B5E20`
-- **Captions / metadata:** Medium, `#4CAF50`
+- **Headings:** Bold, `Strong` (`#5C2E24`)
+- **Body:** Regular, `Deep` (`#4A352C`)
+- **Captions / metadata:** Medium, `Muted` or `Primary` as appropriate
 
 ### 6.3 Aesthetic Principles
-- Clean and fresh — generous whitespace, no visual clutter
-- Subtle warmth — surfaces lean warm, not sterile
-- No heavy shadows, no dark mode (Phase 1)
-- Wordmark: initials **SR**, set in Inter Bold, `#2E7D32`
+- **Grounded warmth** — whitewash and terracotta, not stark white or corporate green
+- Generous whitespace; calm, uncluttered layouts
+- Light, soft shadows tinted toward umber (no heavy drop shadows)
+- No dark mode (Phase 1)
+- **Wordmark:** initials **SR** in Inter Bold, `Strong`; **Clara** in Inter Bold, `Primary`
 
 ### 6.4 Voice
 - Direct and precise — no filler language

@@ -106,10 +106,6 @@ export default function CuesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="font-display text-2xl font-semibold tracking-tight text-clara-strong">
-        Practice Cues
-      </h1>
-
       <Card>
         <CueInput
           onSubmit={submitCue}
@@ -134,7 +130,7 @@ export default function CuesPage() {
       )}
 
       <div>
-        <h2 className="mb-3 font-display text-lg font-semibold text-clara-strong">
+        <h2 className="mb-3 text-lg font-bold text-clara-strong">
           This session
         </h2>
         {history.length === 0 ? (
@@ -156,7 +152,7 @@ export default function CuesPage() {
                         : "border-clara-border bg-clara-surface hover:bg-clara-elevated"
                     }`}
                   >
-                    <div className="font-medium text-clara-ink">
+                    <div className="font-bold text-clara-strong">
                       {entry.exerciseName}
                     </div>
                     <div className="text-xs text-clara-muted">

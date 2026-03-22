@@ -21,22 +21,32 @@ export default function IngestionStatus({
     if (!uploadId) return;
 
     const fetchStatus = async () => {
-      const res = await fetch("/api/ingest/status");
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Failed to fetch status");
-        return;
-      }
-      const found = (data.uploads ?? []).find(
-        (u: CurriculumUpload) => u.id === uploadId
-      );
-      setUpload(found ?? null);
-      if (found && found.status !== "processing") {
-        onComplete();
+      try {
+        const res = await fetch("/api/ingest/status", {
+          credentials: "same-origin",
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setError(
+            typeof data.error === "string"
+              ? data.error
+              : "Failed to fetch ingestion status."
+          );
+          return;
+        }
+        const found = (data.uploads ?? []).find(
+          (u: CurriculumUpload) => u.id === uploadId
+        );
+        setUpload(found ?? null);
+        if (found && found.status !== "processing") {
+          onComplete();
+        }
+      } catch {
+        setError("Could not reach the server to check ingestion status.");
       }
     };
 
-    fetchStatus();
+    void fetchStatus();
     const interval = setInterval(fetchStatus, 3000);
     return () => clearInterval(interval);
   }, [uploadId, onComplete]);
@@ -64,7 +74,7 @@ export default function IngestionStatus({
   if (upload.status === "complete") {
     const count = upload.file_count ?? 0;
     return (
-      <p className="text-clara-strong font-medium">
+      <p className="text-sm font-bold text-clara-strong">
         Complete — {count} chunks stored
       </p>
     );

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { AUTH_REQUIRED, GOOGLE_DRIVE_CONNECT_FAILED } from "@/lib/api/messages";
 import { generateAuthUrl } from "@/lib/google/auth";
 
 function jsonResponse(data: unknown, status = 200) {
@@ -12,17 +13,14 @@ export async function GET() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return jsonResponse({ error: "Unauthorized" }, 401);
+    return jsonResponse({ error: AUTH_REQUIRED }, 401);
   }
 
   try {
     const url = generateAuthUrl();
     return jsonResponse({ url });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return jsonResponse(
-      { error: message || "Failed to get auth URL" },
-      500
-    );
+    console.error("[api/auth/drive-url]", err);
+    return jsonResponse({ error: GOOGLE_DRIVE_CONNECT_FAILED }, 502);
   }
 }

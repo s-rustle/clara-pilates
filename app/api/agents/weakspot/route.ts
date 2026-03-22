@@ -1,5 +1,11 @@
 import { type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import {
+  AUTH_REQUIRED,
+  STUDY_ASSISTANT_UNAVAILABLE,
+  WEAK_SPOT_LOAD_FAILED,
+  WEAK_SPOT_SAVE_FAILED,
+} from "@/lib/api/messages";
 import { analyzeWeakSpots } from "@/lib/anthropic/agents/weakspot";
 import type { WeakSpotAnalysis, WeakSpotResult } from "@/types";
 
@@ -34,7 +40,7 @@ export async function GET() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+    return jsonResponse({ success: false, error: AUTH_REQUIRED }, 401);
   }
 
   try {
@@ -46,7 +52,7 @@ export async function GET() {
 
     if (countErr) {
       return jsonResponse(
-        { success: false, error: `Failed to count quiz sessions: ${countErr.message}` },
+        { success: false, error: WEAK_SPOT_LOAD_FAILED },
         500
       );
     }
@@ -61,7 +67,7 @@ export async function GET() {
 
     if (fetchErr) {
       return jsonResponse(
-        { success: false, error: `Failed to load weak spot analysis: ${fetchErr.message}` },
+        { success: false, error: WEAK_SPOT_LOAD_FAILED },
         500
       );
     }
@@ -85,14 +91,8 @@ export async function GET() {
       },
     });
   } catch (err) {
-    return jsonResponse(
-      {
-        success: false,
-        error:
-          err instanceof Error ? err.message : "Failed to load weak spot analysis",
-      },
-      500
-    );
+    console.error("[api/agents/weakspot GET]", err);
+    return jsonResponse({ success: false, error: WEAK_SPOT_LOAD_FAILED }, 500);
   }
 }
 
@@ -103,7 +103,7 @@ export async function POST(_request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+    return jsonResponse({ success: false, error: AUTH_REQUIRED }, 401);
   }
 
   try {
@@ -125,7 +125,7 @@ export async function POST(_request: NextRequest) {
 
     if (insertErr) {
       return jsonResponse(
-        { success: false, error: `Failed to save weak spot analysis: ${insertErr.message}` },
+        { success: false, error: WEAK_SPOT_SAVE_FAILED },
         500
       );
     }
@@ -138,8 +138,10 @@ export async function POST(_request: NextRequest) {
       },
     });
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Failed to run weak spot analysis";
-    return jsonResponse({ success: false, error: message }, 500);
+    console.error("[api/agents/weakspot POST]", err);
+    return jsonResponse(
+      { success: false, error: STUDY_ASSISTANT_UNAVAILABLE },
+      503
+    );
   }
 }

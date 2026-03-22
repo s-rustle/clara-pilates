@@ -1,5 +1,10 @@
 import { type NextRequest } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
+import {
+  AUTH_REQUIRED,
+  HOUR_LOG_LOAD_FAILED,
+  HOUR_LOG_SAVE_FAILED,
+} from "@/lib/api/messages";
 import type { HourLog } from "@/types";
 
 function jsonResponse(data: unknown, status = 200) {
@@ -13,7 +18,7 @@ export async function GET(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+    return jsonResponse({ success: false, error: AUTH_REQUIRED }, 401);
   }
 
   try {
@@ -37,21 +42,13 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query;
 
     if (error) {
-      return jsonResponse(
-        { success: false, error: error.message },
-        500
-      );
+      return jsonResponse({ success: false, error: HOUR_LOG_LOAD_FAILED }, 500);
     }
 
     return jsonResponse({ success: true, data: data as HourLog[] });
   } catch (err) {
-    return jsonResponse(
-      {
-        success: false,
-        error: err instanceof Error ? err.message : "Failed to fetch hour logs",
-      },
-      500
-    );
+    console.error("[api/hours GET]", err);
+    return jsonResponse({ success: false, error: HOUR_LOG_LOAD_FAILED }, 500);
   }
 }
 
@@ -62,7 +59,7 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+    return jsonResponse({ success: false, error: AUTH_REQUIRED }, 401);
   }
 
   try {
@@ -140,22 +137,13 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      return jsonResponse(
-        { success: false, error: error.message },
-        500
-      );
+      return jsonResponse({ success: false, error: HOUR_LOG_SAVE_FAILED }, 500);
     }
 
     return jsonResponse({ success: true, data: data as HourLog });
   } catch (err) {
-    return jsonResponse(
-      {
-        success: false,
-        error:
-          err instanceof Error ? err.message : "Failed to create hour log",
-      },
-      500
-    );
+    console.error("[api/hours POST]", err);
+    return jsonResponse({ success: false, error: HOUR_LOG_SAVE_FAILED }, 500);
   }
 }
 
@@ -166,7 +154,7 @@ export async function PATCH(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+    return jsonResponse({ success: false, error: AUTH_REQUIRED }, 401);
   }
 
   try {
@@ -229,21 +217,12 @@ export async function PATCH(request: NextRequest) {
       .single();
 
     if (error) {
-      return jsonResponse(
-        { success: false, error: error.message },
-        500
-      );
+      return jsonResponse({ success: false, error: HOUR_LOG_SAVE_FAILED }, 500);
     }
 
     return jsonResponse({ success: true, data: data as HourLog });
   } catch (err) {
-    return jsonResponse(
-      {
-        success: false,
-        error:
-          err instanceof Error ? err.message : "Failed to update hour log",
-      },
-      500
-    );
+    console.error("[api/hours PATCH]", err);
+    return jsonResponse({ success: false, error: HOUR_LOG_SAVE_FAILED }, 500);
   }
 }

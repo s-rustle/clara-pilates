@@ -1,5 +1,6 @@
 import { type NextRequest } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { AUTH_REQUIRED, GOOGLE_DRIVE_NOT_CONNECTED } from "@/lib/api/messages";
 import { listFilesInFolder, downloadFile } from "@/lib/google/drive";
 import type { ContentChunk } from "@/types";
 import {
@@ -52,8 +53,7 @@ async function runIngestion(
     return jsonResponse(
       {
         success: false,
-        error:
-          "Google Drive not connected. Please connect your Drive account first.",
+        error: GOOGLE_DRIVE_NOT_CONNECTED,
       },
       400
     );
@@ -353,7 +353,7 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+    return jsonResponse({ success: false, error: AUTH_REQUIRED }, 401);
   }
 
   try {
@@ -374,7 +374,7 @@ export async function DELETE(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+    return jsonResponse({ success: false, error: AUTH_REQUIRED }, 401);
   }
 
   try {

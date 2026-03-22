@@ -1,7 +1,7 @@
 "use client";
 
-import ReactMarkdown from "react-markdown";
 import Card from "@/components/ui/Card";
+import MarkdownBody from "@/components/ui/MarkdownBody";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import SourceBadge from "./SourceBadge";
@@ -63,9 +63,7 @@ export default function StudyResponse({
   return (
     <Card className="flex flex-col gap-3">
       <p className="font-medium text-clara-strong">{question}</p>
-      <div className="prose prose-sm max-w-none text-clara-deep prose-headings:text-clara-strong prose-strong:text-clara-strong">
-        <ReactMarkdown>{answer}</ReactMarkdown>
-      </div>
+      <MarkdownBody>{answer}</MarkdownBody>
 
       {hasDocs && confidence !== "not_found" && (
         <div className="rounded-md border border-clara-highlight bg-clara-surface/80 p-3 text-sm">

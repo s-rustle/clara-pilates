@@ -1,5 +1,6 @@
 import { type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { AUTH_REQUIRED, QUIZ_QUESTION_SAVE_FAILED, STUDY_ASSISTANT_UNAVAILABLE } from "@/lib/api/messages";
 import { generateQuestion } from "@/lib/anthropic/agents/examiner";
 
 export async function POST(request: NextRequest) {
@@ -10,7 +11,7 @@ export async function POST(request: NextRequest) {
 
   if (!user) {
     return Response.json(
-      { success: false, error: "Unauthorized" },
+      { success: false, error: AUTH_REQUIRED },
       { status: 401 }
     );
   }
@@ -49,11 +50,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const folderFromChunks =
+      result.source_chunks_used[0]?.folder_name?.trim() || null;
+    const folderName =
+      folderFromChunks ?? result.folder_name?.trim() ?? null;
+
     const { data: inserted, error } = await supabase
       .from("quiz_questions")
       .insert({
         session_id: sessionId,
         question: result.question,
+        folder_name: folderName,
       })
       .select("id")
       .single();
@@ -86,12 +93,10 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (err) {
+    console.error("[api/agents/examiner/generate]", err);
     return Response.json(
-      {
-        success: false,
-        error: err instanceof Error ? err.message : "Failed to generate question",
-      },
-      { status: 500 }
+      { success: false, error: STUDY_ASSISTANT_UNAVAILABLE },
+      { status: 503 }
     );
   }
 }

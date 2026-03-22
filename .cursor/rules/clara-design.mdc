@@ -1,36 +1,45 @@
 ---
-description: Visual design for Clara — minimal neutral UI. Apply when editing layout, Tailwind, or components.
+description: Visual design for Clara — warm terracotta & whitewash. Apply when editing layout, Tailwind, or components.
 globs:
   - "**/*.tsx"
   - "**/*.css"
   - "**/tailwind.config.ts"
 ---
 
-# Clara visual design (reset)
+# Clara visual design
 
-**Direction:** **Warm greige — not white.** Canvas is mid warm taupe (`#D6D0C5`); cards are cream (`#F0EBE3`); text is warm brown-black. Sidebar is a step darker (`#C9C2B5`). Primary actions: warm charcoal (`#3A342C`).
+**Direction:** **Roman whitewash + terracotta — warm, grounded, earthy.** Canvas is limewash pink-beige (`clara-bg`); cards are soft earthen cream (`clara-surface`); navigation is warm stone / mud (`clara-sidebar`). Primary actions are **terracotta / burnt orange-red** (`clara-primary`), not green or cool charcoal.
+
+## Mood
+
+- Burnt sienna, red ochre, fired clay, sun-warmed plaster.
+- Avoid stark `#fff`, cool gray-50, or clinical blue-green accents.
 
 ## Typography
 
-- **UI / body:** Source Sans 3 (`font-sans` / `--font-body`).
-- **Titles / wordmark “Clara”:** Fraunces (`font-display`).
+- **UI / body:** Inter (`font-sans` / `--font-inter`).
+- **Headings:** Inter Bold, `text-clara-strong`.
+- **Wordmark:** SR = `text-clara-strong`; Clara = `text-clara-primary`.
 
 ## Tokens (`clara-*` in `tailwind.config.ts`)
 
-- `bg` — Main canvas (warm greige).
-- `sidebar` — Slightly darker strip for nav.
-- `surface` / `elevated` — Cream panels; avoid `#ffffff`.
-- `border` / `highlight` — Warm taupe borders and hovers.
-- `primary` / `ink` — Warm dark brown / charcoal, not pure black.
-- `warm` — Muted accent for focus rings (`focus:ring-clara-warm/40`).
+- `bg` — Whitewash canvas.
+- `sidebar` — Deeper warm strip for nav.
+- `surface` / `elevated` — Panels and inputs; never pure white.
+- `border` / `highlight` — Dusty clay borders; rose-tan hovers.
+- `primary` / `accent` — Terracotta CTAs and hover states.
+- `strong` / `deep` / `ink` — Sienna headings and umber body text.
+- `muted` — Dusty brown secondary text.
+- `warm` — Focus rings (`focus:ring-clara-warm/40`).
 
 ## Layout
 
-- **Sidebar:** `bg-clara-sidebar`, border-r.
-- **Active nav:** `bg-clara-highlight` + `font-medium`.
-- **Cards:** `shadow-card` (soft brown-tinted shadow).
+- **Sidebar:** `bg-clara-sidebar`, border-r `clara-border`.
+- **Active nav:** `bg-clara-highlight` + bold label, `text-clara-strong`.
+- **Cards:** `bg-clara-surface`, `shadow-card` (umber-tinted shadow).
 
 ## Do / don’t
 
-- **Do** use warm focus rings on inputs (`clara-warm`).
-- **Don’t** use stark white backgrounds or cool gray-50 for large surfaces.
+- **Do** use `clara-*` tokens for all surfaces and text hierarchy.
+- **Do** keep error states in a **warm** red-rose family (terracotta-tinted), not icy alert red.
+- **Don’t** reintroduce the old green palette or neutral-cool grays for large surfaces.

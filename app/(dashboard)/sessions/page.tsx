@@ -5,6 +5,7 @@ import type { ExerciseItem, HourLog, SessionFeedback, SessionMode, SessionPlan, 
 import Card from "@/components/ui/Card";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import Button from "@/components/ui/Button";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import HourLogForm, { HOUR_CATEGORY_OPTIONS } from "@/components/hours/HourLogForm";
 import SessionPlannerForm from "@/components/sessions/SessionPlannerForm";
 import WarmUpSection from "@/components/sessions/WarmUpSection";
@@ -100,19 +101,34 @@ export default function SessionsPage() {
   );
 
   const fetchHourDates = useCallback(async () => {
+    setHourDatesError("");
     try {
       const res = await fetch("/api/hours");
       const data = await res.json();
-      if (res.ok && data.success && Array.isArray(data.data)) {
+      if (!res.ok) {
+        setHourDatesError(
+          typeof data.error === "string"
+            ? data.error
+            : "Could not load hour log dates for the calendar."
+        );
+        setLoggedDates([]);
+        return;
+      }
+      if (data.success && Array.isArray(data.data)) {
         const dates = [
           ...new Set(
             (data.data as HourLog[]).map((h) => h.session_date)
           ),
         ] as string[];
         setLoggedDates(dates);
+      } else {
+        setLoggedDates([]);
       }
     } catch {
-      /* optional */
+      setHourDatesError(
+        "Could not load hour log dates for the calendar. Please refresh."
+      );
+      setLoggedDates([]);
     } finally {
       setHourLogsLoaded(true);
     }
@@ -120,6 +136,7 @@ export default function SessionsPage() {
 
   const fetchLogHistory = useCallback(async () => {
     setError("");
+    setHistoryLoading(true);
     try {
       const res = await fetch("/api/sessions?mode=log");
       const data = await res.json();
@@ -136,6 +153,8 @@ export default function SessionsPage() {
     } catch {
       setError("Could not load session history.");
       setLogSessions([]);
+    } finally {
+      setHistoryLoading(false);
     }
   }, []);
 
@@ -350,7 +369,8 @@ export default function SessionsPage() {
         </Card>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-4 space-y-2">
+        <ErrorMessage message={hourDatesError} />
         <ErrorMessage message={error} />
       </div>
 
@@ -380,7 +400,7 @@ export default function SessionsPage() {
             <div className="mb-4 flex items-start justify-between gap-2">
               <h2
                 id="hour-link-title"
-                className="font-display text-lg font-semibold text-clara-strong"
+                className="text-lg font-bold text-clara-strong"
               >
                 Log hours
               </h2>

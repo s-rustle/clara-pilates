@@ -42,16 +42,22 @@ Confirm the app runs locally on localhost:3000.
 
 **Task 1.2 — Tailwind Theme**
 ```
-Configure tailwind.config.ts to include the Clara color palette:
+Configure tailwind.config.ts to include the Clara color palette (warm whitewash + terracotta — Constitution §6):
 
 clara: {
-  bg: '#F9FBF5',
-  surface: '#F0F7E6',
-  highlight: '#DCEDC8',
-  accent: '#76C442',
-  primary: '#4CAF50',
-  strong: '#2E7D32',
-  deep: '#1B5E20',
+  bg: '#F4EDE6',
+  sidebar: '#D4C4B8',
+  surface: '#EBE3D9',
+  elevated: '#F7F1EA',
+  muted: '#8A7268',
+  ink: '#3D2E28',
+  deep: '#4A352C',
+  strong: '#5C2E24',
+  border: '#C9B3A4',
+  highlight: '#E5D5CA',
+  primary: '#B8482E',
+  accent: '#C45F3D',
+  warm: '#A65D45',
 }
 
 Set the default background color to clara-bg and default text color to clara-deep.
@@ -82,8 +88,8 @@ No external component library. Pure Tailwind only.
 ```
 Build /components/layout/Wordmark.tsx.
 
-Display the initials "SR" in Inter Bold, color clara-strong (#2E7D32).
-Below the initials, display "Clara" in Inter Regular, smaller size, color clara-primary.
+Display the initials "SR" in Inter Bold, color clara-strong.
+Below the initials, display "Clara" in Inter Bold (hierarchy via size), color clara-primary.
 The wordmark should work on both light (clara-bg) and clara-surface backgrounds.
 Accept a size prop: "sm" | "md" | "lg".
 ```
@@ -1135,8 +1141,8 @@ Test the following failure scenarios manually:
 ```
 Review all screens for visual consistency:
 
-- All headings: Inter Bold, clara-strong (#2E7D32)
-- All body text: Inter Regular, clara-deep (#1B5E20)
+- All headings: Inter Bold, clara-strong
+- All body text: Inter Regular, clara-deep
 - All Cards: clara-surface background, consistent border radius and padding
 - All primary buttons: clara-primary, consistent sizing
 - All progress bars: clara-primary fill, clara-highlight background

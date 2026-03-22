@@ -87,7 +87,7 @@ export default function WeakSpotCard() {
   if (needsMoreSessions) {
     return (
       <Card>
-        <h2 className="mb-2 font-display text-lg font-semibold text-clara-strong">
+        <h2 className="mb-2 text-lg font-bold text-clara-strong">
           Weak spots
         </h2>
         <p className="mb-3 text-sm text-clara-deep">
@@ -115,7 +115,7 @@ export default function WeakSpotCard() {
   if (!top) {
     return (
       <Card>
-        <h2 className="mb-2 font-display text-lg font-semibold text-clara-strong">
+        <h2 className="mb-2 text-lg font-bold text-clara-strong">
           Weak spots
         </h2>
         <p className="text-sm text-clara-deep">
@@ -130,7 +130,7 @@ export default function WeakSpotCard() {
 
   return (
     <Card>
-      <h2 className="mb-3 font-display text-lg font-semibold text-clara-strong">
+      <h2 className="mb-3 text-lg font-bold text-clara-strong">
         Top priority weak spot
       </h2>
       <p className="mb-2 text-sm font-medium text-clara-strong">{top.area}</p>
@@ -142,7 +142,7 @@ export default function WeakSpotCard() {
       </p>
       <Link
         href={studyHref}
-        className="inline-flex w-full items-center justify-center rounded-md bg-clara-primary px-4 py-2 text-sm font-medium text-[#F5F2EB] transition-colors hover:bg-clara-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-primary sm:w-auto"
+        className="inline-flex w-full items-center justify-center rounded-md bg-clara-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-clara-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-primary sm:w-auto"
       >
         Study this now
       </Link>

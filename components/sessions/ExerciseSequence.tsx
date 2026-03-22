@@ -52,7 +52,7 @@ export default function ExerciseSequence({
   return (
     <section className="space-y-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="font-display text-lg font-semibold text-clara-strong">
+        <h2 className="text-lg font-bold text-clara-strong">
           Main Sequence
         </h2>
         <span className="text-right text-xs text-clara-accent">

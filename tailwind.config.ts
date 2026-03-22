@@ -1,37 +1,52 @@
 import type { Config } from "tailwindcss";
 import typography from "@tailwindcss/typography";
 
-/** Warm greige / cream — darker canvas, no stark white */
+/**
+ * Clara palette — warm Roman whitewash, terracotta, burnt sienna / orange-red earth.
+ * Documented in Constitution §6.1 and Planning §10.
+ */
 const config: Config = {
   content: [],
   theme: {
     extend: {
       colors: {
         clara: {
-          bg: "#D6D0C5",
-          sidebar: "#C9C2B5",
-          surface: "#F0EBE3",
-          elevated: "#F5F2EB",
-          muted: "#6B6560",
-          ink: "#2A2622",
-          deep: "#4A4540",
-          strong: "#2A2622",
-          border: "#A8A095",
-          highlight: "#C4BCAE",
-          primary: "#3A342C",
-          accent: "#4E4740",
-          warm: "#7D6B5C",
+          /** Limewash / roman whitewash canvas */
+          bg: "#F4EDE6",
+          /** Sidebar — deeper warm stone / mud */
+          sidebar: "#D4C4B8",
+          /** Cards and panels — soft earthen cream */
+          surface: "#EBE3D9",
+          /** Inputs, raised fields */
+          elevated: "#F7F1EA",
+          /** Secondary labels, de-emphasized copy */
+          muted: "#8A7268",
+          /** UI chrome, emphasis text */
+          ink: "#3D2E28",
+          /** Body text — burnt umber brown */
+          deep: "#4A352C",
+          /** Headings — deep terracotta / sienna */
+          strong: "#5C2E24",
+          /** Borders — dusty clay */
+          border: "#C9B3A4",
+          /** Hovers, selected rows — rose-tan */
+          highlight: "#E5D5CA",
+          /** Primary actions, progress fill — terracotta */
+          primary: "#B8482E",
+          /** Hover on primary, links — brighter burnt orange */
+          accent: "#C45F3D",
+          /** Focus rings — earth red */
+          warm: "#A65D45",
         },
       },
       fontFamily: {
-        sans: ["var(--font-body)", "system-ui", "sans-serif"],
-        display: ["var(--font-display)", "Georgia", "serif"],
+        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
       },
       boxShadow: {
         card:
-          "0 1px 2px rgba(42, 38, 34, 0.06), 0 6px 20px rgba(42, 38, 34, 0.07)",
+          "0 1px 2px rgba(60, 40, 32, 0.06), 0 6px 20px rgba(60, 40, 32, 0.07)",
         login:
-          "0 2px 8px rgba(42, 38, 34, 0.08), 0 16px 48px rgba(42, 38, 34, 0.1)",
+          "0 2px 8px rgba(60, 40, 32, 0.08), 0 16px 48px rgba(60, 40, 32, 0.1)",
       },
     },
   },

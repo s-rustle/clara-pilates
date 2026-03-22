@@ -49,7 +49,7 @@ export default function HoursSummaryCard() {
   if (loading) {
     return (
       <Card>
-        <h2 className="mb-4 font-display text-lg font-semibold text-clara-strong">
+        <h2 className="mb-4 text-lg font-bold text-clara-strong">
           Hours
         </h2>
         <div className="flex min-h-[200px] items-center justify-center">
@@ -62,7 +62,7 @@ export default function HoursSummaryCard() {
   return (
     <Card>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-display text-lg font-semibold text-clara-strong">
+        <h2 className="text-lg font-bold text-clara-strong">
           Hours
         </h2>
         <Link

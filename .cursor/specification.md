@@ -7,6 +7,10 @@
 
 A personal web application that serves as the complete study and certification tracking system for the Balanced Body Comprehensive Pilates exam. The system ingests uploaded curriculum materials from Google Drive, provides AI-powered study, quiz, and cueing feedback experiences, tracks hours against certification requirements, and synthesizes a readiness score across all dimensions.
 
+### 1.1 Visual identity
+
+The product UI follows **Constitution §6 — Visual Identity**: warm Roman whitewash and terracotta tones (burnt orange, sienna, red-ochre mud), never cool clinical grays or brand-greens. Implementation uses Tailwind `clara-*` tokens as defined in **Planning §10** and `tailwind.config.ts`.
+
 ---
 
 ## 2. User Roles
@@ -350,7 +354,7 @@ All study-facing agents query the pgvector store first. If relevant content is n
 - In Log Mode: "Save & Link to Hours" button — marks session complete and auto-populates hour log entry form with category, date, duration
 
 **Feedback Panel (appears after submission):**
-- Five dimension rows — each with label, status Badge (green/yellow/red), and note
+- Five dimension rows — each with label, status Badge (positive / caution / critical variants using the warm palette), and note
 - Overall synthesis (2-3 sentences)
 - Suggested adjustments section — specific, numbered recommendations
 - "Revise Routine" button — returns to edit mode with current routine intact

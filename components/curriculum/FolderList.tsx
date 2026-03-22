@@ -6,6 +6,7 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import ErrorMessage from "@/components/ui/ErrorMessage";
 import IngestionStatus from "./IngestionStatus";
 
 const EXPECTED_FOLDERS = [
@@ -70,53 +71,67 @@ export default function FolderList() {
   const [uploads, setUploads] = useState<CurriculumUpload[]>([]);
   const [folders, setFolders] = useState<DriveFolder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [listError, setListError] = useState<string | null>(null);
   const [activeUploadId, setActiveUploadId] = useState<string | null>(null);
   const [ingestingFolder, setIngestingFolder] = useState<string | null>(null);
   const [folderUrls, setFolderUrls] = useState<Record<string, string>>({});
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
-    const [statusRes, foldersRes] = await Promise.all([
-      fetch("/api/ingest/status"),
-      fetch("/api/ingest/folders"),
-    ]);
+    setListError(null);
+    try {
+      const [statusRes, foldersRes] = await Promise.all([
+        fetch("/api/ingest/status", { credentials: "same-origin" }),
+        fetch("/api/ingest/folders", { credentials: "same-origin" }),
+      ]);
 
-    const statusData = await statusRes.json();
-    const foldersData = await foldersRes.json();
+      const [statusData, foldersData] = await Promise.all([
+        statusRes.json().catch(() => ({})),
+        foldersRes.json().catch(() => ({})),
+      ]);
 
-    if (statusData.success && statusData.uploads) {
-      setUploads(statusData.uploads);
+      if (!statusRes.ok || statusData.success === false) {
+        setUploads([]);
+        setListError(
+          typeof statusData.error === "string"
+            ? statusData.error
+            : "Unable to load curriculum ingestion status."
+        );
+        if (foldersRes.ok && foldersData.success !== false && foldersData.folders) {
+          setFolders(foldersData.folders);
+        } else {
+          setFolders([]);
+        }
+        return;
+      }
+
+      setUploads(statusData.uploads ?? []);
+
+      if (!foldersRes.ok || foldersData.success === false) {
+        setFolders([]);
+        setListError(
+          typeof foldersData.error === "string"
+            ? foldersData.error
+            : "Unable to load folders from Google Drive."
+        );
+        return;
+      }
+
+      setFolders(foldersData.folders ?? []);
+    } catch (err) {
+      setListError(
+        err instanceof Error ? err.message : "Failed to load curriculum data."
+      );
+      setFolders([]);
+      setUploads([]);
+    } finally {
+      setLoading(false);
     }
-    if (foldersData.folders) {
-      setFolders(foldersData.folders);
-    }
-    setLoading(false);
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      const [statusRes, foldersRes] = await Promise.all([
-        fetch("/api/ingest/status"),
-        fetch("/api/ingest/folders"),
-      ]);
-      if (cancelled) return;
-
-      const statusData = await statusRes.json();
-      const foldersData = await foldersRes.json();
-      if (cancelled) return;
-
-      if (statusData.success && statusData.uploads) {
-        setUploads(statusData.uploads);
-      }
-      if (foldersData.folders) {
-        setFolders(foldersData.folders);
-      }
-      setLoading(false);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    void fetchData();
+  }, [fetchData]);
 
   /** Refresh while any folder is ingesting so the table updates when the job completes */
   useEffect(() => {
@@ -158,7 +173,7 @@ export default function FolderList() {
     } else if (manualUrl?.trim()) {
       driveFolderId = extractFolderId(manualUrl);
       if (!driveFolderId) {
-        alert(
+        setActionError(
           "Could not extract folder ID from the URL. Use a link like: https://drive.google.com/drive/folders/YOUR_FOLDER_ID"
         );
         return;
@@ -166,13 +181,14 @@ export default function FolderList() {
     } else {
       driveFolderId = getDriveFolderId(folderName);
       if (!driveFolderId) {
-        alert(
+        setActionError(
           `Folder "${folderName}" not found in your Google Drive. Paste the folder URL above, or create a folder with this exact name in your Drive (or under "Balanced Body Exam").`
         );
         return;
       }
     }
 
+    setActionError(null);
     setIngestingFolder(folderName);
     setActiveUploadId(null);
 
@@ -188,10 +204,12 @@ export default function FolderList() {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error ?? "Ingestion failed");
+        setActionError(data.error ?? "Ingestion failed.");
         setIngestingFolder(null);
         return;
       }
+
+      setActionError(null);
 
       if (data.upload_id) {
         setActiveUploadId(data.upload_id);
@@ -199,7 +217,7 @@ export default function FolderList() {
       await fetchData();
       setIngestingFolder(null);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Ingestion failed");
+      setActionError(err instanceof Error ? err.message : "Ingestion failed.");
       setIngestingFolder(null);
     }
   };
@@ -226,7 +244,7 @@ export default function FolderList() {
       const deleteData = await deleteRes.json();
 
       if (!deleteRes.ok || !deleteData.success) {
-        alert(deleteData.error ?? "Failed to clear existing data");
+        setActionError(deleteData.error ?? "Failed to clear existing data.");
         return;
       }
 
@@ -236,7 +254,7 @@ export default function FolderList() {
         driveFolderId
       );
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Re-ingest failed");
+      setActionError(err instanceof Error ? err.message : "Re-ingest failed.");
     }
   };
 
@@ -255,32 +273,49 @@ export default function FolderList() {
 
   return (
     <div className="space-y-4">
+      {actionError ? <ErrorMessage message={actionError} /> : null}
       <IngestionStatus
         uploadId={activeUploadId}
         onComplete={handleIngestionComplete}
       />
+
+      {listError && (
+        <Card>
+          <ErrorMessage message={listError} />
+          <p className="mt-3 text-sm text-clara-deep">
+            If Google Drive was disconnected or your session expired,{" "}
+            <a
+              href="#drive-connect"
+              className="font-medium text-clara-primary underline"
+            >
+              reconnect Google Drive
+            </a>{" "}
+            at the top of this page and try again.
+          </p>
+        </Card>
+      )}
 
       <Card>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-clara-highlight">
-                <th className="pb-2 pr-4 font-medium text-clara-strong">
+                <th className="pb-2 pr-4 font-bold text-clara-strong">
                   Folder
                 </th>
-                <th className="pb-2 pr-4 font-medium text-clara-strong">
+                <th className="pb-2 pr-4 font-bold text-clara-strong">
                   Folder URL or ID
                 </th>
-                <th className="pb-2 pr-4 font-medium text-clara-strong">
+                <th className="pb-2 pr-4 font-bold text-clara-strong">
                   Status
                 </th>
-                <th className="pb-2 pr-4 font-medium text-clara-strong">
+                <th className="pb-2 pr-4 font-bold text-clara-strong">
                   Last ingested
                 </th>
-                <th className="pb-2 pr-4 font-medium text-clara-strong">
+                <th className="pb-2 pr-4 font-bold text-clara-strong">
                   Chunks
                 </th>
-                <th className="pb-2 font-medium text-clara-strong">Action</th>
+                <th className="pb-2 font-bold text-clara-strong">Action</th>
               </tr>
             </thead>
             <tbody>

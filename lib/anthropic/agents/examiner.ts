@@ -219,7 +219,7 @@ export async function generateQuestion(
   if (notFound || chunks.length === 0) {
     return {
       error:
-        "No curriculum material found for this topic. Please ingest relevant materials first.",
+        "I couldn't find this in your uploaded materials. Ingest your curriculum folders in Curriculum Manager, then try again.",
     };
   }
 

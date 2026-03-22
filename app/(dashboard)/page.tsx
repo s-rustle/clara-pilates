@@ -7,7 +7,7 @@ import WeakSpotCard from "@/components/dashboard/WeakSpotCard";
 import type { QuizSession } from "@/types";
 
 const quickActionClass =
-  "inline-flex items-center justify-center rounded-md bg-clara-primary px-4 py-2.5 text-center text-sm font-medium text-[#F5F2EB] transition-colors hover:bg-clara-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-primary";
+  "inline-flex items-center justify-center rounded-md bg-clara-primary px-4 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-clara-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-primary";
 
 function formatCompletedAt(iso: string | null) {
   if (!iso) return "";
@@ -46,10 +46,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="font-display text-2xl font-semibold tracking-tight text-clara-strong">
-        Dashboard
-      </h1>
-
       <ReadinessCard />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
@@ -62,7 +58,7 @@ export default async function DashboardPage() {
       </div>
 
       <Card>
-        <h2 className="mb-4 font-display text-lg font-semibold text-clara-strong">
+        <h2 className="mb-4 text-lg font-bold text-clara-strong">
           Quick actions
         </h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -82,7 +78,7 @@ export default async function DashboardPage() {
       </Card>
 
       <Card>
-        <h2 className="mb-4 font-display text-lg font-semibold text-clara-strong">
+        <h2 className="mb-4 text-lg font-bold text-clara-strong">
           Recent activity
         </h2>
         {recentSessions.length === 0 ? (

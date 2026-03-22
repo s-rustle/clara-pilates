@@ -13,11 +13,11 @@ interface ButtonProps {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-clara-primary text-[#F5F2EB] hover:bg-clara-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-primary",
+    "bg-clara-primary text-white hover:bg-clara-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-primary",
   secondary:
     "border border-clara-border bg-clara-surface text-clara-ink shadow-sm hover:bg-clara-elevated focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-warm/50",
   destructive:
-    "bg-red-600 text-white hover:bg-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600",
+    "bg-[#8F3D32] text-white hover:bg-[#7A3329] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8F3D32]",
 };
 
 export default function Button({

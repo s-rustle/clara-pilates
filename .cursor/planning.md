@@ -462,21 +462,29 @@ Readiness snapshot saved to Supabase after every quiz session completion and eve
 
 ## 10. Tailwind Theme Configuration
 
-Add to `tailwind.config.ts`:
+Add to `tailwind.config.ts` (warm terracotta / whitewash identity — see Constitution §6):
 
 ```typescript
 colors: {
   clara: {
-    bg: '#F9FBF5',
-    surface: '#F0F7E6',
-    highlight: '#DCEDC8',
-    accent: '#76C442',
-    primary: '#4CAF50',
-    strong: '#2E7D32',
-    deep: '#1B5E20',
-  }
+    bg: '#F4EDE6',
+    sidebar: '#D4C4B8',
+    surface: '#EBE3D9',
+    elevated: '#F7F1EA',
+    muted: '#8A7268',
+    ink: '#3D2E28',
+    deep: '#4A352C',
+    strong: '#5C2E24',
+    border: '#C9B3A4',
+    highlight: '#E5D5CA',
+    primary: '#B8482E',
+    accent: '#C45F3D',
+    warm: '#A65D45',
+  },
 }
 ```
+
+Shadows should use soft umber-tinted rgba, not cool gray.
 
 ---
 

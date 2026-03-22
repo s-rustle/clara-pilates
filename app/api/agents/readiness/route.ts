@@ -1,4 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
+import {
+  AUTH_REQUIRED,
+  READINESS_LOAD_FAILED,
+  READINESS_SAVE_FAILED,
+  STUDY_ASSISTANT_UNAVAILABLE,
+} from "@/lib/api/messages";
 import { generateReadinessBrief } from "@/lib/anthropic/agents/readiness";
 import {
   calculateCurriculumScore,
@@ -19,7 +25,7 @@ export async function GET() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+    return jsonResponse({ success: false, error: AUTH_REQUIRED }, 401);
   }
 
   try {
@@ -33,7 +39,7 @@ export async function GET() {
 
     if (error) {
       return jsonResponse(
-        { success: false, error: `Failed to load readiness snapshot: ${error.message}` },
+        { success: false, error: READINESS_LOAD_FAILED },
         500
       );
     }
@@ -43,14 +49,8 @@ export async function GET() {
       data: { snapshot: (row as ReadinessSnapshot | null) ?? null },
     });
   } catch (err) {
-    return jsonResponse(
-      {
-        success: false,
-        error:
-          err instanceof Error ? err.message : "Failed to load readiness snapshot",
-      },
-      500
-    );
+    console.error("[api/agents/readiness GET]", err);
+    return jsonResponse({ success: false, error: READINESS_LOAD_FAILED }, 500);
   }
 }
 
@@ -61,7 +61,7 @@ export async function POST() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+    return jsonResponse({ success: false, error: AUTH_REQUIRED }, 401);
   }
 
   try {
@@ -87,7 +87,7 @@ export async function POST() {
 
     if (weakErr) {
       return jsonResponse(
-        { success: false, error: `Failed to load weak spot data: ${weakErr.message}` },
+        { success: false, error: READINESS_SAVE_FAILED },
         500
       );
     }
@@ -129,7 +129,7 @@ export async function POST() {
 
     if (insertErr) {
       return jsonResponse(
-        { success: false, error: `Failed to save readiness snapshot: ${insertErr.message}` },
+        { success: false, error: READINESS_SAVE_FAILED },
         500
       );
     }
@@ -148,8 +148,10 @@ export async function POST() {
       },
     });
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Failed to refresh readiness";
-    return jsonResponse({ success: false, error: message }, 500);
+    console.error("[api/agents/readiness POST]", err);
+    return jsonResponse(
+      { success: false, error: STUDY_ASSISTANT_UNAVAILABLE },
+      503
+    );
   }
 }

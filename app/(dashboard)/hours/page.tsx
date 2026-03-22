@@ -54,10 +54,6 @@ export default function HoursPage() {
 
   return (
     <div>
-      <h1 className="mb-6 font-display text-2xl font-semibold tracking-tight text-clara-strong">
-        Hour Tracking
-      </h1>
-
       <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-5">
         <div className="lg:col-span-2">
           <HourLogForm

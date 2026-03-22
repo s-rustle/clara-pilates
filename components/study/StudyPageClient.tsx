@@ -6,6 +6,7 @@ import Card from "@/components/ui/Card";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import StudyInput from "@/components/study/StudyInput";
 import StudyResponse from "@/components/study/StudyResponse";
+import { useHasIngestedCurriculum } from "@/lib/hooks/useHasIngestedCurriculum";
 import type { CurriculumResponse } from "@/types";
 import { studyFolderFromSearchParams } from "@/lib/constants/studyFolders";
 
@@ -17,6 +18,7 @@ interface ConversationItem {
 
 export default function StudyPageClient() {
   const searchParams = useSearchParams();
+  const hasIngestedCurriculum = useHasIngestedCurriculum();
   const [conversation, setConversation] = useState<ConversationItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -83,10 +85,6 @@ export default function StudyPageClient() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="font-display text-2xl font-semibold tracking-tight text-clara-strong">
-        Study
-      </h1>
-
       <StudyInput
         onSubmit={handleSubmit}
         isLoading={isLoading}
@@ -94,6 +92,23 @@ export default function StudyPageClient() {
         folderFilter={folderFilter}
         onFolderFilterChange={setFolderFilter}
       />
+
+      {hasIngestedCurriculum === false && (
+        <Card>
+          <p className="text-clara-deep">
+            No curriculum has been ingested yet. Open{" "}
+            <a
+              href="/curriculum"
+              className="font-medium text-clara-primary underline"
+            >
+              Curriculum Manager
+            </a>{" "}
+            to connect Google Drive and ingest at least one folder. Until then,
+            Clara can only tell you that topics are not in your uploaded
+            materials.
+          </p>
+        </Card>
+      )}
 
       {error && <ErrorMessage message={error} />}
 

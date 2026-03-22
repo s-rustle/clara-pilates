@@ -1,5 +1,9 @@
 import { type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import {
+  SESSION_PLAN_SAVE_FAILED,
+  STUDY_ASSISTANT_UNAVAILABLE,
+} from "@/lib/api/messages";
 import { evaluateSession } from "@/lib/anthropic/agents/sessions";
 
 function jsonResponse(data: unknown, status = 200) {
@@ -49,34 +53,34 @@ export async function POST(request: NextRequest) {
     const { id: _omit, ...sessionPayload } = record;
     const feedback = await evaluateSession(sessionPayload, user.id);
 
-    const origin = request.nextUrl.origin;
-    const cookie = request.headers.get("cookie") ?? "";
-    const patchRes = await fetch(`${origin}/api/sessions`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        ...(cookie ? { Cookie: cookie } : {}),
-      },
-      body: JSON.stringify({
-        id,
-        feedback,
-      }),
-    });
+    // Persist feedback with the same user-scoped client (avoid server → self HTTP fetch,
+    // which can hang or fail in dev / serverless).
+    const { data: updated, error: saveErr } = await supabase
+      .from("session_plans")
+      .update({ feedback })
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .select()
+      .single();
 
-    const patchBody = (await patchRes.json()) as {
-      success?: boolean;
-      error?: string;
-      data?: unknown;
-    };
-
-    if (!patchRes.ok || !patchBody.success) {
-      const errMsg =
-        typeof patchBody.error === "string"
-          ? patchBody.error
-          : "Failed to save feedback to session plan";
+    if (saveErr) {
+      if (saveErr.code === "PGRST116") {
+        return jsonResponse(
+          { success: false, error: "Session plan not found" },
+          404
+        );
+      }
+      console.error("[api/agents/sessions] save feedback:", saveErr);
       return jsonResponse(
-        { success: false, error: errMsg },
-        patchRes.status >= 400 ? patchRes.status : 500
+        { success: false, error: SESSION_PLAN_SAVE_FAILED },
+        500
+      );
+    }
+
+    if (!updated) {
+      return jsonResponse(
+        { success: false, error: "Session plan not found" },
+        404
       );
     }
 
@@ -84,7 +88,14 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Failed to evaluate session";
-    const status = isClientErrorMessage(message) ? 400 : 500;
-    return jsonResponse({ success: false, error: message }, status);
+    const status = isClientErrorMessage(message) ? 400 : 503;
+    if (status === 400) {
+      return jsonResponse({ success: false, error: message }, status);
+    }
+    console.error("[api/agents/sessions]", err);
+    return jsonResponse(
+      { success: false, error: STUDY_ASSISTANT_UNAVAILABLE },
+      status
+    );
   }
 }

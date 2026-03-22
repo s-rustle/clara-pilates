@@ -34,19 +34,16 @@ export default async function CurriculumPage() {
 
   return (
     <div>
-      <h1 className="mb-4 font-display text-2xl font-semibold tracking-tight text-clara-strong">
-        Curriculum Manager
-      </h1>
-
-      <div className="mb-6">
+      <div className="mb-6 scroll-mt-6" id="drive-connect">
         <DriveConnect isConnected={isConnected} />
       </div>
 
       {!isConnected ? (
         <Card>
           <p className="text-clara-deep">
-            Connect your Google Drive to begin ingesting your Balanced Body
-            materials.
+            Google Drive is not connected. Use{" "}
+            <strong>Connect Google Drive</strong> above to reconnect or set up
+            access, then you can ingest your Balanced Body materials.
           </p>
         </Card>
       ) : (

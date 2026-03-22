@@ -17,7 +17,7 @@ interface QuestionCardProps {
 function QuestionText({ text }: { text: string }) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return (
-    <p className="font-display text-clara-strong">
+    <p className="text-base font-bold text-clara-strong">
       {parts.map((part, i) =>
         part.startsWith("**") && part.endsWith("**") ? (
           <strong key={i} className="font-bold">

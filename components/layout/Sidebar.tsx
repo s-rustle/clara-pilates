@@ -7,6 +7,7 @@ import {
   BookOpen,
   ClipboardList,
   Calendar,
+  GraduationCap,
   Mic,
   Clock,
   FolderOpen,
@@ -22,11 +23,11 @@ const navItems = [
   { href: "/study", label: "Study", icon: BookOpen },
   { href: "/quiz", label: "Quiz", icon: ClipboardList },
   { href: "/sessions", label: "Sessions", icon: Calendar },
+  { href: "/learn", label: "Learn", icon: GraduationCap },
   {
     href: "/cues",
     label: "Practice Cues",
     icon: Mic,
-    disabled: true,
     badge: "Phase 2",
   },
   { href: "/hours", label: "Hours", icon: Clock },
@@ -51,27 +52,10 @@ export default function Sidebar() {
         <Wordmark size="sm" />
       </div>
 
-      <nav className="flex flex-1 flex-col gap-0.5 px-2">
+      <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
-
-          if (item.disabled) {
-            return (
-              <div
-                key={item.href}
-                className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-clara-muted/70"
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                <span className="flex-1">{item.label}</span>
-                {item.badge && (
-                  <Badge variant="grey" className="text-[10px]">
-                    {item.badge}
-                  </Badge>
-                )}
-              </div>
-            );
-          }
 
           return (
             <Link
@@ -79,12 +63,17 @@ export default function Sidebar() {
               href={item.href}
               className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
                 isActive
-                  ? "bg-clara-highlight font-medium text-clara-ink"
-                  : "text-clara-deep hover:bg-clara-highlight/70 hover:text-clara-ink"
+                  ? "bg-clara-highlight font-bold text-clara-strong"
+                  : "text-clara-deep hover:bg-clara-highlight/70 hover:text-clara-strong"
               }`}
             >
               <Icon className="h-4 w-4 shrink-0" />
-              <span>{item.label}</span>
+              <span className="flex-1">{item.label}</span>
+              {item.badge ? (
+                <Badge variant="grey" className="text-[10px]">
+                  {item.badge}
+                </Badge>
+              ) : null}
             </Link>
           );
         })}
@@ -94,7 +83,7 @@ export default function Sidebar() {
         <button
           type="button"
           onClick={handleSignOut}
-          className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-clara-muted transition-colors hover:bg-clara-highlight hover:text-clara-ink"
+          className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-clara-muted transition-colors hover:bg-clara-highlight hover:text-clara-strong"
         >
           <LogOut className="h-4 w-4 shrink-0" />
           <span>Sign out</span>

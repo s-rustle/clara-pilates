@@ -76,7 +76,7 @@ export default function WarmUpSection({
 
   return (
     <section className="space-y-3">
-      <h2 className="font-display text-lg font-semibold text-clara-strong">
+      <h2 className="text-lg font-bold text-clara-strong">
         Pre-Pilates Warm-Up
       </h2>
 

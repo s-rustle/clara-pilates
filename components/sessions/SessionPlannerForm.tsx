@@ -75,7 +75,7 @@ export default function SessionPlannerForm({
             disabled={busy}
             className={`flex-1 rounded px-4 py-2 text-sm font-medium transition-colors ${
               mode === m
-                ? "bg-clara-primary text-[#F5F2EB] underline decoration-clara-highlight decoration-2 underline-offset-4"
+                ? "bg-clara-primary text-white underline decoration-clara-highlight decoration-2 underline-offset-4"
                 : "text-clara-deep hover:bg-clara-highlight/60"
             } disabled:opacity-50`}
           >

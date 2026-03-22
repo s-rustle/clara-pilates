@@ -124,7 +124,7 @@ export default function HourLogTable({ logs, onStatusUpdate }: HourLogTableProps
       <button
         type="button"
         onClick={() => handleSort(columnKey)}
-        className="flex items-center gap-1 font-medium text-clara-deep hover:text-clara-strong"
+        className="flex items-center gap-1 font-bold text-clara-strong hover:text-clara-deep"
       >
         {label}
         {isActive &&

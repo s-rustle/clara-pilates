@@ -1,5 +1,6 @@
 import { type NextRequest } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { AUTH_REQUIRED, GOOGLE_DRIVE_NOT_CONNECTED } from "@/lib/api/messages";
 import { downloadFile, getFileMetadata } from "@/lib/google/drive";
 
 /**
@@ -31,7 +32,13 @@ export async function GET(request: NextRequest) {
     .maybeSingle();
 
   if (!allowed) {
-    return Response.json({ error: "Forbidden" }, { status: 403 });
+    return Response.json(
+      {
+        error:
+          "That file is not part of your ingested curriculum, or you do not have access.",
+      },
+      { status: 403 }
+    );
   }
 
   const { data: profile } = await supabase
@@ -44,10 +51,7 @@ export async function GET(request: NextRequest) {
   const refreshToken = profile?.google_refresh_token ?? null;
 
   if (!accessToken || !refreshToken) {
-    return Response.json(
-      { error: "Google Drive not connected" },
-      { status: 400 }
-    );
+    return Response.json({ error: GOOGLE_DRIVE_NOT_CONNECTED }, { status: 400 });
   }
 
   try {

@@ -8,10 +8,11 @@ const titleMap: Record<string, string> = {
   "/": "Dashboard",
   "/study": "Study",
   "/quiz": "Quiz",
-  "/sessions": "Session Planner",
+  "/sessions": "Sessions",
+  "/learn": "Learn",
   "/cues": "Practice Cues",
-  "/hours": "Hour Tracking",
-  "/curriculum": "Curriculum Manager",
+  "/hours": "Hours",
+  "/curriculum": "Curriculum",
   "/settings": "Settings",
 };
 
@@ -26,9 +27,9 @@ export default function DashboardShell({
   return (
     <div className="min-h-screen bg-clara-bg">
       <Sidebar />
-      <div className="pl-56">
+      <div className="min-w-0 max-w-full pl-56">
         <TopBar title={title} />
-        <main className="min-h-[calc(100vh-4rem)] overflow-auto p-6 md:p-10">
+        <main className="min-h-[calc(100vh-4rem)] min-w-0 max-w-full overflow-x-auto overflow-y-auto p-4 sm:p-6 md:p-10">
           {children}
         </main>
       </div>

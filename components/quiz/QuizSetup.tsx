@@ -4,6 +4,7 @@ import { useState } from "react";
 import Button from "@/components/ui/Button";
 import Select from "@/components/ui/Select";
 import Card from "@/components/ui/Card";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 const APPARATUS_OPTIONS = [
   { value: "All", label: "All" },
@@ -43,9 +44,10 @@ interface QuizSetupProps {
     questionCount: number,
     format: string
   ) => void;
+  isStarting?: boolean;
 }
 
-export default function QuizSetup({ onStart }: QuizSetupProps) {
+export default function QuizSetup({ onStart, isStarting = false }: QuizSetupProps) {
   const [apparatus, setApparatus] = useState("All");
   const [difficulty, setDifficulty] = useState("Foundational");
   const [questionCount, setQuestionCount] = useState(10);
@@ -59,30 +61,42 @@ export default function QuizSetup({ onStart }: QuizSetupProps) {
           options={APPARATUS_OPTIONS}
           value={apparatus}
           onChange={(e) => setApparatus(e.target.value)}
+          disabled={isStarting}
         />
         <Select
           label="Difficulty"
           options={DIFFICULTY_OPTIONS}
           value={difficulty}
           onChange={(e) => setDifficulty(e.target.value)}
+          disabled={isStarting}
         />
         <Select
           label="Question count"
           options={QUESTION_COUNT_OPTIONS}
           value={String(questionCount)}
           onChange={(e) => setQuestionCount(Number(e.target.value))}
+          disabled={isStarting}
         />
         <Select
           label="Question format"
           options={FORMAT_OPTIONS}
           value={format}
           onChange={(e) => setFormat(e.target.value)}
+          disabled={isStarting}
         />
         <Button
           variant="primary"
           onClick={() => onStart(apparatus, difficulty, questionCount, format)}
+          disabled={isStarting}
         >
-          Start Quiz
+          {isStarting ? (
+            <span className="inline-flex items-center gap-2">
+              <LoadingSpinner size="sm" />
+              Starting…
+            </span>
+          ) : (
+            "Start Quiz"
+          )}
         </Button>
       </div>
     </Card>

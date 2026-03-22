@@ -26,7 +26,7 @@ export default function QuizSummary({
   return (
     <Card>
       <div className="flex flex-col gap-6">
-        <p className="text-xl font-display font-semibold text-clara-strong">
+        <p className="text-xl font-bold text-clara-strong">
           {score} of {total} correct ({percent}%)
         </p>
         {(apparatus || topic) && (

@@ -9,6 +9,7 @@ import QuizSetup from "@/components/quiz/QuizSetup";
 import QuestionCard from "@/components/quiz/QuestionCard";
 import AnswerInput from "@/components/quiz/AnswerInput";
 import QuizSummary from "@/components/quiz/QuizSummary";
+import { useHasIngestedCurriculum } from "@/lib/hooks/useHasIngestedCurriculum";
 
 type Phase = "setup" | "in_progress" | "complete";
 
@@ -35,6 +36,7 @@ interface EvaluationState {
 }
 
 export default function QuizPage() {
+  const hasIngestedCurriculum = useHasIngestedCurriculum();
   const [phase, setPhase] = useState<Phase>("setup");
   const [error, setError] = useState<string | null>(null);
 
@@ -252,13 +254,19 @@ export default function QuizPage() {
       const supabase = createClient();
       const percent =
         questionCount > 0 ? Math.round((score / questionCount) * 100) : 0;
-      await supabase
+      const { error: updateError } = await supabase
         .from("quiz_sessions")
         .update({
           score_percent: percent,
           completed_at: new Date().toISOString(),
         })
         .eq("id", sessionId);
+      if (updateError) {
+        setError(
+          `Your quiz session could not be saved: ${updateError.message}. Please try again.`
+        );
+        return;
+      }
       void fetch("/api/agents/weakspot", {
         method: "POST",
         credentials: "same-origin",
@@ -312,15 +320,29 @@ export default function QuizPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="font-display text-2xl font-semibold tracking-tight text-clara-strong">
-        Quiz
-      </h1>
-
       {error && <ErrorMessage message={error} />}
+
+      {phase === "setup" && hasIngestedCurriculum === false && (
+        <Card>
+          <p className="text-clara-deep">
+            No curriculum has been ingested yet. Quiz questions are built from
+            your uploaded manuals. Go to{" "}
+            <a
+              href="/curriculum"
+              className="font-medium text-clara-primary underline"
+            >
+              Curriculum Manager
+            </a>{" "}
+            to connect Google Drive and ingest your folders before starting a
+            quiz.
+          </p>
+        </Card>
+      )}
 
       {phase === "setup" && (
         <QuizSetup
-          onStart={(app, diff, count, fmt) => handleStart(app, diff, count, fmt)}
+          onStart={(app, diff, count, fmt) => void handleStart(app, diff, count, fmt)}
+          isStarting={isLoadingQuestion}
         />
       )}
 

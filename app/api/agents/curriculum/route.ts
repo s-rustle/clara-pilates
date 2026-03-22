@@ -1,5 +1,6 @@
 import { type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { AUTH_REQUIRED, STUDY_ASSISTANT_UNAVAILABLE } from "@/lib/api/messages";
 import { askCurriculum } from "@/lib/anthropic/agents/curriculum";
 
 export async function POST(request: NextRequest) {
@@ -9,7 +10,10 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return Response.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    return Response.json(
+      { success: false, error: AUTH_REQUIRED },
+      { status: 401 }
+    );
   }
 
   try {
@@ -27,12 +31,10 @@ export async function POST(request: NextRequest) {
     const data = await askCurriculum(query, user.id, folder_filter);
     return Response.json({ success: true, data });
   } catch (err) {
+    console.error("[api/agents/curriculum]", err);
     return Response.json(
-      {
-        success: false,
-        error: err instanceof Error ? err.message : "Failed to get answer",
-      },
-      { status: 500 }
+      { success: false, error: STUDY_ASSISTANT_UNAVAILABLE },
+      { status: 503 }
     );
   }
 }

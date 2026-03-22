@@ -1,5 +1,6 @@
 import { type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { AUTH_REQUIRED, STUDY_ASSISTANT_UNAVAILABLE } from "@/lib/api/messages";
 import { explainCorrectAnswer } from "@/lib/anthropic/agents/examiner";
 
 export async function POST(request: NextRequest) {
@@ -10,7 +11,7 @@ export async function POST(request: NextRequest) {
 
   if (!user) {
     return Response.json(
-      { success: false, error: "Unauthorized" },
+      { success: false, error: AUTH_REQUIRED },
       { status: 401 }
     );
   }
@@ -48,12 +49,10 @@ export async function POST(request: NextRequest) {
       data: { explanation },
     });
   } catch (err) {
+    console.error("[api/agents/examiner/explain]", err);
     return Response.json(
-      {
-        success: false,
-        error: err instanceof Error ? err.message : "Failed to get explanation",
-      },
-      { status: 500 }
+      { success: false, error: STUDY_ASSISTANT_UNAVAILABLE },
+      { status: 503 }
     );
   }
 }

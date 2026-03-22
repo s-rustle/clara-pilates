@@ -9,11 +9,11 @@ interface BadgeProps {
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  green: "bg-clara-primary text-[#F5F2EB]",
-  yellow: "bg-amber-500/90 text-amber-950",
-  red: "bg-red-700 text-white",
+  green: "bg-clara-primary text-white",
+  yellow: "bg-amber-600/90 text-amber-950",
+  red: "bg-[#8F3D32] text-white",
   grey: "bg-clara-border/60 text-clara-deep",
-  blue: "bg-slate-600 text-white",
+  blue: "bg-[#5E4A42] text-white",
 };
 
 export default function Badge({

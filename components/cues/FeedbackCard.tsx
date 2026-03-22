@@ -3,6 +3,7 @@
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
+import MarkdownBody from "@/components/ui/MarkdownBody";
 import type { CueDimension, CueFeedback } from "@/types";
 
 const DIMENSION_ROWS: {
@@ -70,12 +71,10 @@ function DimensionRow({ label, dim }: { label: string; dim: CueDimension }) {
   return (
     <div className="flex flex-col gap-1 border-b border-clara-border/60 py-3 last:border-b-0 last:pb-0 first:pt-0">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm font-medium text-clara-ink">{label}</span>
+        <span className="text-sm font-bold text-clara-strong">{label}</span>
         <Badge variant={variant}>{formatScoreLabel(dim.score)}</Badge>
       </div>
-      {dim.note ? (
-        <p className="text-xs text-clara-deep">{dim.note}</p>
-      ) : null}
+      {dim.note ? <MarkdownBody>{dim.note}</MarkdownBody> : null}
     </div>
   );
 }
@@ -92,16 +91,20 @@ export default function FeedbackCard({ feedback, onTryAgain }: FeedbackCardProps
       </div>
 
       {feedback.overall ? (
-        <p className="mt-4 text-sm text-clara-deep">{feedback.overall}</p>
+        <div className="mt-4">
+          <MarkdownBody>{feedback.overall}</MarkdownBody>
+        </div>
       ) : null}
 
       <div className="mt-4 rounded-md bg-clara-surface p-4 ring-1 ring-clara-border/80">
-        <p className="mb-2 text-sm font-medium text-clara-strong">
+        <p className="mb-2 text-sm font-bold text-clara-strong">
           Here is a better version:
         </p>
-        <p className="text-sm italic text-clara-strong">
-          {betterBody || "—"}
-        </p>
+        {betterBody ? (
+          <MarkdownBody className="italic [&_p]:italic">{betterBody}</MarkdownBody>
+        ) : (
+          <p className="text-sm text-clara-deep">—</p>
+        )}
       </div>
 
       <div className="mt-4">

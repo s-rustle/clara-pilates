@@ -107,6 +107,7 @@ export interface QuizQuestion {
   correct_answer: string | null;
   result: string | null;
   feedback: string | null;
+  folder_name: string | null;
   created_at: string;
 }
 
@@ -214,6 +215,21 @@ export interface SourceDocument {
   drive_file_id: string;
   file_name: string;
   mime_type: string;
+}
+
+export interface TutorialContent {
+  exercise_name: string;
+  apparatus: string;
+  starting_position: string;
+  movement_description: string;
+  breath_cues: string;
+  spring_settings: string | null;
+  precautions: string;
+  teaching_tips: string;
+  source_folder: string;
+  error?: string;
+  /** First curriculum image chunk from RAG (Drive), when available */
+  manual_image?: { file_name: string; folder_name: string } | null;
 }
 
 export interface CurriculumResponse {

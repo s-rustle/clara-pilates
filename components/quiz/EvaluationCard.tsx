@@ -5,6 +5,7 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import MarkdownBody from "@/components/ui/MarkdownBody";
 
 interface EvaluationCardProps {
   result: "correct" | "partial" | "incorrect";
@@ -55,15 +56,15 @@ export default function EvaluationCard({
         <Badge variant={BADGE_VARIANTS[result]}>
           {result.charAt(0).toUpperCase() + result.slice(1)}
         </Badge>
-        <p className="text-clara-deep">{feedback}</p>
+        <MarkdownBody>{feedback}</MarkdownBody>
         {correctAnswer && (
           <div className="rounded-lg border border-clara-border bg-clara-surface p-3">
-            <p className="text-xs font-medium text-clara-muted">
+            <p className="text-xs font-bold text-clara-strong">
               Correct answer
             </p>
-            <p className="mt-1 font-display font-semibold text-clara-strong">
-              {correctAnswer}
-            </p>
+            <div className="mt-1">
+              <MarkdownBody>{correctAnswer}</MarkdownBody>
+            </div>
           </div>
         )}
         {showExplainButton && (
@@ -84,8 +85,10 @@ export default function EvaluationCard({
         )}
         {explanation && (
           <div className="rounded-lg border border-clara-border bg-clara-elevated p-3">
-            <p className="text-xs font-medium text-clara-muted">Explanation</p>
-            <p className="mt-1 text-sm text-clara-deep">{explanation}</p>
+            <p className="text-xs font-bold text-clara-strong">Explanation</p>
+            <div className="mt-1">
+              <MarkdownBody>{explanation}</MarkdownBody>
+            </div>
           </div>
         )}
         <Button variant="primary" onClick={onNext}>
