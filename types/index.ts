@@ -164,6 +164,12 @@ export interface SessionFeedback {
   suggested_adjustments: string[];
 }
 
+/** LLM-generated readiness copy (also persisted on ReadinessSnapshot). */
+export interface ReadinessBrief {
+  narrative: string;
+  recommendations: string[];
+}
+
 export interface ReadinessSnapshot {
   id: string;
   user_id: string;
