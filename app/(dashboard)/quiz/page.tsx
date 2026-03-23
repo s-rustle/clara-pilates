@@ -20,7 +20,8 @@ interface CurrentQuestion {
     | "fill_blank"
     | "matching"
     | "diagram_matching"
-    | "anatomy_multiple_choice";
+    | "anatomy_multiple_choice"
+    | "anatomy_diagram";
   question: string;
   questionId: string;
   expectedAnswerElements: string[];
@@ -29,6 +30,8 @@ interface CurrentQuestion {
   correctAnswer?: string;
   anatomyOptions?: string[];
   correctOption?: string;
+  /** Interactive SVG anatomy question — canonical muscle group name */
+  targetMuscle?: string;
   pairs?: { left: string; right: string }[];
   leftItems?: string[];
   rightItems?: string[];
@@ -121,6 +124,8 @@ export default function QuizPage() {
               : typeof d.correct_answer === "string"
                 ? d.correct_answer
                 : undefined,
+          targetMuscle:
+            typeof d.target_muscle === "string" ? d.target_muscle : undefined,
           pairs: d.pairs,
           leftItems: d.left_items,
           rightItems: d.right_items,
@@ -229,7 +234,9 @@ export default function QuizPage() {
             correct_answer:
               currentQuestion.format === "anatomy_multiple_choice"
                 ? currentQuestion.correctOption ?? currentQuestion.correctAnswer
-                : currentQuestion.correctAnswer,
+                : currentQuestion.format === "anatomy_diagram"
+                  ? currentQuestion.targetMuscle
+                  : currentQuestion.correctAnswer,
             pairs: currentQuestion.pairs,
             options: currentQuestion.options,
           }),
@@ -316,7 +323,9 @@ export default function QuizPage() {
           correct_answer:
             currentQuestion.format === "anatomy_multiple_choice"
               ? currentQuestion.correctOption ?? currentQuestion.correctAnswer
-              : currentQuestion.correctAnswer,
+              : currentQuestion.format === "anatomy_diagram"
+                ? currentQuestion.targetMuscle
+                : currentQuestion.correctAnswer,
           correct_id: currentQuestion.correctId,
           options: currentQuestion.options,
           pairs: currentQuestion.pairs,
@@ -404,6 +413,17 @@ export default function QuizPage() {
                     }
                   }}
                   anatomy_submit_loading={isEvaluating}
+                  target_muscle={currentQuestion.targetMuscle}
+                  selected_muscle={selectedAnatomyOption}
+                  on_select_muscle={setSelectedAnatomyOption}
+                  on_submit_diagram={() => {
+                    if (selectedAnatomyOption) {
+                      void handleAnswerSubmit(selectedAnatomyOption, false);
+                    }
+                  }}
+                  diagram_submit_loading={isEvaluating}
+                  reveal_diagram_answer={!!evaluation}
+                  correct_muscle={currentQuestion.targetMuscle}
                 />
                 <AnswerInput
                   key={currentQuestion.questionId}

@@ -131,7 +131,6 @@ export default function QuestionCard({
   diagram_submit_loading,
   reveal_diagram_answer,
   correct_muscle,
-  diagram_feedback,
 }: QuestionCardProps) {
   const isAnatomyMc = question_type === "anatomy_multiple_choice";
   const isAnatomyDiagram = question_type === "anatomy_diagram";
@@ -190,11 +189,6 @@ export default function QuestionCard({
                 "Submit Answer"
               )}
             </Button>
-            {reveal_diagram_answer && diagram_feedback && (
-              <div className="rounded-sm border border-clara-highlight bg-clara-surface p-4 text-sm text-clara-deep">
-                <MarkdownBody>{diagram_feedback}</MarkdownBody>
-              </div>
-            )}
           </div>
         )}
       {isAnatomyMc &&

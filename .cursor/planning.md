@@ -145,6 +145,7 @@ clara/
 │   ├── quiz/
 │   │   ├── QuizSetup.tsx
 │   │   ├── QuestionCard.tsx
+│   │   ├── AnatomyDiagram.tsx   # anatomy_diagram pin-the-muscle SVG
 │   │   ├── AnswerInput.tsx
 │   │   ├── EvaluationCard.tsx
 │   │   └── QuizSummary.tsx

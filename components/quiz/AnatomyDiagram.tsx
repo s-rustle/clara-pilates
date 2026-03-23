@@ -82,7 +82,7 @@ function SilhouetteFront() {
   return (
     <path
       d="M 140 20 C 118 20 100 38 100 58 C 100 68 104 76 110 82 C 88 92 78 115 78 140 L 82 175 L 72 185 L 68 255 L 78 265 L 88 400 L 98 430 L 108 520 L 118 528 L 132 528 L 138 440 L 140 400 L 142 440 L 148 528 L 162 528 L 172 520 L 182 430 L 192 400 L 202 265 L 212 255 L 208 185 L 198 175 L 202 140 C 202 115 192 92 170 82 C 176 76 180 68 180 58 C 180 38 162 20 140 20 Z"
-      fill="#DDD2C4"
+      fill="#F0E9E0"
       stroke={STROKE}
       strokeWidth={1.2}
       className="pointer-events-none"
@@ -94,7 +94,7 @@ function SilhouetteBack() {
   return (
     <path
       d="M 140 20 C 118 20 100 38 100 58 C 100 68 104 76 110 82 C 88 92 78 115 78 140 L 82 178 L 72 188 L 68 258 L 78 268 L 88 402 L 98 432 L 108 522 L 118 530 L 132 530 L 138 442 L 140 402 L 142 442 L 148 530 L 162 530 L 172 522 L 182 432 L 192 402 L 202 268 L 212 258 L 208 188 L 198 178 L 202 140 C 202 115 192 92 170 82 C 176 76 180 68 180 58 C 180 38 162 20 140 20 Z"
-      fill="#DDD2C4"
+      fill="#F0E9E0"
       stroke={STROKE}
       strokeWidth={1.2}
       className="pointer-events-none"

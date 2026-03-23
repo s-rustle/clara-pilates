@@ -59,7 +59,7 @@ Receives user queries and routes them to the appropriate specialist agent. Never
 Answers study questions about apparatus, anatomy, movement principles, and sequencing. Reasons exclusively over RAG layer. Returns source reference when possible (e.g., "Based on your Reformer manual, page section X...").
 
 ### 4.3 Examiner Agent
-Generates exam-style questions (written format, Phase 1). Evaluates written answers against source material criteria. Does not give partial credit for vague answers — pushes for precision, consistent with exam standards. Covers: anatomy, cueing, starting position, precautions, spring settings, sequencing.
+Generates exam-style questions (written format, Phase 1). Evaluates written answers against source material criteria. Does not give partial credit for vague answers — pushes for precision, consistent with exam standards. Covers: anatomy, cueing, starting position, precautions, spring settings, sequencing. **Anatomy diagram** (`anatomy_diagram`) questions use a fixed interactive SVG (front/back) with canonical muscle group regions; the model must choose `target_muscle` only from that list while the question text stays grounded in RAG. Grading for that format is deterministic (no LLM judge).
 
 ### 4.4 Cueing Feedback Agent
 Evaluates written cues submitted by the user against Balanced Body criteria: anatomical accuracy, breath cuing, starting position clarity, precaution language, client accessibility. Returns structured feedback: what landed, what was vague, what was missing. **Shipped** in the **Practice Cues** screen (`/cues`) as a full primary nav item alongside Study, Quiz, and Sessions. **Phase 2 (optional):** add OpenAI Whisper so the user can speak a cue before evaluation — the written flow remains the default.

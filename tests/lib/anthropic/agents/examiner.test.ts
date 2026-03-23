@@ -172,4 +172,38 @@ describe("Examiner Agent", () => {
     expect(bad.result).toBe("incorrect");
     expect(bad.correct_answer).toBe("Psoas major");
   });
+
+  it("evaluates anatomy_diagram without Claude — canonical and synonym match", async () => {
+    const ok = await evaluateAnswer(
+      "During Corkscrew, which muscle group is primarily strengthened?",
+      "Abdominals",
+      ["Abdominals", "rectus abdominis", "obliques"],
+      false,
+      "user-1",
+      { format: "anatomy_diagram", correct_answer: "Abdominals" }
+    );
+    expect(ok.result).toBe("correct");
+    expect(ok.correct_answer).toBeNull();
+
+    const partial = await evaluateAnswer(
+      "During Corkscrew, which muscle group is primarily strengthened?",
+      "rectus abdominis",
+      ["Abdominals", "rectus abdominis"],
+      false,
+      "user-1",
+      { format: "anatomy_diagram", correct_answer: "Abdominals" }
+    );
+    expect(partial.result).toBe("correct");
+
+    const bad = await evaluateAnswer(
+      "During Corkscrew, which muscle group is primarily strengthened?",
+      "Hamstrings",
+      ["Abdominals", "obliques"],
+      false,
+      "user-1",
+      { format: "anatomy_diagram", correct_answer: "Abdominals" }
+    );
+    expect(bad.result).toBe("incorrect");
+    expect(bad.correct_answer).toBe("Abdominals");
+  });
 });

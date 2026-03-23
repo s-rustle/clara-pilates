@@ -299,7 +299,7 @@ All study-facing agents query the pgvector store first. If relevant content is n
 ### 6.4 Quiz Screen
 - Topic selector — apparatus + category + difficulty
 - Question card — one question at a time
-- Answer input — free text
+- Answer input — free text, multiple choice, matching, or **anatomy diagram** (pin-the-muscle on an SVG front/back figure with fixed muscle regions)
 - Submit → evaluation response appears below
 - Next question button
 - Session progress indicator (Question 3 of 10)
