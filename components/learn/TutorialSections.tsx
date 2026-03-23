@@ -58,6 +58,12 @@ export default function TutorialSections({ tutorial }: TutorialSectionsProps) {
         if (key === "rr" && (value === null || value === "")) {
           return null;
         }
+        if (
+          key === "lv" &&
+          (!value?.trim() || /^not specified/i.test(value.trim()))
+        ) {
+          return null;
+        }
         const body =
           value && value.trim() !== ""
             ? value
