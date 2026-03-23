@@ -178,7 +178,7 @@ All study-facing agents query the pgvector store first. If relevant content is n
 **Quiz session summary:** Score by topic, time taken, questions missed — saved to Supabase on session end.
 
 ### 5.4 Cueing Feedback Agent
-**Trigger:** User submits a written cue in the Cueing Practice screen  
+**Trigger:** User submits a written cue on the **Practice Cues** screen (`/cues`)  
 **Input:** Written cue + exercise context (apparatus, exercise name, client level)  
 **Output — structured feedback:**
 - **Anatomical Accuracy:** correct / needs refinement + note
@@ -286,7 +286,7 @@ All study-facing agents query the pgvector store first. If relevant content is n
 - Readiness Score — prominent, center — overall % with three dimension indicators
 - Hours Summary — total logged vs. 536, three practical progress bars
 - Weak Spot Card — #1 priority weak area only + recommended action
-- Quick Actions — Study, Quiz, Practice Cueing, Plan Session, Log Hours
+- Quick Actions — Study, Quiz, Practice Cues, Plan Session, Log Hours
 - Recent Activity — last 5 sessions (quiz, planned, or logged)
 
 ### 6.3 Study Screen
@@ -305,12 +305,15 @@ All study-facing agents query the pgvector store first. If relevant content is n
 - Session progress indicator (Question 3 of 10)
 - Exit saves session to Supabase
 
-### 6.5 Cueing Practice Screen
-- Exercise selector — apparatus + exercise name (free text or dropdown populated from ingested materials)
+### 6.5 Cueing Practice Screen (Practice Cues — shipped)
+- **Navigation:** Same prominence as Study, Quiz, Sessions — no “Phase 2” badge, no deferred/greyed styling
+- Optional collapsible panel: what verbal cues are, why they matter, how Clara’s feedback dimensions map to exam-ready teaching; link to Learn for manual-deep tutorials
+- Exercise selector — apparatus + **exercise name (dropdown)** populated from ingested materials (same source as Learn exercise list)
 - Client level selector — Beginner / Intermediate / Advanced
 - Cue input — free text area
 - Submit → structured feedback card appears
 - History of submitted cues + feedback in this session
+- **Phase 2 (out of scope until built):** optional audio capture via Whisper before evaluation
 
 ### 6.6 Learn Screen
 - Route: `/learn`
@@ -414,9 +417,9 @@ All errors surface as explicit, specific messages. No silent failures.
 
 ## 9. Out of Scope — Phase 1
 
-The following are documented for Phase 2 and must not be built in Phase 1:
+The following are documented for Phase 2 and must not be built until explicitly scheduled:
 
-- Verbal cueing via microphone (OpenAI Whisper)
+- **Microphone / Whisper cueing** — optional spoken cue → transcription → Cueing Feedback Agent (**written** Practice Cues at `/cues` is implemented and not deferred)
 - Exam date countdown on readiness score
 - Multi-user access and individual progress tracking
 - Dark mode

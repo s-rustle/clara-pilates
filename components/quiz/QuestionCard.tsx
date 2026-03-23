@@ -5,6 +5,7 @@ import { clsx } from "clsx";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import Button from "@/components/ui/Button";
+import AnatomyDiagram from "@/components/quiz/AnatomyDiagram";
 
 interface QuestionCardProps {
   question: string;
@@ -13,13 +14,20 @@ interface QuestionCardProps {
   scoreSoFar: number;
   image_file_name?: string;
   folder_name?: string;
-  /** `anatomy_multiple_choice` shows diagram (if any), question, four options, and submit. */
   question_type?: string;
   anatomy_options?: string[];
   selected_anatomy_option?: string | null;
   on_select_anatomy_option?: (option: string) => void;
   on_submit_anatomy?: () => void;
   anatomy_submit_loading?: boolean;
+  /** Pin-the-muscle SVG quiz */
+  target_muscle?: string;
+  selected_muscle?: string | null;
+  on_select_muscle?: (muscle: string) => void;
+  on_submit_diagram?: () => void;
+  diagram_submit_loading?: boolean;
+  reveal_diagram_answer?: boolean;
+  correct_muscle?: string;
 }
 
 /** Renders question text with **exercise** marked segments in bold (matches source material style). */
@@ -116,8 +124,17 @@ export default function QuestionCard({
   on_select_anatomy_option,
   on_submit_anatomy,
   anatomy_submit_loading,
+  target_muscle,
+  selected_muscle,
+  on_select_muscle,
+  on_submit_diagram,
+  diagram_submit_loading,
+  reveal_diagram_answer,
+  correct_muscle,
+  diagram_feedback,
 }: QuestionCardProps) {
   const isAnatomyMc = question_type === "anatomy_multiple_choice";
+  const isAnatomyDiagram = question_type === "anatomy_diagram";
 
   return (
     <div className="flex flex-col gap-3">
@@ -127,18 +144,59 @@ export default function QuestionCard({
       <p className="text-sm font-medium text-clara-accent">
         {scoreSoFar} correct so far
       </p>
-      {image_file_name && folder_name && (
-        <DiagramImage
-          file_name={image_file_name}
-          folder_name={folder_name}
-          className={
-            isAnatomyMc
-              ? "max-h-80 w-auto max-w-full rounded-sm border border-clara-highlight object-contain"
-              : undefined
-          }
-        />
-      )}
+      {!isAnatomyDiagram &&
+        image_file_name &&
+        folder_name && (
+          <DiagramImage
+            file_name={image_file_name}
+            folder_name={folder_name}
+            className={
+              isAnatomyMc
+                ? "max-h-80 w-auto max-w-full rounded-sm border border-clara-highlight object-contain"
+                : undefined
+            }
+          />
+        )}
       <QuestionText text={question} />
+      {isAnatomyDiagram &&
+        target_muscle &&
+        on_select_muscle &&
+        on_submit_diagram && (
+          <div className="mt-2 flex flex-col gap-4">
+            <AnatomyDiagram
+              targetMuscle={target_muscle}
+              onSelect={on_select_muscle}
+              selectedMuscle={selected_muscle ?? undefined}
+              revealAnswer={reveal_diagram_answer}
+              correctMuscle={correct_muscle}
+            />
+            <Button
+              variant="primary"
+              type="button"
+              onClick={() => on_submit_diagram()}
+              disabled={
+                diagram_submit_loading ||
+                reveal_diagram_answer ||
+                !selected_muscle
+              }
+              className="w-full sm:w-auto"
+            >
+              {diagram_submit_loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <LoadingSpinner size="sm" />
+                  Evaluating…
+                </span>
+              ) : (
+                "Submit Answer"
+              )}
+            </Button>
+            {reveal_diagram_answer && diagram_feedback && (
+              <div className="rounded-sm border border-clara-highlight bg-clara-surface p-4 text-sm text-clara-deep">
+                <MarkdownBody>{diagram_feedback}</MarkdownBody>
+              </div>
+            )}
+          </div>
+        )}
       {isAnatomyMc &&
         anatomy_options &&
         anatomy_options.length === 4 &&

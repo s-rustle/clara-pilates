@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Wordmark from "./Wordmark";
-import Badge from "@/components/ui/Badge";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: Home },
@@ -24,12 +23,7 @@ const navItems = [
   { href: "/quiz", label: "Quiz", icon: ClipboardList },
   { href: "/sessions", label: "Sessions", icon: Calendar },
   { href: "/learn", label: "Learn", icon: GraduationCap },
-  {
-    href: "/cues",
-    label: "Practice Cues",
-    icon: Mic,
-    badge: "Phase 2",
-  },
+  { href: "/cues", label: "Practice Cues", icon: Mic },
   { href: "/hours", label: "Hours", icon: Clock },
   { href: "/curriculum", label: "Curriculum", icon: FolderOpen },
   { href: "/settings", label: "Settings", icon: Settings },
@@ -69,11 +63,6 @@ export default function Sidebar() {
             >
               <Icon className="h-4 w-4 shrink-0" />
               <span className="flex-1">{item.label}</span>
-              {item.badge ? (
-                <Badge variant="grey" className="text-[10px]">
-                  {item.badge}
-                </Badge>
-              ) : null}
             </Link>
           );
         })}

@@ -8,7 +8,8 @@ export type QuizQuestionFormat =
   | "fill_blank"
   | "matching"
   | "diagram_matching"
-  | "anatomy_multiple_choice";
+  | "anatomy_multiple_choice"
+  | "anatomy_diagram";
 
 export interface McOption {
   id: string;

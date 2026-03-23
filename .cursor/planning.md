@@ -83,7 +83,7 @@ clara/
 │   │   ├── quiz/
 │   │   │   └── page.tsx             # Examiner Agent quiz mode
 │   │   ├── cues/
-│   │   │   └── page.tsx             # Cueing Feedback Agent
+│   │   │   └── page.tsx             # Practice Cues — Cueing Feedback Agent (primary nav)
 │   │   ├── sessions/
 │   │   │   └── page.tsx             # Session Planner
 │   │   ├── learn/

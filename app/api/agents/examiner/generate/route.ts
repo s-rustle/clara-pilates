@@ -87,6 +87,7 @@ export async function POST(request: NextRequest) {
         correct_answer: result.correct_answer,
         anatomy_options: result.anatomy_options,
         correct_option: result.correct_option,
+        target_muscle: result.target_muscle,
         pairs: result.pairs,
         left_items: result.left_items,
         right_items: result.right_items,

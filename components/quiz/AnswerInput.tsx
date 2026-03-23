@@ -13,7 +13,8 @@ type QuestionFormat =
   | "fill_blank"
   | "matching"
   | "diagram_matching"
-  | "anatomy_multiple_choice";
+  | "anatomy_multiple_choice"
+  | "anatomy_diagram";
 
 interface AnswerInputProps {
   format?: QuestionFormat;
@@ -63,8 +64,8 @@ export default function AnswerInput({
       (result === "partial" && !showRetry));
   const inputDisabled = disabled || !!showEvaluation;
 
-  /** Anatomy MC: options + submit live on QuestionCard; only evaluation appears here. */
-  if (format === "anatomy_multiple_choice") {
+  /** Anatomy MC / diagram: interaction + submit on QuestionCard; only evaluation appears here. */
+  if (format === "anatomy_multiple_choice" || format === "anatomy_diagram") {
     if (showEvaluation && result && feedback !== undefined) {
       const showCorrectAnswer =
         result === "incorrect" || (result === "partial" && !showRetry);

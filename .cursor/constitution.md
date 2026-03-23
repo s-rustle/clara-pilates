@@ -62,7 +62,7 @@ Answers study questions about apparatus, anatomy, movement principles, and seque
 Generates exam-style questions (written format, Phase 1). Evaluates written answers against source material criteria. Does not give partial credit for vague answers — pushes for precision, consistent with exam standards. Covers: anatomy, cueing, starting position, precautions, spring settings, sequencing.
 
 ### 4.4 Cueing Feedback Agent
-Evaluates written cues submitted by the user against Balanced Body criteria: anatomical accuracy, breath cuing, starting position clarity, precaution language, client accessibility. Returns structured feedback: what landed, what was vague, what was missing. Phase 1 written only; Phase 2 adds Whisper voice transcription.
+Evaluates written cues submitted by the user against Balanced Body criteria: anatomical accuracy, breath cuing, starting position clarity, precaution language, client accessibility. Returns structured feedback: what landed, what was vague, what was missing. **Shipped** in the **Practice Cues** screen (`/cues`) as a full primary nav item alongside Study, Quiz, and Sessions. **Phase 2 (optional):** add OpenAI Whisper so the user can speak a cue before evaluation — the written flow remains the default.
 
 ### 4.5 Hour Tracking Agent
 Logs and retrieves practice hours by category: Mat, Reformer, Apparatus. Calculates progress against Balanced Body requirements (requirements entered by user when available). Surfaces gaps and remaining hours per category.
@@ -157,7 +157,7 @@ Clara’s UI is **Red Rocks — earthy brutalist**: warm sand and stone neutrals
 - Vercel deployment
 
 ### Phase 2 — Document Now, Build Later
-- Verbal cueing via OpenAI Whisper (mic → transcription → Cueing Feedback Agent)
+- Microphone cueing via OpenAI Whisper (mic → transcription → same Cueing Feedback Agent) — **additive** to the existing written Practice Cues flow
 - Learn screen audio narration via Whisper
 - Exam date countdown layer on Readiness Score
 - Hour requirement targets (once Balanced Body breakdown is confirmed)

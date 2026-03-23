@@ -143,7 +143,7 @@ Sidebar design:
   - Dashboard (home icon)
   - Study (book icon)
   - Quiz (clipboard icon)
-  - Practice Cues (microphone icon — greyed out, Phase 2 label)
+  - Practice Cues (microphone icon — same active/inactive link styling as Study, Quiz, Sessions; no badge)
   - Hours (clock icon)
   - Curriculum (folder icon)
   - Settings (gear icon)
@@ -688,9 +688,13 @@ Build /app/api/agents/cues/route.ts:
 ```
 Build /app/(dashboard)/cues/page.tsx and components.
 
+Sidebar: Practice Cues is a normal nav link (same styling as Study / Quiz / Sessions); no Phase 2 badge.
+
+CueEducationPanel (optional `<details>`): short explainer on what cues are, why they help, Clara’s five dimensions; link to /learn.
+
 CueInput component:
 - Apparatus selector
-- Exercise name input (free text)
+- Exercise name: dropdown populated from GET /api/agents/learn?apparatus=… (ingested materials)
 - Client level selector: Beginner / Intermediate / Advanced
 - Large textarea: "Write your cue here..."
 - "Get Feedback" button + LoadingSpinner

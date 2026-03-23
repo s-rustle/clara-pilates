@@ -4,6 +4,10 @@ import { OUT_OF_SCOPE_INSTRUCTION } from "./boundaries";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { RagChunk } from "@/types";
 import type { McOption, MatchingPair } from "@/types";
+import {
+  ANATOMY_DIAGRAM_MUSCLE_LIST_PROMPT,
+  canonicalizeAnatomyDiagramMuscle,
+} from "@/lib/quiz/anatomyDiagramMuscles";
 
 const EXAMINER_MODEL = "claude-sonnet-4-20250514";
 
@@ -21,6 +25,10 @@ The question must be: "Looking at the diagram, identify the muscle/structure ind
   anatomy_multiple_choice: `Return ONLY valid JSON: {"format": "anatomy_multiple_choice", "question": "string", "options": ["string","string","string","string"], "correct_option": "string", "expected_answer_elements": ["string"]}
 options must contain exactly four distinct strings. correct_option must equal exactly one of the four options (same spelling and casing). expected_answer_elements should be a single-element array containing correct_option.
 For anatomy questions, generate four multiple choice options. One must be correct. Three must be plausible but incorrect — drawn from related anatomy terms and structures that appear in the source material. Never invent anatomy not present in the materials.`,
+  anatomy_diagram: `Return ONLY valid JSON: {"format": "anatomy_diagram", "question": "string", "target_muscle": "string", "expected_answer_elements": ["string", "..."]}
+target_muscle must be EXACTLY one of these muscle group names (same spelling): ${ANATOMY_DIAGRAM_MUSCLE_LIST_PROMPT}.
+expected_answer_elements must include that exact target_muscle string plus any reasonable synonyms from the source (e.g. "rectus abdominis", "obliques" when target_muscle is Abdominals).
+The question should ask which diagram region (muscle group) is primarily strengthened, stretched, stabilized, or targeted for a movement or teaching scenario described in the source — the learner will click the region on an interactive SVG.`,
 };
 
 const GENERATE_SYSTEM_PROMPT = `You are a Balanced Body Comprehensive exam examiner.
@@ -41,6 +49,7 @@ Question types (when supported by the chunks):
 - Progression questions (e.g. what prepares a client for another exercise; ordering in progression tables)
 - Session sequencing (e.g. which session template or level fits a client profile — only if templates appear in source)
 When the requested format is anatomy_multiple_choice: follow the anatomy MC JSON schema exactly; options are four muscle/structure names from the source; the question should reference the diagram or region being tested.
+When the requested format is anatomy_diagram: target_muscle must exactly match one of these muscle group names (no other spelling or label): ${ANATOMY_DIAGRAM_MUSCLE_LIST_PROMPT}. Never use a muscle name not in this list.
 
 ${OUT_OF_SCOPE_INSTRUCTION}`;
 
@@ -82,7 +91,8 @@ export interface GenerateQuestionSuccess {
     | "fill_blank"
     | "matching"
     | "diagram_matching"
-    | "anatomy_multiple_choice";
+    | "anatomy_multiple_choice"
+    | "anatomy_diagram";
   question: string;
   expected_answer_elements: string[];
   source_chunks_used: RagChunk[];
@@ -93,6 +103,8 @@ export interface GenerateQuestionSuccess {
   anatomy_options?: string[];
   /** Correct label — must match one of anatomy_options exactly */
   correct_option?: string;
+  /** Pin-the-muscle diagram: canonical group name from ANATOMY_DIAGRAM_MUSCLE_IDS */
+  target_muscle?: string;
   pairs?: MatchingPair[];
   left_items?: string[];
   right_items?: string[];
@@ -125,7 +137,8 @@ export interface ExplainCorrectOptions {
     | "fill_blank"
     | "matching"
     | "diagram_matching"
-    | "anatomy_multiple_choice";
+    | "anatomy_multiple_choice"
+    | "anatomy_diagram";
   correct_answer?: string;
   correct_id?: string;
   correct_option?: string;
@@ -149,6 +162,8 @@ export async function explainCorrectAnswer(
     (options.correct_option || options.correct_answer)
   ) {
     context = `Correct answer: ${options.correct_option ?? options.correct_answer}`;
+  } else if (format === "anatomy_diagram" && options.correct_answer) {
+    context = `Correct muscle group (diagram): ${options.correct_answer}`;
   } else if ((format === "matching" || format === "diagram_matching") && options.pairs?.length) {
     context = `Correct pairs:\n${options.pairs.map((p) => `${p.left} → ${p.right}`).join("\n")}`;
   } else if (options.correct_answer) {
@@ -207,25 +222,6 @@ const FORMATS: Array<"open_ended" | "multiple_choice" | "fill_blank" | "matching
   "fill_blank",
   "matching",
 ];
-
-const IMAGE_EXT = /\.(png|jpe?g|gif|webp|bmp|tif)$/i;
-
-function pickDiagramImageFromChunks(
-  chunks: RagChunk[]
-): { file_name: string; folder_name: string } | null {
-  for (const c of chunks) {
-    if (c.content_type === "diagram") {
-      return { file_name: c.file_name, folder_name: c.folder_name };
-    }
-    if (c.drive_file_id) {
-      const mime = c.source_mime_type?.toLowerCase() ?? "";
-      if (mime.startsWith("image/") || IMAGE_EXT.test(c.file_name)) {
-        return { file_name: c.file_name, folder_name: c.folder_name };
-      }
-    }
-  }
-  return null;
-}
 
 async function getAnatomyDiagramChunks(
   userId: string
@@ -307,19 +303,14 @@ export async function generateQuestion(
     String(chunks[0].folder_name ?? "")
       .trim()
       .toLowerCase() === "anatomy";
-  const useAnatomyMultipleChoice = isAnatomy || Boolean(anatomyPrimarySource);
+  const useAnatomyDiagram = isAnatomy || Boolean(anatomyPrimarySource);
 
   let format: GenerateQuestionSuccess["format"];
   let imageFileName: string | undefined;
   let folderName: string | undefined;
 
-  if (useAnatomyMultipleChoice) {
-    format = "anatomy_multiple_choice";
-    const pick = pickDiagramImageFromChunks(chunks);
-    if (pick) {
-      imageFileName = pick.file_name;
-      folderName = pick.folder_name;
-    }
+  if (useAnatomyDiagram) {
+    format = "anatomy_diagram";
   } else if (diagramChunks.length > 0 && wantsMatching) {
     format = "diagram_matching";
     const picked = diagramChunks[Math.floor(Math.random() * diagramChunks.length)];
@@ -341,8 +332,8 @@ export async function generateQuestion(
       : "";
 
   const diagramNote =
-    format === "anatomy_multiple_choice" && imageFileName && folderName
-      ? `\nA diagram image from the learner's materials will be shown with this question (file: ${imageFileName}, folder: ${folderName}). Write the question so it refers to identifying a muscle or structure that can be tested with that diagram.\n`
+    format === "anatomy_diagram"
+      ? `\nThe learner answers on an interactive body diagram (front and back). They click exactly one of these muscle groups: ${ANATOMY_DIAGRAM_MUSCLE_LIST_PROMPT}. Ask which region is the primary answer for a movement or teaching scenario grounded in the chunks.\n`
       : "";
 
   const userMessage = `Source material:
@@ -388,31 +379,33 @@ Generate one NEW ${format.replace(/_/g, " ")} question that is different from al
     source_chunks_used: chunks,
   };
 
-  if (format === "anatomy_multiple_choice") {
-    if (Array.isArray(parsed.options) && parsed.options.length === 4) {
-      const opts = (parsed.options as unknown[]).map((x) => String(x).trim()).filter(Boolean);
-      const correctOpt =
-        typeof parsed.correct_option === "string" ? parsed.correct_option.trim() : "";
-      if (
-        opts.length === 4 &&
-        correctOpt &&
-        opts.some((o) => o === correctOpt)
-      ) {
-        return {
-          ...base,
-          format: "anatomy_multiple_choice",
-          anatomy_options: opts,
-          correct_option: correctOpt,
-          correct_answer: correctOpt,
-          expected_answer_elements: [correctOpt],
-          image_file_name: imageFileName,
-          folder_name: folderName,
-        };
-      }
+  if (format === "anatomy_diagram") {
+    const raw =
+      typeof parsed.target_muscle === "string" ? parsed.target_muscle.trim() : "";
+    const canonical = canonicalizeAnatomyDiagramMuscle(raw);
+    if (!canonical) {
+      throw new Error(
+        `Invalid anatomy_diagram: target_muscle must be one of: ${ANATOMY_DIAGRAM_MUSCLE_LIST_PROMPT}. Received: ${raw || "(missing)"}`
+      );
     }
-    throw new Error(
-      "Invalid anatomy multiple choice: expected four string options and correct_option matching exactly one of them."
+    let els = Array.isArray(parsed.expected_answer_elements)
+      ? (parsed.expected_answer_elements as unknown[])
+          .map((x) => String(x).trim())
+          .filter(Boolean)
+      : [];
+    const hasCanonical = els.some(
+      (e) => canonicalizeAnatomyDiagramMuscle(e) === canonical
     );
+    if (!hasCanonical) {
+      els = [canonical, ...els];
+    }
+    return {
+      ...base,
+      format: "anatomy_diagram",
+      target_muscle: canonical,
+      correct_answer: canonical,
+      expected_answer_elements: els.length ? els : [canonical],
+    };
   }
 
   if (parsed.format === "multiple_choice" && Array.isArray(parsed.options)) {
@@ -457,11 +450,31 @@ export interface EvaluateAnswerOptions {
     | "fill_blank"
     | "matching"
     | "diagram_matching"
-    | "anatomy_multiple_choice";
+    | "anatomy_multiple_choice"
+    | "anatomy_diagram";
   correct_id?: string;
   correct_answer?: string;
   pairs?: MatchingPair[];
   options?: McOption[];
+}
+
+function anatomyDiagramSelectionMatches(
+  userSelection: string,
+  expectedElements: string[],
+  canonicalTarget: string
+): boolean {
+  const u = userSelection.trim().toLowerCase();
+  if (!u) return false;
+  const targetLower = canonicalTarget.trim().toLowerCase();
+  if (u === targetLower) return true;
+  const userCanon = canonicalizeAnatomyDiagramMuscle(userSelection);
+  if (userCanon === canonicalTarget) return true;
+  for (const el of expectedElements) {
+    const e = el.trim().toLowerCase();
+    if (!e) continue;
+    if (u === e || u.includes(e) || e.includes(u)) return true;
+  }
+  return false;
 }
 
 export async function evaluateAnswer(
@@ -473,6 +486,39 @@ export async function evaluateAnswer(
   options?: EvaluateAnswerOptions
 ): Promise<EvaluationResult> {
   const format = options?.format ?? "open_ended";
+
+  if (format === "anatomy_diagram") {
+    const rawCorrect =
+      options?.correct_answer?.trim() ||
+      expectedElements.find((x) => canonicalizeAnatomyDiagramMuscle(x)) ||
+      expectedElements[0] ||
+      "";
+    const canonTarget =
+      canonicalizeAnatomyDiagramMuscle(rawCorrect) ?? rawCorrect.trim();
+    if (!canonTarget) {
+      return {
+        result: "incorrect",
+        feedback:
+          "Could not determine the correct muscle group for this question.",
+        correct_answer: null,
+      };
+    }
+    if (
+      anatomyDiagramSelectionMatches(userAnswer, expectedElements, canonTarget)
+    ) {
+      return {
+        result: "correct",
+        feedback: `Correct — your source material emphasizes **${canonTarget}** for this question. Use the diagram to connect exercise names to the major groups your manual calls out.`,
+        correct_answer: null,
+      };
+    }
+    const picked = userAnswer.trim() || "(no region selected)";
+    return {
+      result: "incorrect",
+      feedback: `Not quite. Based on your uploaded materials, the answer is **${canonTarget}**. You selected **${picked}**. Revisit the Purpose or muscle-target wording for this movement in your manual.`,
+      correct_answer: canonTarget,
+    };
+  }
 
   if (format === "anatomy_multiple_choice" && options?.correct_answer) {
     const correct = options.correct_answer.trim();
