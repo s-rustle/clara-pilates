@@ -30,6 +30,12 @@ export async function POST(request: NextRequest) {
     const correctAnswer = body?.correct_answer;
     const pairs = Array.isArray(body?.pairs) ? body.pairs : undefined;
     const options = Array.isArray(body?.options) ? body.options : undefined;
+    const diagramSelectedMuscle =
+      typeof body?.diagram_selected_muscle === "string"
+        ? body.diagram_selected_muscle
+        : body?.diagram_selected_muscle === null
+          ? null
+          : undefined;
 
     if (!questionId || typeof questionId !== "string") {
       return Response.json(
@@ -57,6 +63,7 @@ export async function POST(request: NextRequest) {
         correct_answer: correctAnswer,
         pairs,
         options,
+        diagram_selected_muscle: diagramSelectedMuscle,
       }
     );
 

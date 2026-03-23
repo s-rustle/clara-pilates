@@ -1,4 +1,4 @@
-import type { HourLog } from "@/types";
+import type { HourLog, HourTargets } from "@/types";
 import {
   calculateTotalHours,
   calculatePracticalHours,
@@ -6,33 +6,35 @@ import {
   calculateGaps,
   formatHours,
   getProgressPercent,
+  resolveHourTargets,
 } from "@/lib/utils/hours";
 import ProgressBar from "@/components/ui/ProgressBar";
 import Card from "@/components/ui/Card";
 
 interface HoursProgressPanelProps {
   logs: HourLog[];
+  /** When omitted, Balanced Body defaults (70 / 150 / 150 / 536) apply. */
+  hourTargets?: Partial<HourTargets> | null;
 }
 
-const MAT_TARGET = 70;
-const REFORMER_TARGET = 150;
-const APPARATUS_TARGET = 150;
-const TOTAL_TARGET = 536;
-
-export default function HoursProgressPanel({ logs }: HoursProgressPanelProps) {
+export default function HoursProgressPanel({
+  logs,
+  hourTargets,
+}: HoursProgressPanelProps) {
+  const t = resolveHourTargets(hourTargets);
   const totalLogged = calculateTotalHours(logs);
   const matLogged = calculatePracticalHours(logs, "mat");
   const reformerLogged = calculatePracticalHours(logs, "reformer");
   const apparatusLogged = calculatePracticalHours(logs, "apparatus");
   const scheduledHours = calculateScheduledHours(logs);
-  const gaps = calculateGaps(logs);
+  const gaps = calculateGaps(logs, hourTargets);
 
-  const totalPercent = getProgressPercent(totalLogged, TOTAL_TARGET);
-  const matPercent = getProgressPercent(matLogged, MAT_TARGET);
-  const reformerPercent = getProgressPercent(reformerLogged, REFORMER_TARGET);
+  const totalPercent = getProgressPercent(totalLogged, t.total);
+  const matPercent = getProgressPercent(matLogged, t.mat_practical);
+  const reformerPercent = getProgressPercent(reformerLogged, t.reformer_practical);
   const apparatusPercent = getProgressPercent(
     apparatusLogged,
-    APPARATUS_TARGET
+    t.apparatus_practical
   );
 
   const hasAnyGaps =
@@ -44,7 +46,7 @@ export default function HoursProgressPanel({ logs }: HoursProgressPanelProps) {
         <ProgressBar
           label="Total Hours"
           value={totalPercent}
-          sublabel={`${formatHours(totalLogged)} of 536 hours logged`}
+          sublabel={`${formatHours(totalLogged)} of ${t.total} hours logged`}
         />
       </div>
 
@@ -52,17 +54,17 @@ export default function HoursProgressPanel({ logs }: HoursProgressPanelProps) {
         <ProgressBar
           label="Mat Practical"
           value={matPercent}
-          sublabel={`${formatHours(matLogged)} of 70 hours`}
+          sublabel={`${formatHours(matLogged)} of ${t.mat_practical} hours`}
         />
         <ProgressBar
           label="Reformer Practical"
           value={reformerPercent}
-          sublabel={`${formatHours(reformerLogged)} of 150 hours`}
+          sublabel={`${formatHours(reformerLogged)} of ${t.reformer_practical} hours`}
         />
         <ProgressBar
           label="Apparatus Practical"
           value={apparatusPercent}
-          sublabel={`${formatHours(apparatusLogged)} of 150 hours`}
+          sublabel={`${formatHours(apparatusLogged)} of ${t.apparatus_practical} hours`}
         />
       </div>
 

@@ -6,20 +6,27 @@ import Card from "@/components/ui/Card";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import HoursProgressPanel from "@/components/hours/HoursProgressPanel";
-import type { HourLog } from "@/types";
+import type { HourLog, HourTargets } from "@/types";
 
 export default function HoursSummaryCard() {
   const [logs, setLogs] = useState<HourLog[]>([]);
+  const [hourTargets, setHourTargets] = useState<Partial<HourTargets> | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const fetchLogs = useCallback(async () => {
     setError("");
     try {
-      const res = await fetch("/api/hours", { credentials: "same-origin" });
-      const data = await res.json();
+      const [hoursRes, profileRes] = await Promise.all([
+        fetch("/api/hours", { credentials: "same-origin" }),
+        fetch("/api/profile", { credentials: "same-origin" }),
+      ]);
 
-      if (!res.ok) {
+      const data = await hoursRes.json();
+
+      if (!hoursRes.ok) {
         setError(
           typeof data.error === "string"
             ? data.error
@@ -34,9 +41,19 @@ export default function HoursSummaryCard() {
       } else {
         setLogs([]);
       }
+
+      const profileJson = await profileRes.json();
+      if (profileRes.ok && profileJson.success && profileJson.data) {
+        setHourTargets(
+          (profileJson.data.hour_targets as HourTargets | null) ?? null
+        );
+      } else {
+        setHourTargets(null);
+      }
     } catch {
       setError("Unable to load your hours. Please refresh the page.");
       setLogs([]);
+      setHourTargets(null);
     } finally {
       setLoading(false);
     }
@@ -75,7 +92,7 @@ export default function HoursSummaryCard() {
       {error ? (
         <ErrorMessage message={error} />
       ) : (
-        <HoursProgressPanel logs={logs} />
+        <HoursProgressPanel logs={logs} hourTargets={hourTargets} />
       )}
     </Card>
   );

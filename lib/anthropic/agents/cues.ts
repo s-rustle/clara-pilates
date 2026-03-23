@@ -1,6 +1,7 @@
 import { anthropic } from "@/lib/anthropic/client";
 import { queryRAG } from "../rag";
 import { OUT_OF_SCOPE_INSTRUCTION } from "./boundaries";
+import { stripBalancedBodyExerciseHeadersFromText } from "@/lib/curriculum/exerciseNames";
 import type { CueFeedback, CueDimension } from "@/types";
 import type { RagChunk } from "@/types";
 
@@ -31,7 +32,7 @@ function formatChunksForPrompt(chunks: RagChunk[]): string {
   return chunks
     .map(
       (c, i) =>
-        `[Chunk ${i + 1} — ${c.folder_name} / ${c.file_name}]\n${c.content}`
+        `[Chunk ${i + 1} — ${c.folder_name} / ${c.file_name}]\n${stripBalancedBodyExerciseHeadersFromText(c.content)}`
     )
     .join("\n\n---\n\n");
 }

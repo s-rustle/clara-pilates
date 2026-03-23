@@ -1,9 +1,36 @@
-import type { HourLog } from "@/types";
+import type { HourLog, HourTargets } from "@/types";
+import { DEFAULT_HOUR_TARGETS } from "@/types";
 
-const TOTAL_TARGET = 536;
-const MAT_PRACTICAL_TARGET = 70;
-const REFORMER_PRACTICAL_TARGET = 150;
-const APPARATUS_PRACTICAL_TARGET = 150;
+export function resolveHourTargets(
+  raw: Partial<HourTargets> | null | undefined
+): HourTargets {
+  return {
+    mat_practical:
+      typeof raw?.mat_practical === "number" &&
+      Number.isFinite(raw.mat_practical) &&
+      raw.mat_practical > 0
+        ? raw.mat_practical
+        : DEFAULT_HOUR_TARGETS.mat_practical,
+    reformer_practical:
+      typeof raw?.reformer_practical === "number" &&
+      Number.isFinite(raw.reformer_practical) &&
+      raw.reformer_practical > 0
+        ? raw.reformer_practical
+        : DEFAULT_HOUR_TARGETS.reformer_practical,
+    apparatus_practical:
+      typeof raw?.apparatus_practical === "number" &&
+      Number.isFinite(raw.apparatus_practical) &&
+      raw.apparatus_practical > 0
+        ? raw.apparatus_practical
+        : DEFAULT_HOUR_TARGETS.apparatus_practical,
+    total:
+      typeof raw?.total === "number" &&
+      Number.isFinite(raw.total) &&
+      raw.total > 0
+        ? raw.total
+        : DEFAULT_HOUR_TARGETS.total,
+  };
+}
 
 function roundToOneDecimal(n: number): number {
   return Math.round(n * 10) / 10;
@@ -67,22 +94,26 @@ export interface HoursGaps {
   apparatus: number;
 }
 
-export function calculateGaps(logs: HourLog[]): HoursGaps {
+export function calculateGaps(
+  logs: HourLog[],
+  targets?: Partial<HourTargets> | null
+): HoursGaps {
+  const t = resolveHourTargets(targets);
   const totalLogged = calculateTotalHours(logs);
   const matLogged = calculatePracticalHours(logs, "mat");
   const reformerLogged = calculatePracticalHours(logs, "reformer");
   const apparatusLogged = calculatePracticalHours(logs, "apparatus");
 
   return {
-    total: Math.max(0, roundToOneDecimal(TOTAL_TARGET - totalLogged)),
-    mat: Math.max(0, roundToOneDecimal(MAT_PRACTICAL_TARGET - matLogged)),
+    total: Math.max(0, roundToOneDecimal(t.total - totalLogged)),
+    mat: Math.max(0, roundToOneDecimal(t.mat_practical - matLogged)),
     reformer: Math.max(
       0,
-      roundToOneDecimal(REFORMER_PRACTICAL_TARGET - reformerLogged)
+      roundToOneDecimal(t.reformer_practical - reformerLogged)
     ),
     apparatus: Math.max(
       0,
-      roundToOneDecimal(APPARATUS_PRACTICAL_TARGET - apparatusLogged)
+      roundToOneDecimal(t.apparatus_practical - apparatusLogged)
     ),
   };
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import type { ExerciseItem } from "@/types";
+import { formatExerciseNameForDisplay } from "@/lib/curriculum/exerciseNames";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 
@@ -104,7 +105,7 @@ export default function ExerciseSequence({
               <div className="flex flex-wrap items-end gap-2">
                 <div className="min-w-[120px] flex-1">
                   <span className="text-sm font-medium text-clara-deep">
-                    {ex.exercise_name}
+                    {formatExerciseNameForDisplay(ex.exercise_name)}
                   </span>
                 </div>
                 <div className="w-20">

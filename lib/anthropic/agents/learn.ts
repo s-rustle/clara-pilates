@@ -3,13 +3,23 @@ import { queryRAGWithContext } from "../rag";
 import { OUT_OF_SCOPE_INSTRUCTION } from "./boundaries";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { RagChunk, TutorialContent } from "@/types";
+import {
+  extractExerciseNamesFromContents,
+  stripBalancedBodyExerciseHeadersFromText,
+  stripStandaloneLevelRepsLines,
+  formatExerciseNameForDisplay,
+} from "@/lib/curriculum/exerciseNames";
+
+export { extractExerciseNamesFromContents };
 
 const LEARN_MODEL = "claude-sonnet-4-20250514";
 
 const LEARN_SYSTEM = `You are Clara, a Balanced Body Pilates instructor teaching in tutorial mode
 Teach the exercise step by step using only the provided source material
-Be precise — use exact Balanced Body terminology, exercise names, and anatomical language
-Manuals often use an exercise header: large ALL CAPS title, then a line like "INTERMEDIATE • 4-6 REPS". When **LEVEL:** or **REPS:** (or equivalent) appears in the chunks, copy those facts exactly into difficulty_level and rep_range.
+Be precise — use exact Balanced Body terminology and anatomical language
+Manual exercise headers in source are often: ALL CAPS title on one line, then a line like "INTERMEDIATE • 4-6 REPS". Those header lines may be omitted from the chunks you see — infer level and reps from **LEVEL:** / **REPS:** tags or body text when present.
+Use Title Case for exercise_name (e.g. "Swan Dive", "Climb a Tree") — never leave the title in ALL CAPS.
+Put program level only in difficulty_level and rep range only in rep_range — do not repeat the raw "LEVEL • N-N REPS" header line inside starting_position, movement_description, or other body fields.
 Return ONLY valid JSON:
 
 {
@@ -124,309 +134,31 @@ function pickManualImageFromChunks(
 const RAG_ERROR =
   "No curriculum material found for this topic. Please ingest relevant materials first.";
 
-/** Explicit tags from ingestion (PDF / vision). */
-const EXERCISE_TAGGED =
-  /\*\*EXERCISE:\s*\[([^\]\*]+)\]\*\*/gi;
-const EXERCISE_TAGGED_UNBRACKETED =
-  /\*\*EXERCISE:\s*([^*\n]+?)\*\*/gi;
-
-/** Other **bold** spans in manuals (exercise names); exclude section labels. */
-const BOLD_SPAN = /\*\*([^*]{2,100})\*\*/g;
-
-const BOLD_SECTION_PREFIX =
-  /^(EXERCISE|PURPOSE|MOVEMENT|LEVEL|PRECAUTIONS|BREATH|SESSION|PROGRESSION|SPRING|STARTING|NOTES?|TIPS?)\b/i;
-
-const TITLE_STOP = new Set([
-  "the",
-  "a",
-  "an",
-  "and",
-  "or",
-  "of",
-  "to",
-  "in",
-  "for",
-  "fig",
-  "figure",
-  "page",
-  "see",
-  "note",
-]);
-
-/** Full-line (normalized) all-caps headers to skip — not exercise titles. */
-const IGNORE_ALL_CAPS_LINES = new Set(
-  [
-    "STARTING POSITION",
-    "MOVEMENT SEQUENCE",
-    "MOVEMENT",
-    "PURPOSE",
-    "BREATH",
-    "PROGRESSIONS",
-    "SPRING SETTINGS",
-    "SESSION TEMPLATE",
-    "PROGRESSION TABLE",
-    "SEQUENCE",
-    "LEVEL",
-    "ARM VARIATIONS",
-    "REPS",
-    "ADVANCED",
-    "BEGINNER",
-    "INTERMEDIATE",
-    "PRECAUTIONS",
-    "NOTES",
-    "TIPS",
-    "INHALE",
-    "EXHALE",
-    "HANDWRITTEN NOTE",
-  ].map((s) => s.toUpperCase())
-);
-
-/**
- * If every token on the line is one of these, treat as non-title (section junk).
- * Single-word lines like "SIDE" still need at least one non-ignore token for multi-word titles.
- */
-const IGNORE_ALL_CAPS_TOKENS = new Set(
-  [
-    "STARTING",
-    "POSITION",
-    "MOVEMENT",
-    "SEQUENCE",
-    "ARM",
-    "VARIATIONS",
-    "REPS",
-    "REP",
-    "ADVANCED",
-    "BEGINNER",
-    "INTERMEDIATE",
-    "PRECAUTIONS",
-    "PURPOSE",
-    "PROGRESSIONS",
-    "PROGRESSION",
-    "TABLE",
-    "SESSION",
-    "TEMPLATE",
-    "SEQUENCE",
-    "SPRING",
-    "SETTINGS",
-    "BREATH",
-    "LEVEL",
-    "MOVEMENT",
-    "NOTES",
-    "TIPS",
-    "INHALE",
-    "EXHALE",
-    "HANDWRITTEN",
-    "NOTE",
-    "THE",
-    "AND",
-    "OR",
-    "OF",
-    "TO",
-    "IN",
-    "FOR",
-    "A",
-    "AN",
-    "FIG",
-    "FIGURE",
-    "PAGE",
-    "SEE",
-  ].map((s) => s.toUpperCase())
-);
-
-/** EXERCISE NAME followed by level / rep cue (whole-line or substring). */
-const LEVEL_SUFFIX =
-  /\s+(ADVANCED|BEGINNER|INTERMEDIATE|(\d+\s*[-–]\s*\d+\s*REPS?))\s*$/i;
-
-function plausibleExerciseTitle(s: string): boolean {
-  const t = s.trim();
-  if (t.length < 2 || t.length > 100) return false;
-  if (/^\d+$/.test(t)) return false;
-  const lower = t.toLowerCase();
-  if (TITLE_STOP.has(lower)) return false;
-  if (/^chunk\s*\d/i.test(t)) return false;
-  if (/^exercise:\s*/i.test(t)) return false;
-  return true;
+function scrubTutorialBodyField(s: string): string {
+  return stripStandaloneLevelRepsLines(
+    stripBalancedBodyExerciseHeadersFromText(s)
+  ).trim();
 }
 
-function normalizeSpaces(s: string): string {
-  return s.replace(/\s+/g, " ").trim();
-}
-
-function isAllCapsLine(line: string): boolean {
-  const t = line.trim();
-  if (t.length < 2 || t.length > 88) return false;
-  if (!/[A-Z]/.test(t)) return false;
-  if (/[a-z]/.test(t)) return false;
-  return /^[A-Z0-9'’\s.,&\-–—]+$/u.test(t);
-}
-
-function shouldSkipAllCapsLine(line: string): boolean {
-  const u = normalizeSpaces(line).toUpperCase();
-  if (IGNORE_ALL_CAPS_LINES.has(u)) return true;
-  const tokens = u.split(/\s+/).filter(Boolean);
-  if (tokens.length === 0) return true;
-  if (tokens.every((tok) => IGNORE_ALL_CAPS_TOKENS.has(tok))) return true;
-  return false;
-}
-
-const BANNED_TITLE_LINE_START =
-  /^(The|This|When|For|If|In|As|At|To|On|Your|Use|Keep|Repeat|Note|See|Figure|Chapter|Table|Each|Both|Place|Hold|Start|Begin|With|From|After|Before|During|Do|Never|Always|There|These|Those|Some|Many|Most|All|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)\b/i;
-
-/** Per-token Title Case, including hyphenated exercise names (e.g. Sit-Up, Side-to-Side). */
-function isTitleCaseExerciseToken(w: string): boolean {
-  if (/^\d+([-–]\d+)?$/.test(w)) return true;
-  const segments = w.split("-");
-  for (const seg of segments) {
-    if (!seg.length) return false;
-    if (!/^[A-Z][a-z0-9']{0,28}$/.test(seg)) return false;
-  }
-  return segments.length > 0;
-}
-
-/** Balanced Body PDFs often use Title Case exercise headings (not ALL CAPS). */
-function isLikelyTitleCaseExerciseLine(line: string): boolean {
-  const t = line.trim();
-  if (t.length < 8 || t.length > 78) return false;
-  if (/^\d+[\.)]\s/.test(t)) return false;
-  if (/^[\W\d]/.test(t)) return false;
-  const words = normalizeSpaces(t).split(/\s+/);
-  if (words.length < 2 || words.length > 8) return false;
-  if (BANNED_TITLE_LINE_START.test(words[0])) return false;
-  for (const w of words) {
-    if (!isTitleCaseExerciseToken(w)) return false;
-  }
-  return true;
-}
-
-/** Strip trailing page refs / ellipsis from numbered manual lines. */
-function stripNumberedLineNoise(s: string): string {
-  let t = normalizeSpaces(s.replace(/\*+/g, "").trim());
-  t = t.replace(/\s*\.{2,}.*$/, "").trim();
-  t = t.replace(/\s*[-–—]\s*p\.?\s*\d+.*$/i, "").trim();
-  return t;
-}
-
-/** Lines like "1. Roll Down" or "12) Side Sit Up" (common in pdf-parse output). */
-function titleFromNumberedLine(line: string): string | null {
-  const trimmed = line.trim();
-  const dotted = /^\s*\d{1,2}[\.)]\s+(.+)$/.exec(trimmed);
-  if (dotted) {
-    const inner = stripNumberedLineNoise(dotted[1]);
-    return inner.length >= 3 ? inner : null;
-  }
-  const spaced = /^\s*\d{1,2}\s+([A-Z][^\n]{2,90})$/.exec(trimmed);
-  if (spaced) {
-    const inner = stripNumberedLineNoise(spaced[1]);
-    return inner.length >= 3 ? inner : null;
-  }
-  return null;
-}
-
-function stripLevelSuffix(s: string): string {
-  let t = normalizeSpaces(s);
-  let prev = "";
-  while (t !== prev) {
-    prev = t;
-    t = t.replace(LEVEL_SUFFIX, "").trim();
-  }
-  return t;
-}
-
-function extractFromExerciseLevelPattern(text: string, seen: Set<string>, out: string[]): void {
-  const re =
-    /(^|\n)\s*([A-Z][A-Z0-9'’\s\-–—]{1,70}?)\s+(ADVANCED|BEGINNER|INTERMEDIATE|\d+\s*[-–]\s*\d+\s*REPS?)\s*(?=\n|$)/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(text)) !== null) {
-    const raw = normalizeSpaces(m[2]);
-    if (raw.length < 2) continue;
-    const base = stripLevelSuffix(raw);
-    if (base.length < 2 || shouldSkipAllCapsLine(base)) continue;
-    const key = base.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(base);
-  }
-}
-
-export function extractExerciseNamesFromContents(contents: string[]): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
-
-  const pushTitle = (raw: string) => {
-    const name = normalizeSpaces(raw);
-    if (!plausibleExerciseTitle(name)) return;
-    const key = name.toLowerCase();
-    if (seen.has(key)) return;
-    seen.add(key);
-    out.push(name);
+function normalizeTutorialDisplayFields(
+  base: Omit<TutorialContent, "error" | "manual_image">
+): Omit<TutorialContent, "error" | "manual_image"> {
+  return {
+    ...base,
+    exercise_name: formatExerciseNameForDisplay(base.exercise_name),
+    starting_position: scrubTutorialBodyField(base.starting_position),
+    movement_description: scrubTutorialBodyField(base.movement_description),
+    breath_cues: scrubTutorialBodyField(base.breath_cues),
+    precautions: scrubTutorialBodyField(base.precautions),
+    teaching_tips: scrubTutorialBodyField(base.teaching_tips),
+    muscle_groups: scrubTutorialBodyField(base.muscle_groups),
+    progressions: base.progressions
+      ? scrubTutorialBodyField(base.progressions)
+      : null,
+    spring_settings: base.spring_settings
+      ? scrubTutorialBodyField(base.spring_settings)
+      : null,
   };
-
-  for (const text of contents) {
-    if (!text) continue;
-
-    EXERCISE_TAGGED.lastIndex = 0;
-    let m: RegExpExecArray | null;
-    while ((m = EXERCISE_TAGGED.exec(text)) !== null) {
-      pushTitle(m[1]);
-    }
-
-    EXERCISE_TAGGED_UNBRACKETED.lastIndex = 0;
-    while ((m = EXERCISE_TAGGED_UNBRACKETED.exec(text)) !== null) {
-      const inner = m[1].trim();
-      const unbracket = inner.replace(/^\[|\]$/g, "").trim();
-      pushTitle(unbracket);
-    }
-
-    extractFromExerciseLevelPattern(text, seen, out);
-
-    BOLD_SPAN.lastIndex = 0;
-    while ((m = BOLD_SPAN.exec(text)) !== null) {
-      const inner = normalizeSpaces(m[1].trim());
-      if (/^exercise:\s*/i.test(inner)) continue;
-      if (BOLD_SECTION_PREFIX.test(inner)) continue;
-      pushTitle(inner);
-    }
-
-    const lines = text.split(/\n/);
-    for (const line of lines) {
-      const trimmed = line.trim();
-      const numberedTitle = titleFromNumberedLine(trimmed);
-      if (numberedTitle) {
-        pushTitle(numberedTitle);
-        continue;
-      }
-      if (isAllCapsLine(trimmed)) {
-        if (shouldSkipAllCapsLine(trimmed)) continue;
-        const wc = normalizeSpaces(trimmed).split(/\s+/).filter(Boolean).length;
-        const base = stripLevelSuffix(trimmed);
-        if (wc >= 2) {
-          if (
-            base.length >= 2 &&
-            isAllCapsLine(base) &&
-            !shouldSkipAllCapsLine(base) &&
-            normalizeSpaces(base).split(/\s+/).filter(Boolean).length >= 2
-          ) {
-            pushTitle(base);
-          }
-        } else if (wc === 1) {
-          const tok = normalizeSpaces(base);
-          if (
-            tok.length >= 5 &&
-            tok.length <= 36 &&
-            isAllCapsLine(tok) &&
-            !shouldSkipAllCapsLine(tok)
-          ) {
-            pushTitle(tok);
-          }
-        }
-      } else if (isLikelyTitleCaseExerciseLine(trimmed)) {
-        pushTitle(trimmed);
-      }
-    }
-  }
-
-  out.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
-  return out.slice(0, 200);
 }
 
 /**
@@ -471,7 +203,7 @@ export async function generateTutorial(
   const sourceBlock = chunks
     .map(
       (c, i) =>
-        `[Chunk ${i + 1} — ${c.folder_name} / ${c.file_name}]\n${c.content}`
+        `[Chunk ${i + 1} — ${c.folder_name} / ${c.file_name}]\n${stripBalancedBodyExerciseHeadersFromText(c.content)}`
     )
     .join("\n\n---\n\n");
 
@@ -504,9 +236,10 @@ Return the JSON object with all fields.`;
   const parsed = parseJsonFromResponse<unknown>(text);
   const base = validateTutorialPayload(parsed);
   const manual_image = pickManualImageFromChunks(chunks);
+  const normalized = normalizeTutorialDisplayFields(base);
 
   return {
-    ...base,
+    ...normalized,
     manual_image: manual_image ?? null,
   };
 }

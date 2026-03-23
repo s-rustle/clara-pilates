@@ -13,6 +13,9 @@ interface EvaluationCardProps {
   correctAnswer?: string;
   onNext: () => void;
   requestExplanation?: () => Promise<string>;
+  /** When set, replaces the default Correct / Partial / Incorrect badge label */
+  badgeLabel?: string;
+  nextButtonLabel?: string;
 }
 
 const BADGE_VARIANTS: Record<
@@ -30,6 +33,8 @@ export default function EvaluationCard({
   correctAnswer,
   onNext,
   requestExplanation,
+  badgeLabel,
+  nextButtonLabel = "Next Question",
 }: EvaluationCardProps) {
   const [explanation, setExplanation] = useState<string | null>(null);
   const [explanationLoading, setExplanationLoading] = useState(false);
@@ -54,7 +59,8 @@ export default function EvaluationCard({
     <Card>
       <div className="flex flex-col gap-4">
         <Badge variant={BADGE_VARIANTS[result]}>
-          {result.charAt(0).toUpperCase() + result.slice(1)}
+          {badgeLabel ??
+            result.charAt(0).toUpperCase() + result.slice(1)}
         </Badge>
         <MarkdownBody>{feedback}</MarkdownBody>
         {correctAnswer && (
@@ -92,7 +98,7 @@ export default function EvaluationCard({
           </div>
         )}
         <Button variant="primary" onClick={onNext}>
-          Next Question
+          {nextButtonLabel}
         </Button>
       </div>
     </Card>

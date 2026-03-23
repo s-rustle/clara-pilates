@@ -1,6 +1,7 @@
 import { anthropic } from "@/lib/anthropic/client";
 import { queryRAGWithContext } from "../rag";
 import { OUT_OF_SCOPE_INSTRUCTION } from "./boundaries";
+import { stripBalancedBodyExerciseHeadersFromText } from "@/lib/curriculum/exerciseNames";
 import type {
   ExerciseItem,
   RagChunk,
@@ -34,13 +35,15 @@ Return ONLY valid JSON — no markdown, no preamble:
 
 If source material not found for an exercise: flag as 'not_verified' rather than invent
 
+Exercise names in JSON (flags, flagged_exercises): use Title Case (e.g. "Swan Dive"), not ALL CAPS manual headers.
+
 ${OUT_OF_SCOPE_INSTRUCTION}`;
 
 function formatChunksForPrompt(chunks: RagChunk[]): string {
   return chunks
     .map(
       (c, i) =>
-        `[Chunk ${i + 1} — ${c.folder_name} / ${c.file_name}]\n${c.content}`
+        `[Chunk ${i + 1} — ${c.folder_name} / ${c.file_name}]\n${stripBalancedBodyExerciseHeadersFromText(c.content)}`
     )
     .join("\n\n---\n\n");
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import type { HourLog } from "@/types";
+import type { HourLog, HourTargets } from "@/types";
 import HourLogForm from "@/components/hours/HourLogForm";
 import HoursProgressPanel from "@/components/hours/HoursProgressPanel";
 import HourLogTable from "@/components/hours/HourLogTable";
@@ -10,29 +10,47 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 export default function HoursPage() {
   const [logs, setLogs] = useState<HourLog[]>([]);
+  const [hourTargets, setHourTargets] = useState<Partial<HourTargets> | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const fetchLogs = useCallback(async () => {
     setError("");
     try {
-      const res = await fetch("/api/hours");
-      const data = await res.json();
+      const [hoursRes, profileRes] = await Promise.all([
+        fetch("/api/hours", { credentials: "same-origin" }),
+        fetch("/api/profile", { credentials: "same-origin" }),
+      ]);
 
-      if (!res.ok) {
-        setError(data.error ?? "Unable to load your hours. Please refresh the page.");
+      const hoursData = await hoursRes.json();
+      if (!hoursRes.ok) {
+        setError(
+          hoursData.error ?? "Unable to load your hours. Please refresh the page."
+        );
         setLogs([]);
         return;
       }
 
-      if (data.success && Array.isArray(data.data)) {
-        setLogs(data.data);
+      if (hoursData.success && Array.isArray(hoursData.data)) {
+        setLogs(hoursData.data);
       } else {
         setLogs([]);
+      }
+
+      const profileData = await profileRes.json();
+      if (profileRes.ok && profileData.success && profileData.data) {
+        setHourTargets(
+          (profileData.data.hour_targets as HourTargets | null) ?? null
+        );
+      } else {
+        setHourTargets(null);
       }
     } catch {
       setError("Unable to load your hours. Please refresh the page.");
       setLogs([]);
+      setHourTargets(null);
     } finally {
       setLoading(false);
     }
@@ -62,7 +80,7 @@ export default function HoursPage() {
           />
         </div>
         <div className="lg:col-span-3">
-          <HoursProgressPanel logs={logs} />
+          <HoursProgressPanel logs={logs} hourTargets={hourTargets} />
         </div>
       </div>
 

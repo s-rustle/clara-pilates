@@ -70,6 +70,9 @@ export default function QuizPage() {
   const [selectedAnatomyOption, setSelectedAnatomyOption] = useState<string | null>(
     null
   );
+  const [diagramSelectedRegion, setDiagramSelectedRegion] = useState<string | null>(
+    null
+  );
 
   const doFetchQuestion = useCallback(
     async (
@@ -136,6 +139,7 @@ export default function QuizPage() {
         setPreviousQuestions((prev) => [...prev, d.question]);
         setEvaluation(null);
         setSelectedAnatomyOption(null);
+        setDiagramSelectedRegion(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load question");
       } finally {
@@ -203,6 +207,7 @@ export default function QuizPage() {
         setPreviousQuestions([]);
         setCurrentQuestion(null);
         setEvaluation(null);
+        setDiagramSelectedRegion(null);
 
         await doFetchQuestion(session.id, [], app, topicVal, diff, fmt);
       } catch (err) {
@@ -220,26 +225,31 @@ export default function QuizPage() {
       setError(null);
       setIsEvaluating(true);
       try {
+        const evaluateBody: Record<string, unknown> = {
+          question_id: currentQuestion.questionId,
+          question: currentQuestion.question,
+          user_answer: answer,
+          expected_elements: currentQuestion.expectedAnswerElements,
+          is_retry: isRetry,
+          format: currentQuestion.format,
+          correct_id: currentQuestion.correctId,
+          correct_answer:
+            currentQuestion.format === "anatomy_multiple_choice"
+              ? currentQuestion.correctOption ?? currentQuestion.correctAnswer
+              : currentQuestion.format === "anatomy_diagram"
+                ? currentQuestion.targetMuscle
+                : currentQuestion.correctAnswer,
+          pairs: currentQuestion.pairs,
+          options: currentQuestion.options,
+        };
+        if (currentQuestion.format === "anatomy_diagram") {
+          evaluateBody.diagram_selected_muscle = diagramSelectedRegion;
+        }
+
         const res = await fetch("/api/agents/examiner/evaluate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            question_id: currentQuestion.questionId,
-            question: currentQuestion.question,
-            user_answer: answer,
-            expected_elements: currentQuestion.expectedAnswerElements,
-            is_retry: isRetry,
-            format: currentQuestion.format,
-            correct_id: currentQuestion.correctId,
-            correct_answer:
-              currentQuestion.format === "anatomy_multiple_choice"
-                ? currentQuestion.correctOption ?? currentQuestion.correctAnswer
-                : currentQuestion.format === "anatomy_diagram"
-                  ? currentQuestion.targetMuscle
-                  : currentQuestion.correctAnswer,
-            pairs: currentQuestion.pairs,
-            options: currentQuestion.options,
-          }),
+          body: JSON.stringify(evaluateBody),
           credentials: "same-origin",
         });
         const json = await res.json();
@@ -256,7 +266,9 @@ export default function QuizPage() {
 
         const { result, feedback, correct_answer } = json.data;
         const showRetry =
-          result === "partial" && !isRetry;
+          result === "partial" &&
+          !isRetry &&
+          currentQuestion.format !== "anatomy_diagram";
 
         setEvaluation({
           result,
@@ -276,7 +288,7 @@ export default function QuizPage() {
         setIsEvaluating(false);
       }
     },
-    [currentQuestion]
+    [currentQuestion, diagramSelectedRegion]
   );
 
   const handleNextQuestion = useCallback(async () => {
@@ -307,6 +319,7 @@ export default function QuizPage() {
       setCurrentIndex(nextIndex);
       setCurrentQuestion(null);
       setEvaluation(null);
+      setDiagramSelectedRegion(null);
       await fetchQuestion();
     }
   }, [currentIndex, questionCount, score, sessionId, fetchQuestion]);
@@ -414,16 +427,18 @@ export default function QuizPage() {
                   }}
                   anatomy_submit_loading={isEvaluating}
                   target_muscle={currentQuestion.targetMuscle}
-                  selected_muscle={selectedAnatomyOption}
-                  on_select_muscle={setSelectedAnatomyOption}
-                  on_submit_diagram={() => {
-                    if (selectedAnatomyOption) {
-                      void handleAnswerSubmit(selectedAnatomyOption, false);
-                    }
+                  selected_muscle={diagramSelectedRegion}
+                  on_select_muscle={setDiagramSelectedRegion}
+                  on_submit_diagram_recall={(typed) => {
+                    void handleAnswerSubmit(typed, false);
                   }}
                   diagram_submit_loading={isEvaluating}
                   reveal_diagram_answer={!!evaluation}
-                  correct_muscle={currentQuestion.targetMuscle}
+                  correct_muscle={
+                    evaluation?.correctAnswer ??
+                    currentQuestion.targetMuscle ??
+                    ""
+                  }
                 />
                 <AnswerInput
                   key={currentQuestion.questionId}

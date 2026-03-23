@@ -36,6 +36,14 @@ interface AnswerInputProps {
   option_strings?: string[];
 }
 
+function anatomyRecallBadgeLabel(
+  result: "correct" | "partial" | "incorrect"
+): string {
+  if (result === "correct") return "✓ Correct";
+  if (result === "partial") return "~ Close";
+  return "✗ Incorrect";
+}
+
 export default function AnswerInput({
   format = "open_ended",
   onSubmit,
@@ -69,6 +77,7 @@ export default function AnswerInput({
     if (showEvaluation && result && feedback !== undefined) {
       const showCorrectAnswer =
         result === "incorrect" || (result === "partial" && !showRetry);
+      const isDiagramRecall = format === "anatomy_diagram";
       return (
         <EvaluationCard
           result={result}
@@ -76,6 +85,8 @@ export default function AnswerInput({
           correctAnswer={showCorrectAnswer ? correctAnswer ?? undefined : undefined}
           onNext={onNext}
           requestExplanation={requestExplanation}
+          badgeLabel={isDiagramRecall ? anatomyRecallBadgeLabel(result) : undefined}
+          nextButtonLabel={isDiagramRecall ? "Next" : undefined}
         />
       );
     }

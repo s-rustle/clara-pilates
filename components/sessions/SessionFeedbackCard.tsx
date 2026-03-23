@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { SessionFeedback } from "@/types";
+import { formatExerciseNameForDisplay } from "@/lib/curriculum/exerciseNames";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import MarkdownBody from "@/components/ui/MarkdownBody";
@@ -88,7 +89,9 @@ export default function SessionFeedbackCard({
             <ul className="mt-2 list-disc space-y-1 pl-5 text-clara-deep">
               {feedback.contraindication_flags.flags.map((f, i) => (
                 <li key={i}>
-                  <span className="font-bold text-clara-strong">{f.exercise_name}:</span>{" "}
+                  <span className="font-bold text-clara-strong">
+                    {formatExerciseNameForDisplay(f.exercise_name)}:
+                  </span>{" "}
                   {f.flag} — {f.recommendation}
                 </li>
               ))}
@@ -118,7 +121,7 @@ export default function SessionFeedbackCard({
             feedback.volume_assessment.flagged_exercises.length > 0 && (
               <ul className="mt-1 list-disc pl-5 text-clara-deep">
                 {feedback.volume_assessment.flagged_exercises.map((ex, i) => (
-                  <li key={i}>{ex}</li>
+                  <li key={i}>{formatExerciseNameForDisplay(ex)}</li>
                 ))}
               </ul>
             )}

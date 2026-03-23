@@ -18,6 +18,7 @@ function isProtectedPath(pathname: string): boolean {
   if (pathname.startsWith("/dashboard")) return true;
   if (pathname.startsWith("/api/agents/")) return true;
   if (pathname.startsWith("/api/hours")) return true;
+  if (pathname.startsWith("/api/profile")) return true;
   if (pathname.startsWith("/api/sessions")) return true;
   if (pathname.startsWith("/api/ingest")) return true;
   if (pathname.startsWith("/api/curriculum/")) return true;

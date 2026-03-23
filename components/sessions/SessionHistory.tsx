@@ -1,6 +1,7 @@
 "use client";
 
 import type { ExerciseItem, SessionFeedback, SessionPlan, WarmUpMove } from "@/types";
+import { formatExerciseNameForDisplay } from "@/lib/curriculum/exerciseNames";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
@@ -206,7 +207,7 @@ function ReadOnlyDetails({ session }: { session: SessionPlan }) {
         <ul className="mt-1 list-disc pl-5">
           {seq.map((e, i) => (
             <li key={i}>
-              {e.exercise_name} — {e.sets}×{e.reps}
+              {formatExerciseNameForDisplay(e.exercise_name)} — {e.sets}×{e.reps}
               {e.notes?.trim() ? ` — ${e.notes}` : ""}
             </li>
           ))}

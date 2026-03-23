@@ -173,35 +173,77 @@ describe("Examiner Agent", () => {
     expect(bad.correct_answer).toBe("Psoas major");
   });
 
-  it("evaluates anatomy_diagram without Claude — canonical and synonym match", async () => {
+  it("evaluates anatomy_diagram typed recall via Examiner (Claude)", async () => {
+    const { anthropic } = await import("@/lib/anthropic/client");
+
+    vi.mocked(anthropic.messages.create).mockResolvedValueOnce({
+      content: [
+        {
+          type: "text",
+          text: '{"result":"correct","feedback":"Right — that matches the abdominal emphasis in your materials.","correct_answer":null}',
+        },
+      ],
+    } as never);
+
     const ok = await evaluateAnswer(
-      "During Corkscrew, which muscle group is primarily strengthened?",
-      "Abdominals",
+      "During **Corkscrew**, which muscle group is primarily strengthened?",
+      "rectus abdominis",
       ["Abdominals", "rectus abdominis", "obliques"],
       false,
       "user-1",
-      { format: "anatomy_diagram", correct_answer: "Abdominals" }
+      {
+        format: "anatomy_diagram",
+        correct_answer: "Abdominals",
+        diagram_selected_muscle: "Abdominals",
+      }
     );
     expect(ok.result).toBe("correct");
     expect(ok.correct_answer).toBeNull();
 
-    const partial = await evaluateAnswer(
-      "During Corkscrew, which muscle group is primarily strengthened?",
-      "rectus abdominis",
-      ["Abdominals", "rectus abdominis"],
+    vi.mocked(anthropic.messages.create).mockResolvedValueOnce({
+      content: [
+        {
+          type: "text",
+          text: '{"result":"partial","feedback":"Close — you named the erector spinae; we use the broader spinal extensor group here.","correct_answer":"Spinal Extensors"}',
+        },
+      ],
+    } as never);
+
+    const close = await evaluateAnswer(
+      "Which muscle group stabilizes the spine in extension?",
+      "erector spinae",
+      ["Spinal Extensors", "erector spinae"],
       false,
       "user-1",
-      { format: "anatomy_diagram", correct_answer: "Abdominals" }
+      {
+        format: "anatomy_diagram",
+        correct_answer: "Spinal Extensors",
+        diagram_selected_muscle: "Spinal Extensors",
+      }
     );
-    expect(partial.result).toBe("correct");
+    expect(close.result).toBe("partial");
+    expect(close.correct_answer).toBe("Spinal Extensors");
+
+    vi.mocked(anthropic.messages.create).mockResolvedValueOnce({
+      content: [
+        {
+          type: "text",
+          text: '{"result":"incorrect","feedback":"That names a different area than this question targets.","correct_answer":"Abdominals"}',
+        },
+      ],
+    } as never);
 
     const bad = await evaluateAnswer(
-      "During Corkscrew, which muscle group is primarily strengthened?",
-      "Hamstrings",
+      "During **Corkscrew**, which muscle group is primarily strengthened?",
+      "hamstrings",
       ["Abdominals", "obliques"],
       false,
       "user-1",
-      { format: "anatomy_diagram", correct_answer: "Abdominals" }
+      {
+        format: "anatomy_diagram",
+        correct_answer: "Abdominals",
+        diagram_selected_muscle: "Hamstrings",
+      }
     );
     expect(bad.result).toBe("incorrect");
     expect(bad.correct_answer).toBe("Abdominals");

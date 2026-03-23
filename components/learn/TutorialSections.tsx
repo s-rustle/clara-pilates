@@ -12,17 +12,8 @@ interface TutorialSectionsProps {
 }
 
 export default function TutorialSections({ tutorial }: TutorialSectionsProps) {
+  /** Level + rep range shown as badges on Learn hero — not repeated here. */
   const sections: { key: string; label: string; value: string | null }[] = [
-    {
-      key: "lv",
-      label: "Level",
-      value: tutorial.difficulty_level ?? "",
-    },
-    {
-      key: "rr",
-      label: "Recommended reps",
-      value: tutorial.rep_range ?? "",
-    },
     { key: "sp", label: "Starting Position", value: tutorial.starting_position },
     {
       key: "md",
@@ -53,15 +44,6 @@ export default function TutorialSections({ tutorial }: TutorialSectionsProps) {
     <div className="grid gap-4 sm:grid-cols-1">
       {sections.map(({ key, label, value }) => {
         if (key === "ss" && (value === null || value === "")) {
-          return null;
-        }
-        if (key === "rr" && (value === null || value === "")) {
-          return null;
-        }
-        if (
-          key === "lv" &&
-          (!value?.trim() || /^not specified/i.test(value.trim()))
-        ) {
           return null;
         }
         const body =

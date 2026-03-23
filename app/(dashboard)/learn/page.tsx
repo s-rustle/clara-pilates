@@ -9,7 +9,12 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import SourceBadge from "@/components/study/SourceBadge";
 import ManualPageImage from "@/components/learn/ManualPageImage";
 import TutorialSections from "@/components/learn/TutorialSections";
+import Badge from "@/components/ui/Badge";
 import type { TutorialContent } from "@/types";
+import {
+  formatExerciseNameForDisplay,
+  formatTutorialLevelRepsBadge,
+} from "@/lib/curriculum/exerciseNames";
 
 const APPARATUS_OPTIONS = [
   { value: "All", label: "All" },
@@ -215,6 +220,8 @@ export default function LearnPage() {
   const showTutorial = tutorial && !tutorial.error;
   const folderForBadge =
     tutorial?.source_folder?.trim() || tutorial?.manual_image?.folder_name || null;
+  const tutorialLevelRepsBadge =
+    showTutorial && tutorial ? formatTutorialLevelRepsBadge(tutorial) : null;
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -372,18 +379,18 @@ export default function LearnPage() {
 
           <div>
             <h2 className="text-2xl font-bold tracking-tight text-clara-strong md:text-3xl">
-              {tutorial.exercise_name}
+              {formatExerciseNameForDisplay(tutorial.exercise_name)}
             </h2>
-            {(tutorial.difficulty_level?.trim() || tutorial.rep_range?.trim()) && (
-              <p className="mt-1 text-sm text-clara-deep">
-                {[
-                  tutorial.difficulty_level?.trim(),
-                  tutorial.rep_range?.trim(),
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
-            )}
+            {tutorialLevelRepsBadge ? (
+              <div className="mt-2">
+                <Badge
+                  variant="grey"
+                  className="text-[0.7rem] font-medium normal-case"
+                >
+                  {tutorialLevelRepsBadge}
+                </Badge>
+              </div>
+            ) : null}
             <div className="mt-2">
               <SourceBadge folderName={folderForBadge} variant="from" />
             </div>

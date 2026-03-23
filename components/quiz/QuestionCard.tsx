@@ -24,7 +24,8 @@ interface QuestionCardProps {
   target_muscle?: string;
   selected_muscle?: string | null;
   on_select_muscle?: (muscle: string) => void;
-  on_submit_diagram?: () => void;
+  /** Typed muscle-group recall; server grades with Examiner (Claude). */
+  on_submit_diagram_recall?: (typedAnswer: string) => void;
   diagram_submit_loading?: boolean;
   reveal_diagram_answer?: boolean;
   correct_muscle?: string;
@@ -127,13 +128,18 @@ export default function QuestionCard({
   target_muscle,
   selected_muscle,
   on_select_muscle,
-  on_submit_diagram,
+  on_submit_diagram_recall,
   diagram_submit_loading,
   reveal_diagram_answer,
   correct_muscle,
 }: QuestionCardProps) {
   const isAnatomyMc = question_type === "anatomy_multiple_choice";
   const isAnatomyDiagram = question_type === "anatomy_diagram";
+  const [diagramRecallText, setDiagramRecallText] = useState("");
+
+  useEffect(() => {
+    setDiagramRecallText("");
+  }, [question, target_muscle]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -160,7 +166,7 @@ export default function QuestionCard({
       {isAnatomyDiagram &&
         target_muscle &&
         on_select_muscle &&
-        on_submit_diagram && (
+        on_submit_diagram_recall && (
           <div className="mt-2 flex flex-col gap-4">
             <AnatomyDiagram
               targetMuscle={target_muscle}
@@ -169,26 +175,45 @@ export default function QuestionCard({
               revealAnswer={reveal_diagram_answer}
               correctMuscle={correct_muscle}
             />
-            <Button
-              variant="primary"
-              type="button"
-              onClick={() => on_submit_diagram()}
-              disabled={
-                diagram_submit_loading ||
-                reveal_diagram_answer ||
-                !selected_muscle
-              }
-              className="w-full sm:w-auto"
-            >
-              {diagram_submit_loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <LoadingSpinner size="sm" />
-                  Evaluating…
-                </span>
-              ) : (
-                "Submit Answer"
-              )}
-            </Button>
+            {!reveal_diagram_answer && (
+              <div className="flex flex-col gap-2">
+                <label htmlFor="diagram-recall-input" className="sr-only">
+                  Name this muscle group
+                </label>
+                <input
+                  id="diagram-recall-input"
+                  type="text"
+                  value={diagramRecallText}
+                  onChange={(e) => setDiagramRecallText(e.target.value)}
+                  placeholder="Name this muscle group…"
+                  disabled={diagram_submit_loading}
+                  autoComplete="off"
+                  className="w-full rounded-sm border border-clara-highlight bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+                <Button
+                  variant="primary"
+                  type="button"
+                  onClick={() =>
+                    on_submit_diagram_recall(diagramRecallText.trim())
+                  }
+                  disabled={
+                    diagram_submit_loading ||
+                    !selected_muscle ||
+                    !diagramRecallText.trim()
+                  }
+                  className="w-full sm:w-auto"
+                >
+                  {diagram_submit_loading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <LoadingSpinner size="sm" />
+                      Evaluating…
+                    </span>
+                  ) : (
+                    "Submit Answer"
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
         )}
       {isAnatomyMc &&

@@ -41,3 +41,9 @@ export const GOOGLE_DRIVE_NOT_CONNECTED =
 
 export const GOOGLE_DRIVE_CONNECT_FAILED =
   "Unable to connect to Google Drive. Check your connection and try again.";
+
+export const PROFILE_LOAD_FAILED =
+  "Unable to load your profile. Please refresh the page.";
+
+export const PROFILE_SAVE_FAILED =
+  "Your settings could not be saved. Please try again.";

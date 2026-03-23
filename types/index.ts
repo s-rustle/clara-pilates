@@ -68,10 +68,26 @@ export interface DriveFile {
   size: string;
 }
 
+/** Saved in `profiles.hour_targets` (jsonb). Keys use snake_case. */
+export interface HourTargets {
+  mat_practical: number;
+  reformer_practical: number;
+  apparatus_practical: number;
+  total: number;
+}
+
+export const DEFAULT_HOUR_TARGETS: HourTargets = {
+  mat_practical: 70,
+  reformer_practical: 150,
+  apparatus_practical: 150,
+  total: 536,
+};
+
 export interface Profile {
   id: string;
   full_name: string | null;
   exam_target_date: string | null;
+  hour_targets?: HourTargets | null;
   google_access_token: string | null;
   google_refresh_token: string | null;
   created_at: string;

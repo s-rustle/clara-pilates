@@ -21,8 +21,19 @@ Some intro paragraph.
     expect(extractExerciseNamesFromContents([text])).toContain("Side Sit-Up");
   });
 
-  it("accepts single-word ALL CAPS exercise names when not a section label", () => {
-    const text = "BREATHING\n\nInhale to prepare.";
-    expect(extractExerciseNamesFromContents([text])).toContain("BREATHING");
+  it("accepts ALL CAPS title only when followed by LEVEL • REPS line (Balanced Body PDF)", () => {
+    const text = "BREATHING\nBEGINNER • 3-5 REPS\n\nInhale to prepare.";
+    expect(extractExerciseNamesFromContents([text])).toContain("Breathing");
+  });
+
+  it("extracts Swan Dive style headers from two-line pattern", () => {
+    const text = "SWAN DIVE\nINTERMEDIATE • 3-5 REPS\n\nStarting position…";
+    expect(extractExerciseNamesFromContents([text])).toContain("Swan Dive");
+  });
+
+  it("does not list STARTING POSITION as an exercise when no level/reps line follows", () => {
+    const text = "STARTING POSITION\n\nLie supine.";
+    const names = extractExerciseNamesFromContents([text]);
+    expect(names.some((n) => /starting\s+position/i.test(n))).toBe(false);
   });
 });

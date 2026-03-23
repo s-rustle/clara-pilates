@@ -8,6 +8,7 @@ import {
   ANATOMY_DIAGRAM_MUSCLE_LIST_PROMPT,
   canonicalizeAnatomyDiagramMuscle,
 } from "@/lib/quiz/anatomyDiagramMuscles";
+import { stripBalancedBodyExerciseHeadersFromText } from "@/lib/curriculum/exerciseNames";
 
 const EXAMINER_MODEL = "claude-sonnet-4-20250514";
 
@@ -27,8 +28,8 @@ options must contain exactly four distinct strings. correct_option must equal ex
 For anatomy questions, generate four multiple choice options. One must be correct. Three must be plausible but incorrect — drawn from related anatomy terms and structures that appear in the source material. Never invent anatomy not present in the materials.`,
   anatomy_diagram: `Return ONLY valid JSON: {"format": "anatomy_diagram", "question": "string", "target_muscle": "string", "expected_answer_elements": ["string", "..."]}
 target_muscle must be EXACTLY one of these muscle group names (same spelling): ${ANATOMY_DIAGRAM_MUSCLE_LIST_PROMPT}.
-expected_answer_elements must include that exact target_muscle string plus any reasonable synonyms from the source (e.g. "rectus abdominis", "obliques" when target_muscle is Abdominals).
-The question should ask which diagram region (muscle group) is primarily strengthened, stretched, stabilized, or targeted for a movement or teaching scenario described in the source — the learner will click the region on an interactive SVG.`,
+expected_answer_elements must include that exact target_muscle string plus any reasonable synonyms from the source (e.g. "rectus abdominis", "TVA", "transverse abdominis", "obliques" when target_muscle is Abdominals).
+The question should ask which muscle group is primarily strengthened, stretched, stabilized, or targeted for a movement or teaching scenario described in the source — do NOT name the answer in the question. The learner will select a region on the interactive diagram (front/back) and type the muscle group name (active recall).`,
 };
 
 const GENERATE_SYSTEM_PROMPT = `You are a Balanced Body Comprehensive exam examiner.
@@ -38,7 +39,7 @@ Difficulty levels:
 - Intermediate: application and explanation
 - Exam-Ready: synthesis, contraindications, edge cases
 CRITICAL: You must NOT repeat or closely paraphrase any question in the previousQuestions list. Each new question must ask about a different fact, concept, exercise, or angle. If a topic was already asked, choose a different topic. This is mandatory.
-EXERCISE NAMES: Only use exercise names that appear explicitly in the source material (often bolded there). Never invent, paraphrase, or infer exercise titles. If you cannot find an exact exercise name in the chunks, ask about a concept or apparatus instead. When the question mentions an exercise, wrap the exact exercise title in **double asterisks** (e.g., "What is the starting position for **the Hundred**?") so it displays bold—matching how titles appear in the source.
+EXERCISE NAMES: Only use exercise names that appear explicitly in the source material (often bolded there). Never invent, paraphrase, or infer exercise titles. If you cannot find an exact exercise name in the chunks, ask about a concept or apparatus instead. When the question mentions an exercise, wrap the title in **double asterisks** using Title Case (e.g. **The Hundred**, **Swan Dive**) — not ALL CAPS as in manual headers — so it reads clearly in the app.
 SOURCE SCOPE: Chunks may come from any ingested manual folder. Anatomy, alignment, and muscle actions described inside an apparatus chapter (e.g. Barrels) are valid material—use them for anatomy and biomechanics questions when they appear in those chunks. Respect the user's apparatus/topic focus when choosing what to ask, but do not assume anatomy lives only in a separate "Anatomy" folder.
 PROGRESSION: If the source discusses exercise order, prerequisites, levels (Mat 1 vs 2 vs 3, Reformer 1 vs 2 vs 3), or sequencing principles, you may ask about flow, progressions, or teaching order—only when the chunks support it.
 Question types (when supported by the chunks):
@@ -49,7 +50,24 @@ Question types (when supported by the chunks):
 - Progression questions (e.g. what prepares a client for another exercise; ordering in progression tables)
 - Session sequencing (e.g. which session template or level fits a client profile — only if templates appear in source)
 When the requested format is anatomy_multiple_choice: follow the anatomy MC JSON schema exactly; options are four muscle/structure names from the source; the question should reference the diagram or region being tested.
-When the requested format is anatomy_diagram: target_muscle must exactly match one of these muscle group names (no other spelling or label): ${ANATOMY_DIAGRAM_MUSCLE_LIST_PROMPT}. Never use a muscle name not in this list.
+When the requested format is anatomy_diagram: target_muscle must exactly match one of these muscle group names (no other spelling or label): ${ANATOMY_DIAGRAM_MUSCLE_LIST_PROMPT}. Never use a muscle name not in this list. The question must not reveal target_muscle by name.
+
+${OUT_OF_SCOPE_INSTRUCTION}`;
+
+const ANATOMY_DIAGRAM_RECALL_EVAL_SYSTEM = `You are a Balanced Body Comprehensive exam examiner. The learner selected a region on an anatomy diagram and typed a muscle group name (active recall).
+
+You must return ONLY valid JSON:
+{"result": "correct"|"partial"|"incorrect", "feedback": "string", "correct_answer": "string|null"}
+
+Grading (use expected synonyms from the materials generously):
+- "correct": The typed answer clearly identifies the canonical muscle GROUP (exact name, established synonym, or unambiguous scientific name such as "erector spinae" for Spinal Extensors, "rectus abdominis" / "TVA" / "transverse abdominis" when they map to the target group per synonyms).
+- "partial": Anatomically close but incomplete or slightly off — e.g. too narrow, missing "group" framing, or informal but recognizable. Feedback should be brief and encouraging (tone: almost there / close). Always set correct_answer to the exact canonical muscle group name provided in the prompt.
+- "incorrect": Wrong group, unrelated anatomy, or too vague to count.
+
+For "correct": set correct_answer to null.
+For "partial" and "incorrect": set correct_answer to the exact canonical muscle group name from the prompt so the UI can display it.
+
+Keep feedback to 1–3 short sentences. Ground judgments in the synonym list and Pilates teaching context; do not invent anatomy not implied by the synonyms or question.
 
 ${OUT_OF_SCOPE_INSTRUCTION}`;
 
@@ -79,7 +97,7 @@ function formatChunksForPrompt(chunks: RagChunk[]): string {
   return chunks
     .map(
       (c, i) =>
-        `[Chunk ${i + 1} — ${c.folder_name} / ${c.file_name}]\n${c.content}`
+        `[Chunk ${i + 1} — ${c.folder_name} / ${c.file_name}]\n${stripBalancedBodyExerciseHeadersFromText(c.content)}`
     )
     .join("\n\n---\n\n");
 }
@@ -456,25 +474,83 @@ export interface EvaluateAnswerOptions {
   correct_answer?: string;
   pairs?: MatchingPair[];
   options?: McOption[];
+  /** Canonical diagram region the learner highlighted (Clara quiz id), if known */
+  diagram_selected_muscle?: string | null;
 }
 
-function anatomyDiagramSelectionMatches(
-  userSelection: string,
+async function evaluateAnatomyDiagramTypedRecall(
+  question: string,
+  userAnswer: string,
   expectedElements: string[],
-  canonicalTarget: string
-): boolean {
-  const u = userSelection.trim().toLowerCase();
-  if (!u) return false;
-  const targetLower = canonicalTarget.trim().toLowerCase();
-  if (u === targetLower) return true;
-  const userCanon = canonicalizeAnatomyDiagramMuscle(userSelection);
-  if (userCanon === canonicalTarget) return true;
-  for (const el of expectedElements) {
-    const e = el.trim().toLowerCase();
-    if (!e) continue;
-    if (u === e || u.includes(e) || e.includes(u)) return true;
+  canonTarget: string,
+  diagramSelectedMuscle: string | null | undefined
+): Promise<EvaluationResult> {
+  const syn = [...new Set([canonTarget, ...expectedElements])].filter(Boolean);
+  const selected =
+    diagramSelectedMuscle?.trim() || "(not provided — grade typed answer only)";
+
+  const user = await anthropic.messages.create({
+    model: EXAMINER_MODEL,
+    max_tokens: 512,
+    system: ANATOMY_DIAGRAM_RECALL_EVAL_SYSTEM,
+    messages: [
+      {
+        role: "user",
+        content: `Canonical muscle GROUP (official answer): ${canonTarget}
+
+Acceptable synonyms and related terms from course materials (use for matching):
+${syn.join(", ")}
+
+Quiz question (do not repeat the official answer unless it already appears in the question):
+${question}
+
+Learner typed:
+${userAnswer.trim() || "(empty)"}
+
+Learner highlighted diagram region (canonical label):
+${selected}`,
+      },
+    ],
+  });
+
+  const text =
+    user.content
+      .filter((block) => block.type === "text")
+      .map((block) => ("text" in block ? (block as { text: string }).text : ""))
+      .join("") ?? "";
+
+  try {
+    const parsed = parseJsonFromResponse<{
+      result: string;
+      feedback: string;
+      correct_answer: string | null;
+    }>(text);
+    const r = parsed.result?.toLowerCase();
+    if (r !== "correct" && r !== "partial" && r !== "incorrect") {
+      throw new Error("invalid result");
+    }
+    const feedback =
+      typeof parsed.feedback === "string" && parsed.feedback.trim()
+        ? parsed.feedback.trim()
+        : "Could not grade this answer.";
+    let correct_answer: string | null =
+      parsed.correct_answer === null || parsed.correct_answer === undefined
+        ? null
+        : String(parsed.correct_answer).trim() || null;
+    if (r === "correct") {
+      correct_answer = null;
+    } else if (!correct_answer) {
+      correct_answer = canonTarget;
+    }
+    return { result: r, feedback, correct_answer };
+  } catch {
+    return {
+      result: "incorrect",
+      feedback:
+        "We could not grade this answer automatically. Compare your response to the expected muscle group in your manual.",
+      correct_answer: canonTarget,
+    };
   }
-  return false;
 }
 
 export async function evaluateAnswer(
@@ -503,21 +579,13 @@ export async function evaluateAnswer(
         correct_answer: null,
       };
     }
-    if (
-      anatomyDiagramSelectionMatches(userAnswer, expectedElements, canonTarget)
-    ) {
-      return {
-        result: "correct",
-        feedback: `Correct — your source material emphasizes **${canonTarget}** for this question. Use the diagram to connect exercise names to the major groups your manual calls out.`,
-        correct_answer: null,
-      };
-    }
-    const picked = userAnswer.trim() || "(no region selected)";
-    return {
-      result: "incorrect",
-      feedback: `Not quite. Based on your uploaded materials, the answer is **${canonTarget}**. You selected **${picked}**. Revisit the Purpose or muscle-target wording for this movement in your manual.`,
-      correct_answer: canonTarget,
-    };
+    return evaluateAnatomyDiagramTypedRecall(
+      question,
+      userAnswer,
+      expectedElements,
+      canonTarget,
+      options?.diagram_selected_muscle ?? null
+    );
   }
 
   if (format === "anatomy_multiple_choice" && options?.correct_answer) {

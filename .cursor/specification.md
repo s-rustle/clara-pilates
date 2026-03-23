@@ -108,8 +108,9 @@ Auth is required from first load. No anonymous access.
 5. **PDFs** — text is extracted with **orientation-aware per-page layout** (compares reading-order candidates and prefers the layout that best matches readable manual Latin text, mitigating upside-down pages and odd stream order). A Claude pass then inserts structured exercise tags into the stored text.
 6. **Balanced Body exercise header model** (manual layout to preserve in tags and chunks):
    - **Title line:** large ALL CAPS exercise name (e.g. SWAN DIVE, SHORT BOX ABDOMINAL SERIES).
-   - **Metadata line:** smaller ALL CAPS — program level, middle dot or bullet (•), rep range (e.g. `INTERMEDIATE • 4-6 REPS`).
-   - Ingestion prompts map these into inline tags: `**EXERCISE: [name]**`, `**LEVEL: [...]**`, `**REPS: [...]**` (plus PURPOSE, STARTING POSITION, MOVEMENT, etc. when present). This metadata is required for accurate **Learn** tutorials and **Examiner** questions about level and reps.
+   - **Metadata line:** immediately below — program level, middle dot (•), rep range, matching `(BEGINNER|INTERMEDIATE|ADVANCED) • N-N REPS` (e.g. `INTERMEDIATE • 4-6 REPS`). Section headers (e.g. STARTING POSITION) are ALL CAPS but are **not** followed by this line — they are not exercise titles.
+   - **App behavior:** Exercise lists (Learn, Practice Cues, Session Planner suggestions) infer names from that two-line pattern plus `**EXERCISE:**` / bold / numbered list fallbacks; names are shown in **Title Case**. The level/reps line is stripped from text sent to agents and from tutorial body fields where redundant; **Learn** shows program level + reps as a **badge** under the title (not raw ALL CAPS).
+   - Ingestion prompts map headers into inline tags: `**EXERCISE: [name]**`, `**LEVEL: [...]**`, `**REPS: [...]**` (plus PURPOSE, STARTING POSITION, MOVEMENT, etc. when present). This metadata supports **Learn** tutorials and **Examiner** questions about level and reps.
 7. Extracted content is chunked by topic/exercise
 8. Chunks are embedded and stored in Supabase pgvector with metadata:
    - Source folder (maps to curriculum category)
@@ -224,6 +225,7 @@ All study-facing agents query the pgvector store first. If relevant content is n
 - Either: specific exercise name (e.g., "The Hundred") OR body part/muscle group (e.g., "hip flexors", "core")
 
 **Output — structured tutorial, one exercise at a time:**
+- Exercise **title in Title Case**; program level and rep range as a compact **badge** (not duplicated inside body sections)
 - Starting position description
 - Movement description
 - Breath cues
@@ -381,9 +383,11 @@ All study-facing agents query the pgvector store first. If relevant content is n
 - Error display — explicit message per failed file
 
 ### 6.10 Settings Screen
-- Profile (name, email)
-- Exam target date (optional — Phase 1 stores but does not yet drive countdown)
-- Hour requirement targets (editable — for when official breakdown is confirmed)
+- **Profile:** editable display name (`profiles.full_name`); email read-only from Supabase Auth; Save with success/error feedback
+- **Exam target date:** optional date (`profiles.exam_target_date`); helper copy that countdown is a future update; Save with feedback
+- **Hour targets:** Mat / Reformer / Apparatus / Total practical targets (defaults 70 / 150 / 150 / 536) saved to `profiles.hour_targets` (jsonb); Save with feedback; Hours dashboard uses these values when set
+- **Sign out** at bottom of page
+- No `<form>` wrappers — buttons use `onClick` + `fetch` to `GET`/`PATCH` `/api/profile`
 
 ---
 
