@@ -266,6 +266,47 @@ function plausibleExerciseTitle(s: string): boolean {
   return true;
 }
 
+/** Lowercase letters+digits only — used to collapse duplicate / garbled title variants. */
+function exerciseDedupKey(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+/**
+ * Filters junk OCR/list noise and document titles from inferred exercise names.
+ * Call on display-formatted titles (after formatExerciseNameForDisplay).
+ */
+function passesExerciseListFilters(name: string): boolean {
+  const t = normalizeSpaces(name);
+  if (!t || t.length < 3 || t.length > 50) return false;
+  if (/[\n\r\t]/.test(name)) return false;
+  if (!/^[\x20-\x7E]+$/.test(t)) return false;
+  if (/=/.test(t)) return false;
+  if (/„/.test(t)) return false;
+  if (/[\u2018\u2019\u201A\u201B]/.test(t)) return false;
+  const lower = t.toLowerCase();
+  if (/\bguide\b/.test(lower)) return false;
+  if (/\bmanual\b/.test(lower)) return false;
+  if (/\bchapter\b/.test(lower)) return false;
+  return true;
+}
+
+function dedupeExerciseNamesByNormalizedKey(names: string[]): string[] {
+  const byKey = new Map<string, string>();
+  for (const name of names) {
+    const key = exerciseDedupKey(name);
+    if (!key) continue;
+    const prev = byKey.get(key);
+    if (prev === undefined) {
+      byKey.set(key, name);
+    } else if (name.length < prev.length) {
+      byKey.set(key, name);
+    } else if (name.length === prev.length && name.localeCompare(prev) < 0) {
+      byKey.set(key, name);
+    }
+  }
+  return [...byKey.values()];
+}
+
 const BANNED_TITLE_LINE_START =
   /^(The|This|When|For|If|In|As|At|To|On|Your|Use|Keep|Repeat|Note|See|Figure|Chapter|Table|Each|Both|Place|Hold|Start|Begin|With|From|After|Before|During|Do|Never|Always|There|These|Those|Some|Many|Most|All|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)\b/i;
 
@@ -315,7 +356,7 @@ function titleFromNumberedLine(line: string): string | null {
   return null;
 }
 
-function scanTwoLineBalancedBodyHeaders(text: string, seen: Set<string>, out: string[]): void {
+function scanTwoLineBalancedBodyHeaders(text: string, out: string[]): void {
   const lines = text.split(/\n/);
   for (let i = 0; i < lines.length - 1; i++) {
     const titleLine = lines[i];
@@ -324,9 +365,7 @@ function scanTwoLineBalancedBodyHeaders(text: string, seen: Set<string>, out: st
     if (!matchesLevelRepsLine(nextLine)) continue;
     const display = toExerciseTitleCase(normalizeSpaces(titleLine));
     if (!plausibleExerciseTitle(display)) continue;
-    const key = display.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
+    if (!passesExerciseListFilters(display)) continue;
     out.push(display);
     i += 1;
   }
@@ -337,22 +376,20 @@ function scanTwoLineBalancedBodyHeaders(text: string, seen: Set<string>, out: st
  * Uses ALL CAPS + LEVEL • REPS line pairs as the primary Balanced Body PDF signal.
  */
 export function extractExerciseNamesFromContents(contents: string[]): string[] {
-  const seen = new Set<string>();
   const out: string[] = [];
 
   const pushTitle = (raw: string) => {
+    if (/[\n\r\t]/.test(raw)) return;
     const name = formatExerciseNameForDisplay(normalizeSpaces(raw));
     if (!plausibleExerciseTitle(name)) return;
-    const key = name.toLowerCase();
-    if (seen.has(key)) return;
-    seen.add(key);
+    if (!passesExerciseListFilters(name)) return;
     out.push(name);
   };
 
   for (const text of contents) {
     if (!text) continue;
 
-    scanTwoLineBalancedBodyHeaders(text, seen, out);
+    scanTwoLineBalancedBodyHeaders(text, out);
 
     EXERCISE_TAGGED.lastIndex = 0;
     let m: RegExpExecArray | null;
@@ -389,6 +426,7 @@ export function extractExerciseNamesFromContents(contents: string[]): string[] {
     }
   }
 
-  out.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
-  return out.slice(0, 200);
+  const deduped = dedupeExerciseNamesByNormalizedKey(out);
+  deduped.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+  return deduped.slice(0, 200);
 }

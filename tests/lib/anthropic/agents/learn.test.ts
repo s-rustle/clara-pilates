@@ -36,4 +36,40 @@ Some intro paragraph.
     const names = extractExerciseNamesFromContents([text]);
     expect(names.some((n) => /starting\s+position/i.test(n))).toBe(false);
   });
+
+  it("rejects junk candidates (empty, short, newlines in raw, non-ASCII, =, document-title words)", () => {
+    const text = `
+1. Roll Down
+2. Ab
+3. Barrel a Detailed Guide for Teaching Barrel
+4. Foo = Bar
+5. Weird\u2019s Move
+**„Broken"**
+`;
+    const names = extractExerciseNamesFromContents([text]);
+    expect(names).toContain("Roll Down");
+    expect(names).not.toContain("Ab");
+    expect(names.some((n) => /guide/i.test(n))).toBe(false);
+    expect(names.some((n) => /=/u.test(n))).toBe(false);
+    expect(names.some((n) => /Weird/u.test(n))).toBe(false);
+  });
+
+  it("dedupes variants that normalize to the same letters (punctuation/case)", () => {
+    const text = `
+1. Roll Down
+2. roll down.
+**ROLL DOWN**
+`;
+    const names = extractExerciseNamesFromContents([text]);
+    expect(names).toEqual(["Roll Down"]);
+  });
+
+  it("rejects titles longer than 50 characters", () => {
+    const long =
+      "This Is An Implausibly Long Exercise Name That Should Not Appear In List";
+    const text = `1. ${long}\n2. Short Name Here`;
+    const names = extractExerciseNamesFromContents([text]);
+    expect(names).toContain("Short Name Here");
+    expect(names.some((n) => n.length > 50)).toBe(false);
+  });
 });
