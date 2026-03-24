@@ -36,12 +36,37 @@ export interface CueFeedback {
   better_version: string;
 }
 
+/** Parsed BB manual subsection text keyed for storage / filtering */
+export interface ExerciseChunkSections {
+  starting_position?: string;
+  movement_sequence?: string;
+  modifications?: string;
+  optimum_form?: string;
+  transition?: string;
+  cueing_and_imagery?: string;
+  purpose?: string;
+  precautions?: string;
+}
+
+/** One exercise block from PDF text (processPdf); drives per-exercise embedding chunks */
+export interface PdfExerciseSegment {
+  exercise_name: string;
+  difficulty: string | null;
+  rep_range: string | null;
+  content: string;
+  sections: ExerciseChunkSections;
+}
+
 export interface ExtractedContent {
   printed_text: string;
   diagrams: string[];
   handwritten_notes: string[];
   fileName: string;
   folderName: string;
+  /** When set (PDF path), chunkContent emits one row per exercise instead of size-based splits */
+  pdf_exercise_segments?: PdfExerciseSegment[];
+  /** Text before the first detected exercise (e.g. TOC), embedded as its own chunk when substantial */
+  pdf_preamble?: string | null;
 }
 
 export interface ContentChunk {
@@ -54,6 +79,10 @@ export interface ContentChunk {
   /** Google Drive file id for this source (same for all chunks from one file) */
   drive_file_id?: string | null;
   source_mime_type?: string | null;
+  exercise_name?: string | null;
+  difficulty?: string | null;
+  rep_range?: string | null;
+  sections?: ExerciseChunkSections | null;
 }
 
 export interface DriveFolder {
@@ -299,6 +328,10 @@ export interface CurriculumChunk {
   embedding: number[] | null;
   drive_file_id?: string | null;
   source_mime_type?: string | null;
+  exercise_name?: string | null;
+  difficulty?: string | null;
+  rep_range?: string | null;
+  sections?: ExerciseChunkSections | null;
   created_at: string;
 }
 

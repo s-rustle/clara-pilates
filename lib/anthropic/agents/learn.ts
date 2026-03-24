@@ -1,16 +1,20 @@
 import { anthropic } from "@/lib/anthropic/client";
 import { queryRAGWithContext } from "../rag";
 import { OUT_OF_SCOPE_INSTRUCTION } from "./boundaries";
-import { createServiceClient } from "@/lib/supabase/server";
 import type { RagChunk, TutorialContent } from "@/types";
 import {
-  extractExerciseNamesFromContents,
+  EXERCISES_BY_APPARATUS,
+  type Apparatus,
+} from "@/constants/exerciseList";
+import {
   stripBalancedBodyExerciseHeadersFromText,
   stripStandaloneLevelRepsLines,
   formatExerciseNameForDisplay,
 } from "@/lib/curriculum/exerciseNames";
 
-export { extractExerciseNamesFromContents };
+function isApparatusKey(s: string): s is Apparatus {
+  return Object.prototype.hasOwnProperty.call(EXERCISES_BY_APPARATUS, s);
+}
 
 const LEARN_MODEL = "claude-sonnet-4-20250514";
 
@@ -245,55 +249,30 @@ Return the JSON object with all fields.`;
 }
 
 /**
- * Lists plausible exercise titles inferred from **bold** mentions in chunk text for the apparatus filter.
+ * Exercise titles for the apparatus filter (authoritative Balanced Body manual TOC list).
  */
 export async function getExerciseList(
   apparatus: string,
-  userId: string
+  _userId: string
 ): Promise<{ exercises: string[]; chunkCount: number }> {
-  try {
-    const supabase = createServiceClient();
-    let q = supabase
-      .from("curriculum_chunks")
-      .select("content")
-      .eq("user_id", userId);
-
-    if (apparatus && apparatus !== "All") {
-      if (apparatus === "Mat") {
-        q = q.ilike("folder_name", "%Mat%");
-      } else if (apparatus === "Reformer") {
-        q = q.ilike("folder_name", "%Reformer%");
-      } else if (apparatus === "Barrels") {
-        // Matches "Barrels", "Arc Barrel", "Ladder Barrel", etc. (substring "Barrel").
-        q = q.ilike("folder_name", "%Barrel%");
-      } else if (apparatus === "Trapeze Cadillac") {
-        q = q.ilikeAnyOf("folder_name", ["%Trapeze%", "%Cadillac%"]);
-      } else {
-        const needle = apparatus.replace(/%/g, "\\%").replace(/_/g, "\\_");
-        q = q.ilike("folder_name", `%${needle}%`);
+  const trimmed = apparatus.trim();
+  if (trimmed === "All") {
+    const seen = new Set<string>();
+    const all: string[] = [];
+    for (const names of Object.values(EXERCISES_BY_APPARATUS)) {
+      for (const name of names) {
+        if (!seen.has(name)) {
+          seen.add(name);
+          all.push(name);
+        }
       }
     }
-
-    const { data, error } = await q
-      .order("file_name", { ascending: true })
-      .order("chunk_index", { ascending: true })
-      .limit(1200);
-
-    if (error) {
-      console.error("[learn] getExerciseList query failed:", error.message);
-      return { exercises: [], chunkCount: 0 };
-    }
-
-    const rows = data ?? [];
-    const contents = rows.map(
-      (row) => (row as { content: string | null }).content ?? ""
-    );
-    return {
-      exercises: extractExerciseNamesFromContents(contents),
-      chunkCount: rows.length,
-    };
-  } catch (err) {
-    console.error("[learn] getExerciseList failed:", err);
-    return { exercises: [], chunkCount: 0 };
+    all.sort((a, b) => a.localeCompare(b));
+    return { exercises: all, chunkCount: all.length };
   }
+  if (isApparatusKey(trimmed)) {
+    const exercises = EXERCISES_BY_APPARATUS[trimmed];
+    return { exercises: [...exercises], chunkCount: exercises.length };
+  }
+  return { exercises: [], chunkCount: 0 };
 }

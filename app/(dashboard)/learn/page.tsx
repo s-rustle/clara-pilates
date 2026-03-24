@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Button from "@/components/ui/Button";
 import Select from "@/components/ui/Select";
-import Input from "@/components/ui/Input";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import SourceBadge from "@/components/study/SourceBadge";
@@ -12,19 +11,25 @@ import TutorialSections from "@/components/learn/TutorialSections";
 import Badge from "@/components/ui/Badge";
 import type { TutorialContent } from "@/types";
 import {
+  EXERCISES_BY_APPARATUS,
+  MUSCLE_GROUPS,
+  type Apparatus,
+} from "@/constants/exerciseList";
+import {
   formatExerciseNameForDisplay,
   formatTutorialLevelRepsBadge,
 } from "@/lib/curriculum/exerciseNames";
 
-const APPARATUS_OPTIONS = [
-  { value: "All", label: "All" },
-  { value: "Mat", label: "Mat" },
-  { value: "Reformer", label: "Reformer" },
-  { value: "Trapeze Cadillac", label: "Trapeze Cadillac" },
-  { value: "Chair", label: "Chair" },
-  { value: "Barrels", label: "Barrels" },
-  { value: "Anatomy", label: "Anatomy" },
-  { value: "Movement Principles", label: "Movement Principles" },
+const APPARATUS_KEYS = Object.keys(EXERCISES_BY_APPARATUS) as Apparatus[];
+
+const APPARATUS_OPTIONS = APPARATUS_KEYS.map((k) => ({
+  value: k,
+  label: k,
+}));
+
+const MUSCLE_GROUP_OPTIONS = [
+  { value: "", label: "Select a muscle group…" },
+  ...MUSCLE_GROUPS.map((m) => ({ value: m, label: m })),
 ];
 
 type BrowseMode = "exercise" | "muscle";
@@ -59,15 +64,14 @@ async function postTutorial(
 }
 
 export default function LearnPage() {
-  const [apparatus, setApparatus] = useState("All");
+  const [apparatus, setApparatus] = useState<Apparatus>(
+    APPARATUS_KEYS[0] ?? "Mat"
+  );
   const [browseMode, setBrowseMode] = useState<BrowseMode>("exercise");
-  const [exerciseList, setExerciseList] = useState<string[]>([]);
-  const [listChunkCount, setListChunkCount] = useState<number | null>(null);
-  const [listLoading, setListLoading] = useState(false);
   const [exerciseFilter, setExerciseFilter] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState("");
-  const [muscleInput, setMuscleInput] = useState("");
+  const [muscleGroup, setMuscleGroup] = useState("");
 
   const [tutorial, setTutorial] = useState<TutorialContent | null>(null);
   const [navList, setNavList] = useState<string[]>([]);
@@ -78,40 +82,7 @@ export default function LearnPage() {
   const cacheRef = useRef<Map<string, TutorialContent>>(new Map());
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const fetchExercises = useCallback(async () => {
-    setListLoading(true);
-    setError("");
-    try {
-      const res = await fetch(
-        `/api/agents/learn?apparatus=${encodeURIComponent(apparatus)}`
-      );
-      const data = await res.json();
-      if (!res.ok) {
-        setExerciseList([]);
-        setListChunkCount(null);
-        setError(data.error ?? "Could not load exercises.");
-        return;
-      }
-      if (data.success && Array.isArray(data.data?.exercises)) {
-        setExerciseList(data.data.exercises as string[]);
-        const n = data.data?.chunkCount;
-        setListChunkCount(typeof n === "number" ? n : null);
-      } else {
-        setExerciseList([]);
-        setListChunkCount(null);
-      }
-    } catch {
-      setExerciseList([]);
-      setListChunkCount(null);
-      setError("Could not load exercises.");
-    } finally {
-      setListLoading(false);
-    }
-  }, [apparatus]);
-
-  useEffect(() => {
-    fetchExercises();
-  }, [fetchExercises]);
+  const exerciseList = EXERCISES_BY_APPARATUS[apparatus] ?? [];
 
   useEffect(() => {
     setSelectedExercise("");
@@ -170,20 +141,19 @@ export default function LearnPage() {
 
   const handleTeachMe = async () => {
     if (browseMode === "exercise") {
-      const ex = (selectedExercise.trim() || exerciseFilter.trim());
+      const ex = selectedExercise.trim() || exerciseFilter.trim();
       if (!ex) {
         setError("Select an exercise from the list.");
         return;
       }
       const idx = exerciseList.indexOf(ex);
-      const list =
-        idx >= 0 && exerciseList.length > 0 ? exerciseList : [ex];
+      const list = idx >= 0 && exerciseList.length > 0 ? exerciseList : [ex];
       const safeIdx = idx >= 0 ? idx : 0;
       await loadTutorialForSubject(ex, list, safeIdx);
     } else {
-      const m = muscleInput.trim();
+      const m = muscleGroup.trim();
       if (!m) {
-        setError("Enter a muscle group or area to study.");
+        setError("Select a muscle group from the list.");
         return;
       }
       await loadTutorialForSubject(m, [m], 0);
@@ -230,7 +200,7 @@ export default function LearnPage() {
           label="Apparatus"
           options={APPARATUS_OPTIONS}
           value={apparatus}
-          onChange={(e) => setApparatus(e.target.value)}
+          onChange={(e) => setApparatus(e.target.value as Apparatus)}
           disabled={tutorialLoading}
         />
 
@@ -282,29 +252,17 @@ export default function LearnPage() {
                 setExerciseFilter(selectedExercise);
                 setDropdownOpen(true);
               }}
-              placeholder={
-                listLoading ? "Loading exercises…" : "Search exercises…"
-              }
-              disabled={tutorialLoading || listLoading}
+              placeholder="Search exercises…"
+              disabled={tutorialLoading}
               className="w-full rounded-sm border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted/80 focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40"
             />
-            {listLoading && (
-              <div className="mt-2 flex items-center gap-2 text-sm text-clara-deep">
-                <LoadingSpinner size="sm" />
-                Loading exercises…
-              </div>
-            )}
-            {dropdownOpen && !listLoading && (
+            {dropdownOpen && (
               <ul className="absolute left-0 right-0 top-full z-20 mt-1 max-h-52 overflow-y-auto rounded-sm border border-clara-border bg-clara-surface py-1">
                 {filteredExercises.length === 0 ? (
                   <li className="px-3 py-2 text-sm text-clara-muted">
                     {exerciseList.length > 0
                       ? "No matches for your search — clear the box or pick another exercise."
-                      : listChunkCount !== null && listChunkCount > 0
-                        ? "No exercise titles found in your text for this apparatus. Re-ingest PDFs (tagged extraction) or try All."
-                        : listChunkCount === 0
-                          ? "No curriculum for this apparatus yet. Ingest materials or try All."
-                          : "No exercises loaded — try another apparatus or ingest materials."}
+                      : "No exercises for this apparatus."}
                   </li>
                 ) : (
                   filteredExercises.slice(0, 80).map((ex) => (
@@ -327,11 +285,11 @@ export default function LearnPage() {
             )}
           </div>
         ) : (
-          <Input
-            label="Muscle group or area"
-            placeholder='e.g. "hamstrings", "obliques", "spine extensors"'
-            value={muscleInput}
-            onChange={(e) => setMuscleInput(e.target.value)}
+          <Select
+            label="Muscle group"
+            options={MUSCLE_GROUP_OPTIONS}
+            value={muscleGroup}
+            onChange={(e) => setMuscleGroup(e.target.value)}
             disabled={tutorialLoading}
           />
         )}

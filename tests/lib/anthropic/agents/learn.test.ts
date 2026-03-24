@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { extractExerciseNamesFromContents } from "@/lib/anthropic/agents/learn";
+import { extractExerciseNamesFromContents } from "@/lib/curriculum/exerciseNames";
 
 describe("extractExerciseNamesFromContents", () => {
   it("pulls titles from numbered list lines (pdf-parse style)", () => {
