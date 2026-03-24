@@ -208,14 +208,14 @@ export default function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="font-display text-2xl font-bold text-clara-strong">
+      <h1 className="text-2xl font-semibold text-clara-accent">
         Settings
       </h1>
 
       {loadError ? <ErrorMessage message={loadError} /> : null}
 
       <Card>
-        <h2 className="mb-4 text-lg font-bold text-clara-strong">Profile</h2>
+        <h2 className="mb-4 text-lg font-bold text-clara-accent">Profile</h2>
         <div className="flex flex-col gap-4">
           <Input
             label="Display name"
@@ -250,7 +250,7 @@ export default function SettingsPage() {
       </Card>
 
       <Card>
-        <h2 className="mb-4 text-lg font-bold text-clara-strong">
+        <h2 className="mb-4 text-lg font-bold text-clara-accent">
           Exam target date
         </h2>
         <div className="flex flex-col gap-4">
@@ -287,7 +287,7 @@ export default function SettingsPage() {
       </Card>
 
       <Card>
-        <h2 className="mb-4 text-lg font-bold text-clara-strong">
+        <h2 className="mb-4 text-lg font-bold text-clara-accent">
           Hour targets
         </h2>
         <p className="mb-3 text-xs text-clara-muted">
@@ -355,7 +355,7 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      <div className="border-t border-clara-highlight pt-6">
+      <div className="border-t border-clara-border pt-6">
         <Button
           type="button"
           variant="secondary"

@@ -76,7 +76,7 @@ export default function WarmUpSection({
 
   return (
     <section className="space-y-3">
-      <h2 className="text-lg font-bold text-clara-strong">
+      <h2 className="text-lg font-bold text-clara-accent">
         Pre-Pilates Warm-Up
       </h2>
 
@@ -92,13 +92,13 @@ export default function WarmUpSection({
           <ChevronDown className="h-4 w-4" aria-hidden />
         </Button>
         {open && (
-          <div className="absolute left-0 top-full z-20 mt-1 w-full max-w-md rounded-sm border border-clara-highlight bg-clara-surface p-2">
+          <div className="absolute left-0 top-full z-20 mt-1 w-full max-w-md rounded-sm border border-clara-border bg-clara-surface p-2">
             <input
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search moves…"
-              className="mb-2 w-full rounded-sm border border-clara-highlight bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted/80 focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40"
+              className="mb-2 w-full rounded-sm border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted/80 focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40"
               autoFocus
             />
             <ul className="max-h-48 overflow-y-auto text-sm">
@@ -109,7 +109,7 @@ export default function WarmUpSection({
                   <li key={name}>
                     <button
                       type="button"
-                      className="w-full rounded px-2 py-1.5 text-left text-clara-deep hover:bg-clara-highlight"
+                      className="w-full rounded px-2 py-1.5 text-left text-clara-deep hover:bg-clara-border"
                       onClick={() => addMove(name)}
                     >
                       {name}
@@ -123,7 +123,7 @@ export default function WarmUpSection({
       </div>
 
       {moves.length === 0 ? (
-        <p className="rounded-sm border border-dashed border-clara-highlight bg-clara-bg/50 px-3 py-6 text-center text-sm text-clara-muted">
+        <p className="rounded-sm border border-dashed border-clara-border bg-clara-bg/50 px-3 py-6 text-center text-sm text-clara-muted">
           Add at least one warm-up move
         </p>
       ) : (
@@ -131,7 +131,7 @@ export default function WarmUpSection({
           {moves.map((move, index) => (
             <li
               key={`${move.move_name}-${index}`}
-              className="flex flex-wrap items-end gap-2 rounded-sm border border-clara-highlight bg-clara-bg px-3 py-2"
+              className="flex flex-wrap items-end gap-2 rounded-sm border border-clara-border bg-clara-bg px-3 py-2"
             >
               <div className="min-w-[140px] flex-1">
                 <span className="text-sm font-medium text-clara-deep">
@@ -170,7 +170,7 @@ export default function WarmUpSection({
                   aria-label="Move up"
                   disabled={disabled || index === 0}
                   onClick={() => moveIndex(index, index - 1)}
-                  className="rounded p-1 text-clara-deep hover:bg-clara-highlight disabled:opacity-30"
+                  className="rounded p-1 text-clara-deep hover:bg-clara-border disabled:opacity-30"
                 >
                   <ChevronUp className="h-4 w-4" />
                 </button>
@@ -179,7 +179,7 @@ export default function WarmUpSection({
                   aria-label="Move down"
                   disabled={disabled || index === moves.length - 1}
                   onClick={() => moveIndex(index, index + 1)}
-                  className="rounded p-1 text-clara-deep hover:bg-clara-highlight disabled:opacity-30"
+                  className="rounded p-1 text-clara-deep hover:bg-clara-border disabled:opacity-30"
                 >
                   <ChevronDown className="h-4 w-4" />
                 </button>
@@ -188,7 +188,7 @@ export default function WarmUpSection({
                   aria-label="Remove"
                   disabled={disabled}
                   onClick={() => removeMove(index)}
-                  className="rounded p-1 text-clara-deep hover:bg-clara-highlight"
+                  className="rounded p-1 text-clara-deep hover:bg-clara-border"
                 >
                   <span className="text-lg leading-none">×</span>
                 </button>

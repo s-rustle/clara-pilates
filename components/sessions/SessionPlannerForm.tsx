@@ -66,7 +66,7 @@ export default function SessionPlannerForm({
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-0 rounded-sm border border-clara-highlight bg-clara-bg p-0.5">
+      <div className="flex gap-0 rounded-sm border border-clara-border bg-clara-bg p-0.5">
         {(["plan", "log"] as const).map((m) => (
           <button
             key={m}
@@ -75,8 +75,8 @@ export default function SessionPlannerForm({
             disabled={busy}
             className={`flex-1 rounded px-4 py-2 text-sm font-medium transition-colors ${
               mode === m
-                ? "bg-clara-primary text-white underline decoration-clara-highlight decoration-2 underline-offset-4"
-                : "text-clara-deep hover:bg-clara-highlight/60"
+                ? "bg-clara-primary text-white underline decoration-clara-border decoration-2 underline-offset-4"
+                : "text-clara-deep hover:bg-clara-border/60"
             } disabled:opacity-50`}
           >
             {m === "plan" ? "Plan" : "Log"}

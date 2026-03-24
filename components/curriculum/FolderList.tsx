@@ -299,23 +299,23 @@ export default function FolderList() {
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-clara-highlight">
-                <th className="pb-2 pr-4 font-bold text-clara-strong">
+              <tr className="border-b border-clara-border">
+                <th className="pb-2 pr-4 font-bold text-clara-deep">
                   Folder
                 </th>
-                <th className="pb-2 pr-4 font-bold text-clara-strong">
+                <th className="pb-2 pr-4 font-bold text-clara-deep">
                   Folder URL or ID
                 </th>
-                <th className="pb-2 pr-4 font-bold text-clara-strong">
+                <th className="pb-2 pr-4 font-bold text-clara-deep">
                   Status
                 </th>
-                <th className="pb-2 pr-4 font-bold text-clara-strong">
+                <th className="pb-2 pr-4 font-bold text-clara-deep">
                   Last ingested
                 </th>
-                <th className="pb-2 pr-4 font-bold text-clara-strong">
+                <th className="pb-2 pr-4 font-bold text-clara-deep">
                   Chunks
                 </th>
-                <th className="pb-2 font-bold text-clara-strong">Action</th>
+                <th className="pb-2 font-bold text-clara-deep">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -328,7 +328,7 @@ export default function FolderList() {
                 return (
                   <tr
                     key={folderName}
-                    className="border-b border-clara-highlight last:border-0"
+                    className="border-b border-clara-border last:border-0"
                   >
                     <td className="py-3 pr-4 text-clara-deep">{folderName}</td>
                     <td className="py-3 pr-4" style={{ minWidth: 280 }}>
@@ -342,7 +342,7 @@ export default function FolderList() {
                             [folderName]: e.target.value,
                           }))
                         }
-                        className="w-full min-w-[200px] rounded border border-clara-highlight bg-clara-surface px-2 py-1.5 text-sm text-clara-deep placeholder:text-clara-deep/60 focus:border-clara-strong focus:outline-none"
+                        className="w-full min-w-[200px] rounded border border-clara-border bg-clara-surface px-2 py-1.5 text-sm text-clara-deep placeholder:text-clara-deep/60 focus:border-clara-primary focus:outline-none"
                       />
                     </td>
                     <td className="py-3 pr-4">

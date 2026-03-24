@@ -74,7 +74,7 @@ export default function IngestionStatus({
   if (upload.status === "complete") {
     const count = upload.file_count ?? 0;
     return (
-      <p className="text-sm font-bold text-clara-strong">
+      <p className="text-sm font-bold text-clara-deep">
         Complete — {count} chunks stored
       </p>
     );

@@ -339,7 +339,7 @@ export default function SessionsPage() {
           </SessionPlannerForm>
 
           {mode === "log" && (
-            <div className="mt-4 border-t border-clara-highlight pt-4">
+            <div className="mt-4 border-t border-clara-border pt-4">
               <Button
                 type="button"
                 variant="primary"
@@ -353,7 +353,7 @@ export default function SessionsPage() {
           )}
 
           {mode === "log" && (
-            <div className="mt-4 space-y-3 border-t border-clara-highlight pt-4">
+            <div className="mt-4 space-y-3 border-t border-clara-border pt-4">
               {historyLoading ? (
                 <div className="flex items-center justify-center gap-2 py-6 text-clara-deep">
                   <LoadingSpinner size="sm" />
@@ -411,7 +411,7 @@ export default function SessionsPage() {
             <div className="mb-4 flex items-start justify-between gap-2">
               <h2
                 id="hour-link-title"
-                className="text-lg font-bold text-clara-strong"
+                className="text-lg font-bold text-clara-accent"
               >
                 Log hours
               </h2>
@@ -421,7 +421,7 @@ export default function SessionsPage() {
                   setHourModalOpen(false);
                   setHourModalSessionId(null);
                 }}
-                className="rounded p-1 text-clara-deep hover:bg-clara-highlight"
+                className="rounded p-1 text-clara-deep hover:bg-clara-border"
                 aria-label="Close dialog"
               >
                 ×

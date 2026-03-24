@@ -53,7 +53,7 @@ export default function ExerciseSequence({
   return (
     <section className="space-y-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-lg font-bold text-clara-strong">
+        <h2 className="text-lg font-bold text-clara-accent">
           Main Sequence
         </h2>
         <span className="text-right text-xs text-clara-accent">
@@ -78,7 +78,7 @@ export default function ExerciseSequence({
             }}
             disabled={disabled}
             placeholder={`e.g. Footwork (${apparatusLabel})`}
-            className="w-full rounded-sm border border-clara-highlight bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted/80 focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-sm border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted/80 focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
         <Button
@@ -92,7 +92,7 @@ export default function ExerciseSequence({
       </div>
 
       {exercises.length === 0 ? (
-        <p className="rounded-sm border border-dashed border-clara-highlight bg-clara-bg/50 px-3 py-6 text-center text-sm text-clara-muted">
+        <p className="rounded-sm border border-dashed border-clara-border bg-clara-bg/50 px-3 py-6 text-center text-sm text-clara-muted">
           Add at least one exercise
         </p>
       ) : (
@@ -100,7 +100,7 @@ export default function ExerciseSequence({
           {exercises.map((ex, index) => (
             <li
               key={`${ex.exercise_name}-${index}`}
-              className="rounded-sm border border-clara-highlight bg-clara-bg p-3"
+              className="rounded-sm border border-clara-border bg-clara-bg p-3"
             >
               <div className="flex flex-wrap items-end gap-2">
                 <div className="min-w-[120px] flex-1">
@@ -140,7 +140,7 @@ export default function ExerciseSequence({
                     aria-label="Move up"
                     disabled={disabled || index === 0}
                     onClick={() => moveIndex(index, index - 1)}
-                    className="rounded p-1 text-clara-deep hover:bg-clara-highlight disabled:opacity-30"
+                    className="rounded p-1 text-clara-deep hover:bg-clara-border disabled:opacity-30"
                   >
                     <ChevronUp className="h-4 w-4" />
                   </button>
@@ -149,7 +149,7 @@ export default function ExerciseSequence({
                     aria-label="Move down"
                     disabled={disabled || index === exercises.length - 1}
                     onClick={() => moveIndex(index, index + 1)}
-                    className="rounded p-1 text-clara-deep hover:bg-clara-highlight disabled:opacity-30"
+                    className="rounded p-1 text-clara-deep hover:bg-clara-border disabled:opacity-30"
                   >
                     <ChevronDown className="h-4 w-4" />
                   </button>
@@ -158,7 +158,7 @@ export default function ExerciseSequence({
                     aria-label="Remove"
                     disabled={disabled}
                     onClick={() => removeExercise(index)}
-                    className="rounded p-1 text-clara-deep hover:bg-clara-highlight"
+                    className="rounded p-1 text-clara-deep hover:bg-clara-border"
                   >
                     <span className="text-lg leading-none">×</span>
                   </button>
@@ -192,7 +192,7 @@ function ExerciseNotesRow({
   const [expanded, setExpanded] = useState(Boolean(exercise.notes?.trim()));
 
   return (
-    <div className="mt-2 border-t border-clara-highlight/80 pt-2">
+    <div className="mt-2 border-t border-clara-border/80 pt-2">
       <button
         type="button"
         onClick={() => setExpanded((e) => !e)}
@@ -207,7 +207,7 @@ function ExerciseNotesRow({
           disabled={disabled}
           rows={2}
           placeholder="Cues, springs, modifications…"
-          className="mt-1 w-full rounded-sm border border-clara-highlight bg-clara-surface px-3 py-2 text-sm text-clara-deep placeholder:text-clara-deep/60 focus:border-clara-strong focus:outline-none focus:ring-1 focus:ring-clara-strong disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-1 w-full rounded-sm border border-clara-border bg-clara-surface px-3 py-2 text-sm text-clara-deep placeholder:text-clara-deep/60 focus:border-clara-primary focus:outline-none focus:ring-1 focus:ring-clara-primary disabled:cursor-not-allowed disabled:opacity-50"
         />
       )}
     </div>

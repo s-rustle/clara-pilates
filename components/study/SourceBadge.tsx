@@ -18,7 +18,7 @@ export default function SourceBadge({
       : `Based on your ${folderName} materials`;
 
   return (
-    <span className="inline-flex items-center rounded-sm border border-clara-highlight bg-clara-highlight px-2.5 py-0.5 text-xs font-medium text-clara-deep">
+    <span className="inline-flex items-center rounded-sm border border-clara-border bg-clara-surface px-2.5 py-0.5 text-xs font-medium text-clara-deep">
       {label}
     </span>
   );

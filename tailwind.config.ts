@@ -1,36 +1,52 @@
 import type { Config } from "tailwindcss";
 import typography from "@tailwindcss/typography";
 
-/** Terracotta & sage — warm cream surfaces (palette from earlier moodboard pass) */
+/** Mediterranean-adjacent: warm plaster neutrals, olive primary, terracotta accent, sea for links */
 const config: Config = {
   content: [],
   theme: {
     extend: {
       colors: {
         clara: {
-          bg: "#F4EDE3",
-          surface: "#E9E2D6",
-          highlight: "#C5D1B8",
-          accent: "#D4A84B",
-          primary: "#C4512E",
-          strong: "#152A22",
-          deep: "#2A3D34",
-          muted: "#5F6B62",
-          rock: "#5C2718",
-          forest: "#2F4D3C",
-          alert: "#A6453B",
-          sky: "#5B9AAA",
+          bg: "#F5F1E8",
+          surface: "#FDFBF7",
+          tint: "#EFE8DC",
+          border: "#E0D8CC",
+          deep: "#2C2824",
+          muted: "#7A756E",
+          primary: {
+            DEFAULT: "#5F6F52",
+            dark: "#4D5C42",
+          },
+          accent: {
+            DEFAULT: "#C2782E",
+            soft: "#F3EBE0",
+            foreground: "#8B5220",
+          },
+          sea: {
+            DEFAULT: "#2C5F63",
+            muted: "#3D7377",
+          },
+          leaf: "#5F6F52",
         },
       },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
-        display: ["var(--font-lora)", "Georgia", "serif"],
+        display: [
+          "var(--font-fraunces)",
+          "Georgia",
+          "Times New Roman",
+          "serif",
+        ],
+      },
+      borderRadius: {
+        clara: "0.375rem",
       },
       boxShadow: {
         "clara-soft":
-          "0 2px 14px rgba(21, 42, 34, 0.06), 0 1px 2px rgba(21, 42, 34, 0.04)",
+          "0 2px 14px rgba(44, 40, 36, 0.06), 0 1px 2px rgba(44, 40, 36, 0.04)",
         "clara-lift":
-          "0 6px 24px rgba(21, 42, 34, 0.08), 0 2px 6px rgba(21, 42, 34, 0.05)",
+          "0 6px 24px rgba(44, 40, 36, 0.08), 0 2px 6px rgba(44, 40, 36, 0.05)",
       },
     },
   },

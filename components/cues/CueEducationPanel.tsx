@@ -27,8 +27,8 @@ const EVALUATION_POINTS: { title: string; why: string }[] = [
 
 export default function CueEducationPanel() {
   return (
-    <details className="group rounded-sm border border-clara-highlight bg-clara-surface">
-      <summary className="cursor-pointer list-none px-4 py-3 text-sm font-bold text-clara-strong marker:hidden [&::-webkit-details-marker]:hidden">
+    <details className="group rounded-sm border border-clara-border bg-clara-surface">
+      <summary className="cursor-pointer list-none px-4 py-3 text-sm font-bold text-clara-deep marker:hidden [&::-webkit-details-marker]:hidden">
         <span className="inline-flex items-center gap-2">
           <span
             className="text-clara-muted transition-transform group-open:rotate-90"
@@ -39,9 +39,9 @@ export default function CueEducationPanel() {
           Learn about cues and how Clara gives feedback
         </span>
       </summary>
-      <div className="border-t border-clara-highlight px-4 pb-4 pt-2 text-sm text-clara-deep">
+      <div className="border-t border-clara-border px-4 pb-4 pt-2 text-sm text-clara-deep">
         <p className="mb-3">
-          A <strong className="text-clara-strong">verbal cue</strong> is a short,
+          A <strong className="text-clara-deep">verbal cue</strong> is a short,
           specific instruction—about alignment, effort, breath, or rhythm—that
           helps someone perform the exercise well. Strong cues are grounded in
           the repertoire and in how real bodies move.
@@ -51,13 +51,13 @@ export default function CueEducationPanel() {
           confidence, and make your teaching easier to follow—especially under
           exam conditions when clarity counts.
         </p>
-        <p className="mb-2 font-bold text-clara-strong">
+        <p className="mb-2 font-bold text-clara-deep">
           What Clara evaluates (and why)
         </p>
         <ul className="mb-4 flex list-none flex-col gap-2">
           {EVALUATION_POINTS.map(({ title, why }) => (
             <li key={title} className="border-l-2 border-clara-accent/50 pl-3">
-              <span className="font-bold text-clara-strong">{title}.</span>{" "}
+              <span className="font-bold text-clara-deep">{title}.</span>{" "}
               {why}
             </li>
           ))}

@@ -16,11 +16,11 @@ interface ButtonProps {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-clara-primary text-white shadow-clara-soft hover:bg-clara-rock focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-forest",
+    "bg-clara-primary text-white shadow-clara-soft hover:bg-clara-primary-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-accent",
   secondary:
-    "border border-clara-highlight bg-clara-bg text-clara-deep shadow-sm hover:bg-clara-highlight/80 hover:border-clara-highlight focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-primary/40",
+    "border border-clara-border bg-clara-surface text-clara-deep shadow-sm hover:bg-clara-bg hover:border-clara-border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-primary/35",
   destructive:
-    "bg-clara-alert text-white hover:bg-clara-rock focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-deep",
+    "bg-clara-deep text-white hover:bg-clara-deep/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-accent/60",
 };
 
 export default function Button({
@@ -33,7 +33,7 @@ export default function Button({
   href,
 }: ButtonProps) {
   const classes = clsx(
-    "inline-flex cursor-pointer items-center justify-center rounded-sm px-4 py-2 text-sm font-medium no-underline transition-colors",
+    "inline-flex cursor-pointer items-center justify-center rounded-clara px-4 py-2 text-sm font-medium no-underline transition-colors",
     variantStyles[variant],
     disabled && "pointer-events-none cursor-not-allowed opacity-50",
     className

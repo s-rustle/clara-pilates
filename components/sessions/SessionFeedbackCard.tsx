@@ -60,7 +60,7 @@ export default function SessionFeedbackCard({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-base font-bold text-clara-strong">
+      <h3 className="text-base font-bold text-clara-accent">
         Clara&apos;s feedback
       </h3>
 
@@ -73,7 +73,7 @@ export default function SessionFeedbackCard({
         />
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <dt className="font-bold text-clara-strong">Contraindication Flags</dt>
+            <dt className="font-bold text-clara-deep">Contraindication Flags</dt>
             <Badge variant={cfBadge.variant}>{cfBadge.label}</Badge>
             {nFlags > 0 && (
               <button
@@ -89,7 +89,7 @@ export default function SessionFeedbackCard({
             <ul className="mt-2 list-disc space-y-1 pl-5 text-clara-deep">
               {feedback.contraindication_flags.flags.map((f, i) => (
                 <li key={i}>
-                  <span className="font-bold text-clara-strong">
+                  <span className="font-bold text-clara-deep">
                     {formatExerciseNameForDisplay(f.exercise_name)}:
                   </span>{" "}
                   {f.flag} — {f.recommendation}
@@ -100,7 +100,7 @@ export default function SessionFeedbackCard({
         </div>
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <dt className="font-bold text-clara-strong">Volume Assessment</dt>
+            <dt className="font-bold text-clara-deep">Volume Assessment</dt>
             <Badge variant={vaBadge.variant}>{vaBadge.label}</Badge>
             {feedback.volume_assessment.flagged_exercises.length > 0 && (
               <button
@@ -128,7 +128,7 @@ export default function SessionFeedbackCard({
         </div>
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <dt className="font-bold text-clara-strong">Muscle Group Balance</dt>
+            <dt className="font-bold text-clara-deep">Muscle Group Balance</dt>
             <Badge variant={mbBadge.variant}>{mbBadge.label}</Badge>
             {feedback.muscle_group_balance.gaps.length > 0 && (
               <button
@@ -161,13 +161,13 @@ export default function SessionFeedbackCard({
         />
       </dl>
 
-      <div className="rounded-sm border border-clara-highlight bg-clara-surface p-4 text-sm leading-relaxed">
+      <div className="rounded-sm border border-clara-border bg-clara-surface p-4 text-sm leading-relaxed">
         <MarkdownBody>{feedback.overall}</MarkdownBody>
       </div>
 
       {feedback.suggested_adjustments.length > 0 && (
         <div>
-          <h4 className="mb-2 text-sm font-bold text-clara-strong">
+          <h4 className="mb-2 text-sm font-bold text-clara-accent">
             Suggested Adjustments
           </h4>
           <ol className="list-decimal space-y-2 pl-5 text-sm text-clara-deep">
@@ -208,7 +208,7 @@ function DimensionRow({
   return (
     <div>
       <div className="flex flex-wrap items-center gap-2">
-        <dt className="font-bold text-clara-strong">{label}</dt>
+        <dt className="font-bold text-clara-deep">{label}</dt>
         <Badge variant={badgeVariant}>{badgeLabel}</Badge>
       </div>
       {note ? (

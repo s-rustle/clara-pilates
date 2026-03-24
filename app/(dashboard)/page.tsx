@@ -7,7 +7,7 @@ import WeakSpotCard from "@/components/dashboard/WeakSpotCard";
 import type { QuizSession } from "@/types";
 
 const quickActionClass =
-  "w-full rounded-sm py-2.5 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-rock";
+  "w-full rounded-sm py-2.5 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-primary";
 
 function formatCompletedAt(iso: string | null) {
   if (!iso) return "";
@@ -58,7 +58,7 @@ export default async function DashboardPage() {
       </div>
 
       <Card>
-        <h2 className="mb-4 text-lg font-bold text-clara-strong">
+        <h2 className="mb-4 text-lg font-bold text-clara-accent">
           Quick actions
         </h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -78,7 +78,7 @@ export default async function DashboardPage() {
       </Card>
 
       <Card>
-        <h2 className="mb-4 text-lg font-bold text-clara-strong">
+        <h2 className="mb-4 text-lg font-bold text-clara-accent">
           Recent activity
         </h2>
         {recentSessions.length === 0 ? (
@@ -86,7 +86,7 @@ export default async function DashboardPage() {
             No completed quiz sessions yet. Finish a quiz to see it here.
           </p>
         ) : (
-          <ul className="divide-y divide-clara-highlight text-sm text-clara-deep">
+          <ul className="divide-y divide-clara-border text-sm text-clara-deep">
             {recentSessions.map((s) => {
               const label = [s.apparatus, s.topic].filter(Boolean).join(" · ");
               const score =
@@ -99,11 +99,11 @@ export default async function DashboardPage() {
                   className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div>
-                    <p className="font-medium text-clara-strong">{label}</p>
+                    <p className="font-medium text-clara-deep">{label}</p>
                     <p className="text-xs text-clara-muted">{s.difficulty}</p>
                   </div>
                   <div className="flex shrink-0 flex-col items-start gap-0.5 sm:items-end">
-                    <span className="text-clara-strong">{score}</span>
+                    <span className="text-clara-deep">{score}</span>
                     <time
                       className="text-xs text-clara-muted"
                       dateTime={s.completed_at ?? undefined}

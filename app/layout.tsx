@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Inter, Lora } from "next/font/google";
+import { Fraunces, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["300", "400", "700", "900"],
+  weight: ["300", "400", "500", "600", "700", "900"],
 });
 
-const lora = Lora({
-  variable: "--font-lora",
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
@@ -33,7 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${lora.variable} ${geistMono.variable} font-sans antialiased text-clara-deep`}
+        className={`${inter.variable} ${fraunces.variable} ${geistMono.variable} font-sans antialiased text-clara-deep`}
       >
         {children}
       </body>

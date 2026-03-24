@@ -71,7 +71,7 @@ export default function HoursPage() {
   }
 
   return (
-    <div>
+    <>
       <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-5">
         <div className="lg:col-span-2">
           <HourLogForm
@@ -88,6 +88,6 @@ export default function HoursPage() {
         <ErrorMessage message={error} />
         <HourLogTable logs={logs} onStatusUpdate={fetchLogs} />
       </div>
-    </div>
+    </>
   );
 }

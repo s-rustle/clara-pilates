@@ -143,7 +143,7 @@ export default function CueInput({
           disabled={isLoading || !canPickExercise}
         />
         {listError ? (
-          <p className="mt-1.5 text-xs text-clara-rock">{listError}</p>
+          <p className="mt-1.5 text-xs text-clara-primary">{listError}</p>
         ) : null}
         {!listLoading && !listError && exerciseOptions.length === 0 ? (
           <p className="mt-1.5 text-xs text-clara-muted">
@@ -169,7 +169,7 @@ export default function CueInput({
           placeholder="Write your cue here..."
           rows={6}
           disabled={isLoading}
-          className="w-full resize-y rounded-sm border border-clara-highlight bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted/80 focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full resize-y rounded-sm border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted/80 focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
         />
       </div>
       <div>

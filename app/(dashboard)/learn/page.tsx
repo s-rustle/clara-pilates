@@ -225,7 +225,7 @@ export default function LearnPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <div className="mb-8 space-y-4 rounded-sm border border-clara-highlight bg-clara-surface p-5">
+      <div className="mb-8 space-y-4 rounded-sm border border-clara-border bg-clara-surface p-5">
         <Select
           label="Apparatus"
           options={APPARATUS_OPTIONS}
@@ -238,7 +238,7 @@ export default function LearnPage() {
           <span className="mb-2 block text-sm font-medium text-clara-deep">
             Browse by
           </span>
-          <div className="flex gap-0 rounded-sm border border-clara-highlight bg-clara-bg p-0.5">
+          <div className="flex gap-0 rounded-sm border border-clara-border bg-clara-bg p-0.5">
             <button
               type="button"
               onClick={() => setBrowseMode("exercise")}
@@ -246,7 +246,7 @@ export default function LearnPage() {
               className={`flex-1 rounded px-3 py-2 text-sm font-medium transition-colors ${
                 browseMode === "exercise"
                   ? "bg-clara-primary text-white"
-                  : "text-clara-deep hover:bg-clara-highlight/60"
+                  : "text-clara-deep hover:bg-clara-border/60"
               }`}
             >
               Exercise
@@ -258,7 +258,7 @@ export default function LearnPage() {
               className={`flex-1 rounded px-3 py-2 text-sm font-medium transition-colors ${
                 browseMode === "muscle"
                   ? "bg-clara-primary text-white"
-                  : "text-clara-deep hover:bg-clara-highlight/60"
+                  : "text-clara-deep hover:bg-clara-border/60"
               }`}
             >
               Muscle Group
@@ -268,7 +268,7 @@ export default function LearnPage() {
 
         {browseMode === "exercise" ? (
           <div className="relative" ref={panelRef}>
-            <label className="mb-1 block text-sm font-bold text-clara-strong">
+            <label className="mb-1 block text-sm font-bold text-clara-deep">
               Exercise
             </label>
             <input
@@ -286,7 +286,7 @@ export default function LearnPage() {
                 listLoading ? "Loading exercises…" : "Search exercises…"
               }
               disabled={tutorialLoading || listLoading}
-              className="w-full rounded-sm border border-clara-highlight bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted/80 focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40"
+              className="w-full rounded-sm border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted/80 focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40"
             />
             {listLoading && (
               <div className="mt-2 flex items-center gap-2 text-sm text-clara-deep">
@@ -295,7 +295,7 @@ export default function LearnPage() {
               </div>
             )}
             {dropdownOpen && !listLoading && (
-              <ul className="absolute left-0 right-0 top-full z-20 mt-1 max-h-52 overflow-y-auto rounded-sm border border-clara-highlight bg-clara-surface py-1">
+              <ul className="absolute left-0 right-0 top-full z-20 mt-1 max-h-52 overflow-y-auto rounded-sm border border-clara-border bg-clara-surface py-1">
                 {filteredExercises.length === 0 ? (
                   <li className="px-3 py-2 text-sm text-clara-muted">
                     {exerciseList.length > 0
@@ -311,7 +311,7 @@ export default function LearnPage() {
                     <li key={ex}>
                       <button
                         type="button"
-                        className="w-full px-3 py-2 text-left text-sm text-clara-deep hover:bg-clara-highlight"
+                        className="w-full px-3 py-2 text-left text-sm text-clara-deep hover:bg-clara-border"
                         onClick={() => {
                           setSelectedExercise(ex);
                           setExerciseFilter(ex);
@@ -378,7 +378,7 @@ export default function LearnPage() {
           )}
 
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-clara-strong md:text-3xl">
+            <h2 className="text-2xl font-bold tracking-tight text-clara-accent md:text-3xl">
               {formatExerciseNameForDisplay(tutorial.exercise_name)}
             </h2>
             {tutorialLevelRepsBadge ? (
@@ -399,7 +399,7 @@ export default function LearnPage() {
           <TutorialSections tutorial={tutorial} />
 
           {navList.length > 0 && (
-            <div className="flex flex-col items-center gap-3 border-t border-clara-highlight pt-6 sm:flex-row sm:justify-between">
+            <div className="flex flex-col items-center gap-3 border-t border-clara-border pt-6 sm:flex-row sm:justify-between">
               <p className="text-sm text-clara-deep">
                 Exercise {currentIndex + 1} of {navList.length}
               </p>

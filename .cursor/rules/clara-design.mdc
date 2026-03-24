@@ -1,5 +1,5 @@
 ---
-description: Visual design for Clara — Red Rocks earthy brutalist palette. Apply when editing layout, Tailwind, or components.
+description: Clara UI — grove + citrus spec palette, Inter + Fraunces. Apply when editing layout, Tailwind, or components.
 globs:
   - "**/*.tsx"
   - "**/*.css"
@@ -8,36 +8,51 @@ globs:
 
 # Clara visual design
 
-**Direction:** **Red Rocks — earthy brutalist.** Sand and stone neutrals, umber primary, terracotta accent, deeper rock red-brown for destructive / strong secondary emphasis. **Flat** surfaces — borders and typography carry structure, not shadows.
+**Direction:** **Grove green** leads (**`#5F6F52`**), **orange** is a warm accent (**`#C2782E`**). **Warm plaster surfaces** on a **sage-tinted** page (**`#F5F1E8`**). Typography: **Inter** for UI and SR line; **Fraunces** for headings and wordmark “Clara”.
 
-## Mood
+## Tokens (`tailwind.config.ts` → `clara-*`)
 
-- Desert stone, fired clay, architectural planes, warm minimalism.
+| Token | Hex | Role |
+|-------|-----|------|
+| `bg` | `#F5F1E8` | Page / app background |
+| `surface` | `#FDFBF7` | Cards, panels, inputs |
+| `tint` | `#EFE8DC` | Soft wash (metrics, progress track, sidebar fade) |
+| `border` | `#E0D8CC` | Dividers, outlines |
+| `deep` | `#2C2824` | Body text, labels |
+| `muted` | `#7A756E` | Secondary labels |
+| `primary` | `#5F6F52` | Default buttons, active nav emphasis, solid green badges, wordmark “Clara” |
+| `primary-dark` | `#4D5C42` | Primary hover |
+| `accent` | `#C2782E` | **Headings** (`h1`–`h6`, TopBar title), links, focus rings on primary, warm highlights |
+| `accent-soft` | `#F3EBE0` | Warm badge background |
+| `accent-foreground` | `#8B5220` | Text on warm badges |
+| `sea` | `#2C5F63` | Prose links |
+| `sea-muted` | `#3D7377` | Prose link hover |
+| `leaf` | `#5F6F52` | Success (same as primary) |
 
-## Typography
+## Badges (`Badge.tsx`)
 
-- **UI / body:** Inter (`font-sans` / `--font-inter`) — weights 300 / 400 / 700 / 900 as needed.
-- **Headings:** `text-clara-strong`.
-- **Wordmark:** **SR** = `text-clara-strong` + `font-black`; **Clara** = `text-clara-accent` + `font-light`.
+- **green** — primary: green fill, white text.
+- **yellow** — warm: `accent-soft` + `accent` text + light ring.
+- **red** — dark label: `deep` + white text.
+- **blue** — soft: `tint` + `primary` text (info / neutral emphasis).
+- **grey** — outlined surface.
 
-## Tokens (`clara-*` in `tailwind.config.ts`)
+## Buttons
 
-- `bg` — page background.
-- `surface` — cards, panels, sidebar.
-- `highlight` — borders, hovers, active nav background, dividers.
-- `primary` — primary buttons (white text), positive badges.
-- `accent` — links, CTAs, active nav text, progress fill, spinner ring.
-- `rock` — destructive buttons, strong warning / info badge variant.
-- `strong` / `deep` / `muted` — text hierarchy.
+- **Primary:** `bg-clara-primary`, `hover:bg-clara-primary-dark`, white text; focus outline `clara-accent`.
+- **Destructive:** `bg-clara-deep`, white text.
 
 ## Layout
 
-- **Sidebar:** `bg-clara-surface`, `border-r border-clara-highlight`.
-- **Active nav:** `bg-clara-highlight`, `text-clara-accent`, bold.
-- **Cards:** `bg-clara-surface`, `border border-clara-highlight`, `rounded-sm`, **no** shadow.
+- **Sidebar:** `from-clara-bg` → `to-clara-tint`.
+- **Active nav:** white/surface pill, green text, subtle `primary` ring.
+
+## Wordmark
+
+- **SR:** Inter Black, small caps tracking, `text-clara-muted`.
+- **Clara:** Fraunces bold, `text-clara-primary` (title case).
 
 ## Do / don’t
 
-- **Do** use `border-clara-highlight` instead of shadows for elevation.
-- **Do** keep primary button hover on `bg-clara-accent` with white text.
-- **Don’t** add drop shadows to cards or buttons — keep the brutalist flat look.
+- **Do** use `accent` for links and focus, primary green for main actions and wordmark “Clara”.
+- **Don’t** introduce extra brand fonts beyond Inter + Fraunces without updating this spec.

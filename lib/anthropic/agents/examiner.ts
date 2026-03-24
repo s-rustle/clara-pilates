@@ -262,13 +262,22 @@ async function getAnatomyDiagramChunks(
     .map((r) => ({ file_name: r.file_name }));
 }
 
+export type ExaminerFormatPreference =
+  | "mixed"
+  | "open_ended"
+  | "multiple_choice"
+  | "fill_blank"
+  | "matching"
+  | "anatomy_multiple_choice"
+  | "anatomy_diagram";
+
 export async function generateQuestion(
   apparatus: string,
   topic: string | null,
   difficulty: string,
   previousQuestions: string[],
   userId: string,
-  formatPreference: "mixed" | "open_ended" | "multiple_choice" | "fill_blank" | "matching" = "mixed"
+  formatPreference: ExaminerFormatPreference = "mixed"
 ): Promise<GenerateQuestionResult> {
   const isAnatomy = apparatus === "Anatomy" || topic === "Anatomy";
   const wantsMatching =
@@ -424,6 +433,27 @@ Generate one NEW ${format.replace(/_/g, " ")} question that is different from al
       correct_answer: canonical,
       expected_answer_elements: els.length ? els : [canonical],
     };
+  }
+
+  if (format === "anatomy_multiple_choice") {
+    if (Array.isArray(parsed.options)) {
+      const rawOpts = (parsed.options as unknown[]).map((x) => String(x).trim()).filter(Boolean);
+      const correctOpt =
+        typeof parsed.correct_option === "string" ? parsed.correct_option.trim() : "";
+      if (rawOpts.length === 4 && correctOpt && rawOpts.includes(correctOpt)) {
+        return {
+          ...base,
+          format: "anatomy_multiple_choice",
+          anatomy_options: rawOpts,
+          correct_option: correctOpt,
+          correct_answer: correctOpt,
+          expected_answer_elements: elements.length ? elements : [correctOpt],
+        };
+      }
+    }
+    throw new Error(
+      "Invalid anatomy_multiple_choice: need exactly four options and correct_option equal to one of them."
+    );
   }
 
   if (parsed.format === "multiple_choice" && Array.isArray(parsed.options)) {

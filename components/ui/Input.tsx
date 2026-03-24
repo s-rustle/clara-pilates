@@ -47,7 +47,7 @@ export default function Input({
         min={min}
         max={max}
         step={step}
-        className="w-full rounded-sm border border-clara-highlight bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted/80 focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40 disabled:cursor-not-allowed disabled:opacity-50 read-only:bg-clara-highlight/25 read-only:text-clara-muted"
+        className="w-full rounded-sm border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted/80 focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40 disabled:cursor-not-allowed disabled:opacity-50 read-only:bg-clara-border/25 read-only:text-clara-muted"
       />
     </div>
   );

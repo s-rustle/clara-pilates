@@ -87,16 +87,16 @@ export default function WeakSpotCard() {
   if (needsMoreSessions) {
     return (
       <Card>
-        <h2 className="mb-2 text-lg font-bold text-clara-strong">
+        <h2 className="mb-2 text-lg font-bold text-clara-accent">
           Weak spots
         </h2>
         <p className="mb-3 text-sm text-clara-deep">
           Complete {sessionsNeeded} more quiz{" "}
           {sessionsNeeded === 1 ? "session" : "sessions"} to unlock weak spot analysis.
         </p>
-        <div className="h-2 w-full overflow-hidden rounded-sm bg-clara-highlight">
+        <div className="h-2 w-full overflow-hidden rounded-sm bg-clara-tint">
           <div
-            className="h-full bg-clara-accent transition-[width] duration-300"
+            className="h-full bg-clara-primary transition-[width] duration-300"
             style={{ width: `${progress * 100}%` }}
             role="progressbar"
             aria-valuenow={completed}
@@ -115,7 +115,7 @@ export default function WeakSpotCard() {
   if (!top) {
     return (
       <Card>
-        <h2 className="mb-2 text-lg font-bold text-clara-strong">
+        <h2 className="mb-2 text-lg font-bold text-clara-accent">
           Weak spots
         </h2>
         <p className="text-sm text-clara-deep">
@@ -130,10 +130,10 @@ export default function WeakSpotCard() {
 
   return (
     <Card>
-      <h2 className="mb-3 text-lg font-bold text-clara-strong">
+      <h2 className="mb-3 text-lg font-bold text-clara-accent">
         Top priority weak spot
       </h2>
-      <p className="mb-2 text-sm font-medium text-clara-strong">{top.area}</p>
+      <p className="mb-2 text-sm font-medium text-clara-deep">{top.area}</p>
       <div className="mb-3">
         <Badge variant="red">{top.accuracy_percent}% accuracy</Badge>
       </div>
@@ -142,7 +142,7 @@ export default function WeakSpotCard() {
       </p>
       <Link
         href={studyHref}
-        className="inline-flex w-full items-center justify-center rounded-sm bg-clara-primary px-4 py-2 text-sm font-medium text-white shadow-clara-soft transition-colors hover:bg-clara-rock focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-forest sm:w-auto"
+        className="inline-flex w-full items-center justify-center rounded-sm bg-clara-primary px-4 py-2 text-sm font-medium text-white shadow-clara-soft transition-colors hover:bg-clara-primary-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-accent sm:w-auto"
       >
         Study this now
       </Link>

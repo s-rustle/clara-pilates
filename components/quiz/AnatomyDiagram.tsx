@@ -87,7 +87,7 @@ export default function AnatomyDiagram({
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-clara-deep">
-        <span className="font-medium text-clara-strong">Active recall:</span>{" "}
+        <span className="font-medium text-clara-deep">Active recall:</span>{" "}
         Select the region that answers the question, then type the muscle{" "}
         <span className="font-medium">group</span> name below. The diagram does
         not label answers for you.
@@ -105,7 +105,7 @@ export default function AnatomyDiagram({
             "rounded-sm border px-3 py-1.5 text-sm font-medium transition-colors",
             side === "front"
               ? "border-clara-primary bg-clara-primary text-white"
-              : "border-clara-highlight bg-clara-surface text-clara-deep hover:bg-clara-highlight/50"
+              : "border-clara-border bg-clara-surface text-clara-deep hover:bg-clara-border/50"
           )}
         >
           Front
@@ -117,13 +117,13 @@ export default function AnatomyDiagram({
             "rounded-sm border px-3 py-1.5 text-sm font-medium transition-colors",
             side === "back"
               ? "border-clara-primary bg-clara-primary text-white"
-              : "border-clara-highlight bg-clara-surface text-clara-deep hover:bg-clara-highlight/50"
+              : "border-clara-border bg-clara-surface text-clara-deep hover:bg-clara-border/50"
           )}
         >
           Back
         </button>
       </div>
-      <div className="flex justify-center overflow-x-auto rounded-sm border border-clara-highlight bg-clara-bg p-4">
+      <div className="flex justify-center overflow-x-auto rounded-sm border border-clara-border bg-clara-bg p-4">
         <div className="relative w-full max-w-[240px] [&_.rbh]:drop-shadow-sm">
           <Model
             key={side}
@@ -159,7 +159,7 @@ export default function AnatomyDiagram({
       </div>
       {showAbdominalNote && side === "front" && (
         <p
-          className="rounded-sm border border-clara-highlight bg-clara-surface/80 px-3 py-2 text-xs text-clara-deep"
+          className="rounded-sm border border-clara-border bg-clara-surface/80 px-3 py-2 text-xs text-clara-deep"
           role="note"
         >
           {ABDOMINAL_LAYER_NOTE}

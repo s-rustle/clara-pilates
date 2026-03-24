@@ -62,11 +62,11 @@ export default function StudyResponse({
 
   return (
     <Card className="flex flex-col gap-3">
-      <p className="font-medium text-clara-strong">{question}</p>
+      <p className="font-medium text-clara-deep">{question}</p>
       <MarkdownBody>{answer}</MarkdownBody>
 
       {hasDocs && confidence !== "not_found" && (
-        <div className="rounded-sm border border-clara-highlight bg-clara-surface/80 p-3 text-sm">
+        <div className="rounded-sm border border-clara-border bg-clara-surface/80 p-3 text-sm">
           <p className="mb-2 text-xs font-medium uppercase tracking-wide text-clara-muted">
             Source files (Google Drive)
           </p>
@@ -77,7 +77,7 @@ export default function StudyResponse({
                   href={`https://drive.google.com/file/d/${encodeURIComponent(doc.drive_file_id)}/view`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-clara-strong underline decoration-clara-highlight underline-offset-2 hover:text-clara-accent"
+                  className="text-clara-deep underline decoration-clara-border underline-offset-2 hover:text-clara-accent"
                 >
                   {doc.file_name}
                 </a>
@@ -89,7 +89,7 @@ export default function StudyResponse({
       )}
 
       {hasImages && confidence !== "not_found" && (
-        <div className="space-y-2 rounded-sm border border-clara-highlight bg-clara-surface/80 p-3">
+        <div className="space-y-2 rounded-sm border border-clara-border bg-clara-surface/80 p-3">
           <p className="text-xs font-medium uppercase tracking-wide text-clara-muted">
             Images from your curriculum (Google Drive)
           </p>
@@ -101,9 +101,9 @@ export default function StudyResponse({
             {source_images.map((img) => (
               <li
                 key={img.drive_file_id}
-                className="overflow-hidden rounded border border-clara-highlight/60 bg-clara-bg"
+                className="overflow-hidden rounded border border-clara-border/60 bg-clara-bg"
               >
-                <p className="border-b border-clara-highlight/40 px-2 py-1.5 text-xs font-medium text-clara-strong">
+                <p className="border-b border-clara-border/40 px-2 py-1.5 text-xs font-medium text-clara-deep">
                   {img.file_name}
                 </p>
                 {/* eslint-disable-next-line @next/next/no-img-element -- authenticated same-origin proxy URL */}
@@ -120,7 +120,7 @@ export default function StudyResponse({
       )}
 
       {hasFigures && confidence !== "not_found" && (
-        <div className="space-y-2 rounded-sm border border-clara-highlight bg-clara-surface/80 p-3">
+        <div className="space-y-2 rounded-sm border border-clara-border bg-clara-surface/80 p-3">
           <p className="text-xs font-medium uppercase tracking-wide text-clara-muted">
             From your textbook (figures &amp; illustrations)
           </p>
@@ -134,9 +134,9 @@ export default function StudyResponse({
             {figures.map((fig, idx) => (
               <li
                 key={`${fig.file_name}-${idx}`}
-                className="rounded border border-clara-highlight/60 bg-clara-bg p-3 text-sm"
+                className="rounded border border-clara-border/60 bg-clara-bg p-3 text-sm"
               >
-                <p className="mb-1 font-medium text-clara-strong">{fig.file_name}</p>
+                <p className="mb-1 font-medium text-clara-deep">{fig.file_name}</p>
                 <p className="whitespace-pre-wrap text-clara-deep">{fig.description}</p>
               </li>
             ))}
@@ -150,7 +150,7 @@ export default function StudyResponse({
       </div>
 
       {confidence !== "not_found" && (
-        <div className="flex flex-col gap-2 border-t border-clara-highlight pt-3">
+        <div className="flex flex-col gap-2 border-t border-clara-border pt-3">
           <p className="text-xs font-medium text-clara-muted">Ask a follow-up</p>
           <div className="flex flex-wrap gap-2">
             {FOLLOW_UP_SUGGESTIONS.map((s) => (

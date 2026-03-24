@@ -104,34 +104,35 @@ No client data, no Lumenalta data, no third-party information of any kind touche
 
 ## 6. Visual Identity
 
-Clara’s UI is **Red Rocks — earthy brutalist**: warm sand and stone neutrals, **umber brown** structure, **terracotta** accent (`accent`), and a deeper **rock** red-brown for secondary emphasis (e.g. destructive actions, “info” badges). Surfaces are **flat** — no drop shadows; structure comes from **1px borders** in `highlight` and generous spacing. Nothing clinical or neon.
+Clara’s UI is **Mediterranean-adjacent**: warm plaster neutrals, **olive / grove green** primary actions, **terracotta** accent and top-bar title, **sea teal** for prose links. Surfaces are light with soft borders and restrained shadows. Typography: **Inter** for UI, **Fraunces** for headings and the SR line in the wordmark.
 
 ### 6.1 Color Palette
 
 | Token | Hex | Usage |
 |---|---|---|
-| Background (`bg`) | `#E8E0D5` | Page canvas |
-| Surface | `#DDD5C8` | Cards, panels, sidebar |
-| Highlight | `#C9BFB0` | Borders, hovers, selected rows, active nav background |
-| Accent | `#C4522A` | Links, CTAs, active nav text, wordmark “Clara”, progress fill, loading spinner ring |
-| Primary | `#5C4A32` | Primary buttons (with white text), positive badges |
-| Strong | `#3D3128` | Headings, strong labels, wordmark “SR” |
-| Deep | `#1C1610` | Body copy |
-| Muted | `#8A7F74` | Captions, metadata, secondary lines |
-| Rock | `#A63D1F` | Destructive / strong warning emphasis, secondary accent (e.g. focus outlines on destructive controls) |
+| Background (`bg`) | `#F5F1E8` | Page canvas |
+| Surface | `#FDFBF7` | Cards, panels, wordmark strip |
+| Tint | `#EFE8DC` | Soft wash (progress tracks, sidebar gradient end) |
+| Border | `#E0D8CC` | Dividers, outlines |
+| Deep | `#2C2824` | Body copy, destructive button fill |
+| Muted | `#7A756E` | Captions, metadata |
+| Primary | `#5F6F52` | Primary buttons (white text), active nav, wordmark “Clara”, progress fill |
+| Primary dark (hover) | `#4D5C42` | Primary hover |
+| Accent | `#C2782E` | Headings (`h1`–`h6`), top bar title, focus rings, warm highlights |
+| Sea | `#2C5F63` | Prose links |
+| Sea muted | `#3D7377` | Prose link hover |
 
 ### 6.2 Typography
-- **Font:** Inter (web; substitute for FK Grotesk)
-- **Headings:** Bold, `text-clara-strong`
-- **Body:** Regular, `text-clara-deep`
+- **Body / UI:** Inter (`font-sans`)
+- **Headings (`h1`–`h3`):** Fraunces (`font-display`), semibold, `text-clara-accent`
 - **Captions / metadata:** `text-clara-muted`
-- **Wordmark:** **SR** — Inter Black (`font-black`), `text-clara-strong`; **Clara** — Inter Light (`font-light`), `text-clara-accent`
+- **Wordmark:** **SR** — Inter Black, `text-clara-muted`; **Clara** — Fraunces bold, `text-clara-primary`
 
 ### 6.3 Aesthetic Principles
-- **Flat architecture** — cards and buttons use **no shadow**; `rounded-sm` at most; cards use `border border-clara-highlight` on `bg-clara-surface`
-- **Primary buttons:** `bg-clara-primary`, white text, hover `bg-clara-accent`
-- **Progress bars:** track `bg-clara-highlight`, fill `bg-clara-accent`
-- **Sidebar:** `bg-clara-surface`, `border-r border-clara-highlight`; active item `bg-clara-highlight` + `text-clara-accent`
+- Cards use `border border-clara-border` on `bg-clara-surface`; theme supplies soft shadows (`shadow-clara-soft`) where implemented
+- **Primary buttons:** `bg-clara-primary`, white text, hover `bg-clara-primary-dark`; focus outline `clara-accent`
+- **Progress bars:** track `bg-clara-tint`, fill `bg-clara-primary`
+- **Sidebar:** gradient `from-clara-bg` to `clara-tint`, `border-r border-clara-border`; active item surface pill + `text-clara-primary`
 - Generous whitespace; calm layouts
 - No dark mode (Phase 1)
 

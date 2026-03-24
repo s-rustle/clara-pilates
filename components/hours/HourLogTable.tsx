@@ -124,7 +124,7 @@ export default function HourLogTable({ logs, onStatusUpdate }: HourLogTableProps
       <button
         type="button"
         onClick={() => handleSort(columnKey)}
-        className="flex items-center gap-1 font-bold text-clara-strong hover:text-clara-deep"
+        className="flex items-center gap-1 font-bold text-clara-deep hover:text-clara-deep"
       >
         {label}
         {isActive &&
@@ -149,9 +149,9 @@ export default function HourLogTable({ logs, onStatusUpdate }: HourLogTableProps
 
   return (
     <div className="space-y-4">
-      <div className="overflow-x-auto rounded-sm border border-clara-highlight">
+      <div className="overflow-x-auto rounded-sm border border-clara-border">
         <table className="w-full min-w-[600px]">
-          <thead className="border-b border-clara-highlight bg-clara-surface">
+          <thead className="border-b border-clara-border bg-clara-surface">
             <tr>
               <th className="px-4 py-3 text-left">
                 <SortHeader label="Date" columnKey="session_date" />
@@ -173,7 +173,7 @@ export default function HourLogTable({ logs, onStatusUpdate }: HourLogTableProps
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-clara-highlight bg-clara-bg">
+          <tbody className="divide-y divide-clara-border bg-clara-bg">
             {paginatedLogs.map((log) => (
               <tr key={log.id} className="text-sm text-clara-deep">
                 <td className="px-4 py-3">{log.session_date}</td>

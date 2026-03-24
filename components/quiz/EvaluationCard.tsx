@@ -64,8 +64,8 @@ export default function EvaluationCard({
         </Badge>
         <MarkdownBody>{feedback}</MarkdownBody>
         {correctAnswer && (
-          <div className="rounded-sm border border-clara-highlight bg-clara-surface p-3">
-            <p className="text-xs font-bold text-clara-strong">
+          <div className="rounded-sm border border-clara-border bg-clara-surface p-3">
+            <p className="text-xs font-bold text-clara-deep">
               Correct answer
             </p>
             <div className="mt-1">
@@ -90,8 +90,8 @@ export default function EvaluationCard({
           </Button>
         )}
         {explanation && (
-          <div className="rounded-sm border border-clara-highlight bg-clara-bg p-3">
-            <p className="text-xs font-bold text-clara-strong">Explanation</p>
+          <div className="rounded-sm border border-clara-border bg-clara-bg p-3">
+            <p className="text-xs font-bold text-clara-deep">Explanation</p>
             <div className="mt-1">
               <MarkdownBody>{explanation}</MarkdownBody>
             </div>

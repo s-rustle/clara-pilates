@@ -35,7 +35,7 @@ interface QuestionCardProps {
 function QuestionText({ text }: { text: string }) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return (
-    <p className="text-base font-bold text-clara-strong">
+    <p className="text-base font-bold text-clara-deep">
       {parts.map((part, i) =>
         part.startsWith("**") && part.endsWith("**") ? (
           <strong key={i} className="font-bold">
@@ -104,7 +104,7 @@ function DiagramImage({
         alt="Anatomy diagram"
         className={
           className ??
-          "max-h-64 w-auto rounded-sm border border-clara-highlight object-contain"
+          "max-h-64 w-auto rounded-sm border border-clara-border object-contain"
         }
       />
     );
@@ -157,7 +157,7 @@ export default function QuestionCard({
             folder_name={folder_name}
             className={
               isAnatomyMc
-                ? "max-h-80 w-auto max-w-full rounded-sm border border-clara-highlight object-contain"
+                ? "max-h-80 w-auto max-w-full rounded-sm border border-clara-border object-contain"
                 : undefined
             }
           />
@@ -188,7 +188,7 @@ export default function QuestionCard({
                   placeholder="Name this muscle group…"
                   disabled={diagram_submit_loading}
                   autoComplete="off"
-                  className="w-full rounded-sm border border-clara-highlight bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="w-full rounded-sm border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
                 />
                 <Button
                   variant="primary"
@@ -231,7 +231,7 @@ export default function QuestionCard({
                   "w-full rounded-sm border px-4 py-3 text-left text-sm font-medium transition-colors",
                   selected_anatomy_option === opt
                     ? "border-clara-accent bg-clara-accent text-white"
-                    : "border-clara-highlight bg-clara-surface text-clara-deep hover:border-clara-highlight"
+                    : "border-clara-border bg-clara-surface text-clara-deep hover:border-clara-border"
                 )}
               >
                 {opt}

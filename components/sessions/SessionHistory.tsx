@@ -51,34 +51,34 @@ function formatDate(iso: string | null): string {
 export default function SessionHistory({ sessions, onView }: SessionHistoryProps) {
   return (
     <section className="mt-8 space-y-3">
-      <h2 className="text-lg font-bold text-clara-strong">
+      <h2 className="text-lg font-bold text-clara-accent">
         Session history
       </h2>
       {sessions.length === 0 ? (
-        <p className="rounded-sm border border-dashed border-clara-highlight bg-clara-bg/50 px-3 py-6 text-center text-sm text-clara-deep">
+        <p className="rounded-sm border border-dashed border-clara-border bg-clara-bg/50 px-3 py-6 text-center text-sm text-clara-deep">
           No sessions logged yet.
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-sm border border-clara-highlight bg-clara-surface">
+        <div className="overflow-x-auto rounded-sm border border-clara-border bg-clara-surface">
           <table className="w-full min-w-[520px] text-left text-sm">
             <thead>
-              <tr className="border-b border-clara-highlight bg-clara-bg/80">
-                <th className="px-3 py-2 font-medium text-clara-strong">Date</th>
-                <th className="px-3 py-2 font-medium text-clara-strong">
+              <tr className="border-b border-clara-border bg-clara-bg/80">
+                <th className="px-3 py-2 font-medium text-clara-deep">Date</th>
+                <th className="px-3 py-2 font-medium text-clara-deep">
                   Apparatus
                 </th>
-                <th className="px-3 py-2 font-medium text-clara-strong">
+                <th className="px-3 py-2 font-medium text-clara-deep">
                   Session type
                 </th>
-                <th className="px-3 py-2 font-medium text-clara-strong">Status</th>
-                <th className="px-3 py-2 font-medium text-clara-strong">Actions</th>
+                <th className="px-3 py-2 font-medium text-clara-deep">Status</th>
+                <th className="px-3 py-2 font-medium text-clara-deep">Actions</th>
               </tr>
             </thead>
             <tbody>
               {sessions.map((row) => (
                 <tr
                   key={row.id}
-                  className="border-b border-clara-highlight/80 last:border-0"
+                  className="border-b border-clara-border/80 last:border-0"
                 >
                   <td className="px-3 py-2 text-clara-deep">
                     {formatDate(row.session_date)}
@@ -140,14 +140,14 @@ export function SessionReadOnlyModal({
         <div className="mb-4 flex items-start justify-between gap-2">
           <h2
             id="session-view-title"
-            className="text-lg font-bold text-clara-strong"
+            className="text-lg font-bold text-clara-accent"
           >
             Session
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded p-1 text-clara-deep hover:bg-clara-highlight"
+            className="rounded p-1 text-clara-deep hover:bg-clara-border"
             aria-label="Close dialog"
           >
             ×
@@ -157,7 +157,7 @@ export function SessionReadOnlyModal({
         <ReadOnlyDetails session={session} />
 
         {feedback ? (
-          <div className="mt-4 border-t border-clara-highlight pt-4">
+          <div className="mt-4 border-t border-clara-border pt-4">
             <SessionFeedbackCard feedback={feedback} />
           </div>
         ) : (
@@ -175,25 +175,25 @@ function ReadOnlyDetails({ session }: { session: SessionPlan }) {
   return (
     <div className="space-y-3 text-sm text-clara-deep">
       <p>
-        <span className="font-medium text-clara-strong">Date:</span>{" "}
+        <span className="font-medium text-clara-deep">Date:</span>{" "}
         {formatDate(session.session_date)}
       </p>
       <p>
-        <span className="font-medium text-clara-strong">Apparatus:</span>{" "}
+        <span className="font-medium text-clara-deep">Apparatus:</span>{" "}
         {session.apparatus}
       </p>
       <p>
-        <span className="font-medium text-clara-strong">Type:</span>{" "}
+        <span className="font-medium text-clara-deep">Type:</span>{" "}
         {sessionTypeLabel(session.session_type)}
       </p>
       {session.client_level && (
         <p>
-          <span className="font-medium text-clara-strong">Client level:</span>{" "}
+          <span className="font-medium text-clara-deep">Client level:</span>{" "}
           {session.client_level}
         </p>
       )}
       <div>
-        <span className="font-medium text-clara-strong">Warm-up</span>
+        <span className="font-medium text-clara-deep">Warm-up</span>
         <ul className="mt-1 list-disc pl-5">
           {warm.map((m, i) => (
             <li key={i}>
@@ -203,7 +203,7 @@ function ReadOnlyDetails({ session }: { session: SessionPlan }) {
         </ul>
       </div>
       <div>
-        <span className="font-medium text-clara-strong">Main sequence</span>
+        <span className="font-medium text-clara-deep">Main sequence</span>
         <ul className="mt-1 list-disc pl-5">
           {seq.map((e, i) => (
             <li key={i}>

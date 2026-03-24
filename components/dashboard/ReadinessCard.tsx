@@ -91,8 +91,9 @@ export default function ReadinessCard() {
 
   return (
     <Card>
+      <div className="relative z-10">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <h2 className="text-lg font-bold text-clara-strong">
+        <h2 className="text-lg font-bold text-clara-accent">
           Readiness
         </h2>
         <Button
@@ -128,7 +129,7 @@ export default function ReadinessCard() {
         <div className="flex flex-col gap-6">
           <div>
             <p className="mb-1 text-sm font-medium text-clara-deep">Overall</p>
-            <p className="text-4xl font-bold tabular-nums text-clara-strong">
+            <p className="text-4xl font-bold tabular-nums text-clara-deep">
               {toNumber(snapshot.overall_score).toFixed(1)}%
             </p>
           </div>
@@ -159,8 +160,8 @@ export default function ReadinessCard() {
             const recs = parseRecommendations(snapshot.recommendations);
             if (recs.length === 0) return null;
             return (
-              <div className="rounded-sm border border-clara-highlight bg-clara-surface p-4">
-                <p className="mb-2 text-sm font-bold text-clara-strong">Recommendations</p>
+              <div className="rounded-sm border border-clara-border bg-clara-surface p-4">
+                <p className="mb-2 text-sm font-bold text-clara-deep">Recommendations</p>
                 <ol className="list-decimal space-y-2 pl-5 text-sm text-clara-deep">
                   {recs.map((line, i) => (
                     <li key={i}>{line}</li>
@@ -171,6 +172,7 @@ export default function ReadinessCard() {
           })()}
         </div>
       )}
+      </div>
     </Card>
   );
 }

@@ -121,7 +121,7 @@ export default function CalendarPicker({
         <button
           type="button"
           onClick={goPrevMonth}
-          className="rounded p-1 text-clara-deep hover:bg-clara-highlight"
+          className="rounded p-1 text-clara-deep hover:bg-clara-border"
           aria-label="Previous month"
         >
           <ChevronLeft className="h-5 w-5" />
@@ -135,7 +135,7 @@ export default function CalendarPicker({
         <button
           type="button"
           onClick={goNextMonth}
-          className="rounded p-1 text-clara-deep hover:bg-clara-highlight"
+          className="rounded p-1 text-clara-deep hover:bg-clara-border"
           aria-label="Next month"
         >
           <ChevronRight className="h-5 w-5" />
@@ -146,7 +146,7 @@ export default function CalendarPicker({
         {DAY_NAMES.map((name) => (
           <div
             key={name}
-            className="py-1 text-center text-xs font-medium text-clara-strong"
+            className="py-1 text-center text-xs font-medium text-clara-deep"
           >
             {name}
           </div>
@@ -173,16 +173,16 @@ export default function CalendarPicker({
                 isSelected
                   ? "bg-clara-primary text-white"
                   : isToday
-                    ? "border-2 border-clara-accent text-clara-deep hover:bg-clara-highlight"
-                    : "text-clara-deep hover:bg-clara-highlight"
-              } ${isFocused && !isSelected ? "ring-2 ring-clara-strong ring-offset-1" : ""}`}
+                    ? "border-2 border-clara-accent text-clara-deep hover:bg-clara-border"
+                    : "text-clara-deep hover:bg-clara-border"
+              } ${isFocused && !isSelected ? "ring-2 ring-clara-primary ring-offset-1" : ""}`}
               aria-label={`Select ${dateISO}${isSelected ? " (selected)" : ""}`}
             >
               <span>{date.getDate()}</span>
               {hasLogs && (
                 <span
                   className={`absolute bottom-0.5 h-1 w-1 rounded-full ${
-                    isSelected ? "bg-clara-bg" : "bg-clara-highlight"
+                    isSelected ? "bg-clara-bg" : "bg-clara-border"
                   }`}
                 />
               )}

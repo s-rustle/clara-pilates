@@ -132,7 +132,7 @@ export default function CuesPage() {
       )}
 
       <div>
-        <h2 className="mb-3 text-lg font-bold text-clara-strong">
+        <h2 className="mb-3 text-lg font-bold text-clara-accent">
           This session
         </h2>
         {history.length === 0 ? (
@@ -151,10 +151,10 @@ export default function CuesPage() {
                     className={`w-full rounded-sm border px-4 py-3 text-left text-sm transition-colors ${
                       isActive
                         ? "border-clara-accent bg-clara-bg ring-1 ring-clara-accent/30"
-                        : "border-clara-highlight bg-clara-surface hover:bg-clara-bg"
+                        : "border-clara-border bg-clara-surface hover:bg-clara-bg"
                     }`}
                   >
-                    <div className="font-bold text-clara-strong">
+                    <div className="font-bold text-clara-deep">
                       {entry.exerciseName}
                     </div>
                     <div className="text-xs text-clara-muted">

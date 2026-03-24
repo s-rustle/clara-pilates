@@ -42,22 +42,23 @@ Confirm the app runs locally on localhost:3000.
 
 **Task 1.2 — Tailwind Theme**
 ```
-Configure tailwind.config.ts to include the Clara color palette (Red Rocks brutalist — Constitution §6):
+Configure tailwind.config.ts to include the Clara Mediterranean palette (Constitution §6):
 
 clara: {
-  bg: '#E8E0D5',
-  surface: '#DDD5C8',
-  highlight: '#C9BFB0',
-  accent: '#C4522A',
-  primary: '#5C4A32',
-  strong: '#3D3128',
-  deep: '#1C1610',
-  muted: '#8A7F74',
-  rock: '#A63D1F',
+  bg: '#F5F1E8',
+  surface: '#FDFBF7',
+  tint: '#EFE8DC',
+  border: '#E0D8CC',
+  deep: '#2C2824',
+  muted: '#7A756E',
+  primary: { DEFAULT: '#5F6F52', dark: '#4D5C42' },
+  accent: { DEFAULT: '#C2782E', soft: '#F3EBE0', foreground: '#8B5220' },
+  sea: { DEFAULT: '#2C5F63', muted: '#3D7377' },
+  leaf: '#5F6F52',
 }
 
 Set the default background color to clara-bg and default text color to clara-deep.
-Set the base font to Inter.
+Set the base UI font to Inter; load Fraunces for headings and wordmark “Clara” (see layout.tsx).
 ```
 
 ---
@@ -66,11 +67,11 @@ Set the base font to Inter.
 ```
 Build the following reusable UI components in /components/ui/:
 
-- Button.tsx — primary (clara-primary bg, white text), secondary (clara-surface bg, clara-deep text), destructive (red). All with hover states using clara-accent.
+- Button.tsx — primary (clara-primary bg, white text), secondary (clara-surface bg, clara-deep text), destructive (clara-deep). Primary hover clara-primary-dark; focus rings may use clara-accent.
 - Card.tsx — white surface, subtle border, light shadow. Accepts children and optional className.
-- Input.tsx — full width, clara-surface background, clara-deep text, clara-strong border on focus.
-- Select.tsx — same styling as Input, dropdown arrow in clara-strong.
-- ProgressBar.tsx — accepts value (0-100), label, and sublabel. Fill color clara-primary. Background clara-highlight.
+- Input.tsx — full width, clara-bg background, clara-deep text, clara-accent border on focus.
+- Select.tsx — same styling as Input, dropdown arrow in clara-muted.
+- ProgressBar.tsx — accepts value (0-100), label, and sublabel. Fill color clara-primary. Track clara-tint.
 - Badge.tsx — small pill. Variants: green (clara-primary), yellow, red, grey.
 - ErrorMessage.tsx — red-tinted card with error icon and message string prop.
 - LoadingSpinner.tsx — animated, clara-primary color.
@@ -84,8 +85,8 @@ No external component library. Pure Tailwind only.
 ```
 Build /components/layout/Wordmark.tsx.
 
-Display the initials "SR" in Inter Bold, color clara-strong.
-Below the initials, display "Clara" in Inter Bold (hierarchy via size), color clara-primary.
+Display the initials "SR" in Inter Black, color clara-muted.
+Below the initials, display "Clara" in Fraunces bold, color clara-primary.
 The wordmark should work on both light (clara-bg) and clara-surface backgrounds.
 Accept a size prop: "sm" | "md" | "lg".
 ```
@@ -114,7 +115,7 @@ Build /app/(auth)/login/page.tsx.
 
 Design:
 - Full screen, clara-bg background
-- Centered card (clara-surface) with clara-strong border
+- Centered card (clara-surface) with clara-border border
 - Wordmark at top of card (size "md")
 - Email input field
 - Password input field
@@ -137,7 +138,7 @@ Functionality:
 Build /app/(dashboard)/layout.tsx with a persistent sidebar.
 
 Sidebar design:
-- clara-surface background, full height
+- Gradient from clara-bg to clara-tint, full height, clara-border right divider
 - Wordmark at top (size "sm")
 - Navigation links:
   - Dashboard (home icon)
@@ -147,13 +148,13 @@ Sidebar design:
   - Hours (clock icon)
   - Curriculum (folder icon)
   - Settings (gear icon)
-- Active link: clara-primary text, clara-highlight background pill
-- Inactive link: clara-deep text, hover clara-highlight background
+- Active link: clara-primary text, clara-surface background pill
+- Inactive link: clara-deep text, hover clara-border/40 background
 - Sign out button at bottom
 
 Main content area: clara-bg background, full width, scrollable.
 
-TopBar: displays current page title and user initials avatar (clara-primary circle, white text "SR").
+TopBar: displays current page title in clara-accent (Fraunces) and user initials avatar (clara-surface border, clara-deep text "SR").
 ```
 
 ---
@@ -161,7 +162,7 @@ TopBar: displays current page title and user initials avatar (clara-primary circ
 **Task 1.8 — Empty Screen Placeholders**
 ```
 Build empty placeholder screens for all dashboard routes. Each screen should:
-- Display the page title in clara-strong, Inter Bold
+- Display the page title in clara-accent, Fraunces (or match TopBar)
 - Display a single Card with the text "Coming soon — [feature name]"
 - Be fully navigable from the sidebar
 
@@ -276,7 +277,7 @@ Features:
 - Future dates selectable (for scheduling)
 - Selected date highlighted in clara-primary
 - Today's date outlined in clara-accent
-- Dates with existing logs shown with a small clara-highlight dot indicator
+- Dates with existing logs shown with a small clara-tint dot indicator
 - Keyboard accessible
 - Returns selected date as ISO string to parent via onChange prop
 ```
@@ -540,7 +541,7 @@ StudyInput component:
 
 StudyResponse component:
 - Answer text, formatted with paragraph breaks
-- SourceBadge: "Based on your [folder name] materials" in clara-highlight pill
+- SourceBadge: "Based on your [folder name] materials" in clara-tint pill
 - Confidence indicator: 
   - Confident: green Badge "Source confirmed"
   - Partial: yellow Badge "Partial match"
@@ -705,7 +706,7 @@ FeedbackCard component:
   - Yellow Badge = needs refinement / missing elements / needs adjustment
   - Red Badge = absent / incorrect
 - Overall section: 1-2 sentence synthesis
-- "Here is a better version:" section — clara-surface card, clara-strong text, italic
+- "Here is a better version:" section — clara-surface card, clara-deep text, italic
 - "Try again" button — clears cue input, keeps exercise context
 
 Session history:
@@ -1089,7 +1090,7 @@ Build /app/api/agents/readiness/route.ts:
 Update /app/(dashboard)/page.tsx (Dashboard home).
 
 Build /components/dashboard/ReadinessCard.tsx:
-- Overall readiness score: large, prominent percentage in clara-strong
+- Overall readiness score: large, prominent percentage in clara-deep
 - Radial or segmented progress indicator
 - Three dimension scores below: Curriculum / Quiz / Hours — each with label and percentage
 - Narrative text from Readiness Agent (2-3 sentences)
@@ -1141,11 +1142,11 @@ Test the following failure scenarios manually:
 ```
 Review all screens for visual consistency:
 
-- All headings: Inter Bold, clara-strong
+- All headings: Inter Bold, clara-deep
 - All body text: Inter Regular, clara-deep
 - All Cards: clara-surface background, consistent border radius and padding
 - All primary buttons: clara-primary, consistent sizing
-- All progress bars: clara-primary fill, clara-highlight background
+- All progress bars: clara-primary fill, clara-tint background
 - All Badges: correct color variant per status
 - Sidebar active state consistent across all pages
 - Mobile browser view acceptable (not optimized, but not broken)

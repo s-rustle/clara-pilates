@@ -210,7 +210,7 @@ export default function HourLogForm({
           disabled={loading}
           placeholder="Optional notes..."
           rows={2}
-          className="w-full rounded-sm border border-clara-highlight bg-clara-surface px-3 py-2 text-clara-deep placeholder:text-clara-deep/60 focus:border-clara-strong focus:outline-none focus:ring-1 focus:ring-clara-strong disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-sm border border-clara-border bg-clara-surface px-3 py-2 text-clara-deep placeholder:text-clara-deep/60 focus:border-clara-primary focus:outline-none focus:ring-1 focus:ring-clara-primary disabled:cursor-not-allowed disabled:opacity-50"
         />
       </div>
 
@@ -238,7 +238,7 @@ export default function HourLogForm({
       </Button>
 
       {successMessage && (
-        <p className="text-sm font-medium text-clara-strong">
+        <p className="text-sm font-medium text-clara-deep">
           {successMessage}
         </p>
       )}

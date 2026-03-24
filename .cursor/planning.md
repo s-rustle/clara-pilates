@@ -463,25 +463,30 @@ Readiness snapshot saved to Supabase after every quiz session completion and eve
 
 ## 10. Tailwind Theme Configuration
 
-Add to `tailwind.config.ts` (Red Rocks brutalist identity — see Constitution §6):
+Add to `tailwind.config.ts` (Mediterranean identity — see Constitution §6):
 
 ```typescript
 colors: {
   clara: {
-    bg: '#E8E0D5',
-    surface: '#DDD5C8',
-    highlight: '#C9BFB0',
-    accent: '#C4522A',
-    primary: '#5C4A32',
-    strong: '#3D3128',
-    deep: '#1C1610',
-    muted: '#8A7F74',
-    rock: '#A63D1F',
+    bg: '#F5F1E8',
+    surface: '#FDFBF7',
+    tint: '#EFE8DC',
+    border: '#E0D8CC',
+    deep: '#2C2824',
+    muted: '#7A756E',
+    primary: { DEFAULT: '#5F6F52', dark: '#4D5C42' },
+    accent: {
+      DEFAULT: '#C2782E',
+      soft: '#F3EBE0',
+      foreground: '#8B5220',
+    },
+    sea: { DEFAULT: '#2C5F63', muted: '#3D7377' },
+    leaf: '#5F6F52',
   },
 }
 ```
 
-**Semantic usage:** page `bg-clara-bg`; cards/panels `bg-clara-surface` + `border-clara-highlight`; primary buttons `bg-clara-primary` / white text / hover `bg-clara-accent`; progress fill `bg-clara-accent`; links and CTAs `text-clara-accent`; flat UI — no custom drop shadows in theme.
+**Semantic usage:** page `bg-clara-bg`; cards `bg-clara-surface` + `border-clara-border`; primary buttons `bg-clara-primary` / white text / hover `bg-clara-primary-dark`; progress fill `bg-clara-primary`, track `bg-clara-tint`; prose links `text-clara-sea`; headings + top bar title `text-clara-accent`; wordmark “Clara” `text-clara-primary` (Fraunces).
 
 ---
 

@@ -35,6 +35,8 @@ const FORMAT_OPTIONS = [
   { value: "fill_blank", label: "Fill in the blank" },
   { value: "matching", label: "Matching" },
   { value: "open_ended", label: "Open-ended" },
+  { value: "anatomy_multiple_choice", label: "Anatomy — multiple choice" },
+  { value: "anatomy_diagram", label: "Anatomy — interactive diagram" },
 ];
 
 interface QuizSetupProps {
