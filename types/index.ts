@@ -119,6 +119,7 @@ export interface Profile {
   hour_targets?: HourTargets | null;
   google_access_token: string | null;
   google_refresh_token: string | null;
+  google_token_expiry: string | null;
   created_at: string;
 }
 
@@ -192,23 +193,27 @@ export interface SessionPlan {
   created_at: string;
 }
 
+/** Optional structured safety flags (e.g. contraindications). */
+export interface SessionSafetyFlag {
+  exercise_name: string;
+  concern: string;
+  recommendation: string;
+}
+
+/**
+ * Session evaluation rubric: alignment/form, breathing, cueing, progression, safety.
+ * Stored on session_plans.feedback (JSON).
+ */
 export interface SessionFeedback {
-  progression_logic: { score: string; note: string };
-  contraindication_flags: {
-    score: string;
-    flags: Array<{
-      exercise_name: string;
-      flag: string;
-      recommendation: string;
-    }>;
-  };
-  volume_assessment: {
+  alignment_and_form: { score: string; note: string };
+  breathing: { score: string; note: string };
+  cueing_clarity: { score: string; note: string };
+  client_progression: { score: string; note: string };
+  safety: {
     score: string;
     note: string;
-    flagged_exercises: string[];
+    flags: SessionSafetyFlag[];
   };
-  muscle_group_balance: { score: string; note: string; gaps: string[] };
-  sequence_alignment: { score: string; note: string };
   overall: string;
   suggested_adjustments: string[];
 }

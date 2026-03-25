@@ -330,6 +330,7 @@ export default function LearnPage() {
         <div className="space-y-6">
           {tutorial.manual_image && (
             <ManualPageImage
+              key={`${tutorial.manual_image.file_name}-${tutorial.manual_image.folder_name}`}
               fileName={tutorial.manual_image.file_name}
               folderName={tutorial.manual_image.folder_name}
             />

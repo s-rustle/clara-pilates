@@ -275,7 +275,7 @@ create table public.session_plans (
   client_level text,                -- null for personal practice
   warm_up jsonb not null,           -- array of { move_name, sets, reps }
   exercise_sequence jsonb not null, -- array of { exercise_name, sets, reps, notes }
-  feedback jsonb,                   -- structured five-dimension feedback from agent
+  feedback jsonb,                   -- SessionFeedback: alignment_and_form, breathing, cueing_clarity, client_progression, safety (+flags), overall, suggested_adjustments
   linked_hour_log_id uuid references public.hour_logs(id),
   session_date date,
   status text default 'draft',      -- 'draft' | 'complete'

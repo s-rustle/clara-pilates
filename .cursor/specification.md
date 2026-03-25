@@ -386,6 +386,7 @@ All study-facing agents query the pgvector store first. If relevant content is n
 - **Profile:** editable display name (`profiles.full_name`); email read-only from Supabase Auth; Save with success/error feedback
 - **Exam target date:** optional date (`profiles.exam_target_date`); helper copy that countdown is a future update; Save with feedback
 - **Hour targets:** Mat / Reformer / Apparatus / Total practical targets (defaults 70 / 150 / 150 / 536) saved to `profiles.hour_targets` (jsonb); Save with feedback; Hours dashboard uses these values when set
+- **Google Drive (Curriculum):** optional OAuth tokens on `profiles`: `google_access_token`, `google_refresh_token`, `google_token_expiry` (timestamptz, access-token expiry for refresh)
 - **Sign out** at bottom of page
 - No `<form>` wrappers — buttons use `onClick` + `fetch` to `GET`/`PATCH` `/api/profile`
 
@@ -396,9 +397,10 @@ All study-facing agents query the pgvector store first. If relevant content is n
 | Data | Storage | Notes |
 |---|---|---|
 | User auth | Supabase Auth | |
+| Profile + OAuth | Supabase PostgreSQL `profiles` | `hour_targets`, Drive tokens + `google_token_expiry` |
 | Hour logs | Supabase PostgreSQL | Append-only |
 | Quiz sessions | Supabase PostgreSQL | Full Q&A + scores |
-| Session plans | Supabase PostgreSQL | Routine, feedback, mode, linked hour log |
+| Session plans | Supabase PostgreSQL | Routine; `feedback` JSON = current rubric (`alignment_and_form`, `breathing`, `cueing_clarity`, `client_progression`, `safety`, `overall`, `suggested_adjustments`) |
 | Readiness snapshots | Supabase PostgreSQL | Timestamped |
 | Curriculum embeddings | Supabase pgvector | Re-indexed on re-ingest |
 | Upload metadata | Supabase PostgreSQL | Folder, file, status, date |

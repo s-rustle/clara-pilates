@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ExerciseItem, HourLog, SessionFeedback, SessionMode, SessionPlan, SessionType, WarmUpMove } from "@/types";
+import { validateSessionFeedback } from "@/lib/sessionFeedback/validate";
 import Card from "@/components/ui/Card";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import Button from "@/components/ui/Button";
@@ -48,13 +49,12 @@ function normalizeExercises(list: ExerciseItem[]): ExerciseItem[] {
 
 function isSessionFeedback(raw: unknown): raw is SessionFeedback {
   if (!raw || typeof raw !== "object") return false;
-  const o = raw as Record<string, unknown>;
-  return (
-    typeof o.overall === "string" &&
-    Array.isArray(o.suggested_adjustments) &&
-    o.progression_logic != null &&
-    typeof o.progression_logic === "object"
-  );
+  try {
+    validateSessionFeedback(raw);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export default function SessionsPage() {
@@ -63,6 +63,7 @@ export default function SessionsPage() {
   const [apparatus, setApparatus] = useState("Mat");
   const [clientLevel, setClientLevel] = useState<string | null>("Beginner");
   const [sessionDate, setSessionDate] = useState(todayISO);
+  const [clientNotes, setClientNotes] = useState("");
   const [warmUp, setWarmUp] = useState<WarmUpMove[]>([]);
   const [exercises, setExercises] = useState<ExerciseItem[]>([]);
 
@@ -70,6 +71,7 @@ export default function SessionsPage() {
   const [feedback, setFeedback] = useState<SessionFeedback | null>(null);
 
   const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [generateAILoading, setGenerateAILoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [linkLoading, setLinkLoading] = useState(false);
 
@@ -86,7 +88,8 @@ export default function SessionsPage() {
     null
   );
 
-  const busy = feedbackLoading || saveLoading || linkLoading;
+  const busy =
+    feedbackLoading || generateAILoading || saveLoading || linkLoading;
 
   const sessionPayload = useMemo(
     () => ({
@@ -161,14 +164,12 @@ export default function SessionsPage() {
   }, []);
 
   useEffect(() => {
-    fetchHourDates();
-  }, [fetchHourDates]);
-
-  useEffect(() => {
     if (mode === "log") {
-      fetchLogHistory();
+      void Promise.all([fetchHourDates(), fetchLogHistory()]);
+    } else {
+      void fetchHourDates();
     }
-  }, [mode, fetchLogHistory]);
+  }, [mode, fetchHourDates, fetchLogHistory]);
 
   useEffect(() => {
     if (sessionType === "personal") {
@@ -250,6 +251,36 @@ export default function SessionsPage() {
     setFeedback(null);
   };
 
+  const handleGenerateAI = async () => {
+    setError("");
+    setGenerateAILoading(true);
+    try {
+      const res = await fetch("/api/agents/sessions/plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          apparatus,
+          session_type: sessionType,
+          client_level: sessionType === "teaching" ? clientLevel : null,
+          client_notes: clientNotes.trim() || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.data) {
+        throw new Error(
+          typeof data.error === "string" ? data.error : "AI plan failed"
+        );
+      }
+      setWarmUp(data.data.warm_up as WarmUpMove[]);
+      setExercises(normalizeExercises(data.data.exercise_sequence as ExerciseItem[]));
+      setFeedback(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "AI plan failed");
+    } finally {
+      setGenerateAILoading(false);
+    }
+  };
+
   const handleSaveAndLink = async () => {
     setError("");
     setLinkLoading(true);
@@ -324,7 +355,22 @@ export default function SessionsPage() {
             sessionDate={sessionDate}
             onSessionDateChange={setSessionDate}
             loggedDates={hourLogsLoaded ? loggedDates : []}
+            onGenerateAI={mode === "plan" ? handleGenerateAI : undefined}
+            generateAILoading={generateAILoading}
           >
+            <div className="mb-4">
+              <label className="mb-1.5 block text-sm font-medium text-clara-deep">
+                Client / session notes (optional)
+              </label>
+              <textarea
+                value={clientNotes}
+                onChange={(e) => setClientNotes(e.target.value)}
+                disabled={busy}
+                rows={3}
+                placeholder="e.g. goals, limitations, contraindications…"
+                className="w-full resize-y rounded-none border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted/80 focus:border-clara-primary focus:outline-none focus:ring-1 focus:ring-clara-primary/40 disabled:opacity-50"
+              />
+            </div>
             <WarmUpSection
               moves={warmUp}
               onChange={setWarmUp}

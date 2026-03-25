@@ -24,7 +24,11 @@ export default function HoursPage() {
         fetch("/api/profile", { credentials: "same-origin" }),
       ]);
 
-      const hoursData = await hoursRes.json();
+      const [hoursData, profileData] = await Promise.all([
+        hoursRes.json(),
+        profileRes.json(),
+      ]);
+
       if (!hoursRes.ok) {
         setError(
           hoursData.error ?? "Unable to load your hours. Please refresh the page."
@@ -38,8 +42,6 @@ export default function HoursPage() {
       } else {
         setLogs([]);
       }
-
-      const profileData = await profileRes.json();
       if (profileRes.ok && profileData.success && profileData.data) {
         setHourTargets(
           (profileData.data.hour_targets as HourTargets | null) ?? null

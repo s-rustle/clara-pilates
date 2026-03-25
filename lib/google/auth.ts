@@ -56,6 +56,24 @@ export function generateAuthUrl(): string {
 export interface TokenResponse {
   access_token: string;
   refresh_token: string;
+  /** When the access token should be treated as expired (UTC). */
+  expires_at: Date;
+}
+
+function credentialsToExpiry(credentials: {
+  expiry_date?: number | null;
+  expires_in?: number | null;
+}): Date {
+  if (
+    typeof credentials.expiry_date === "number" &&
+    credentials.expiry_date > 0
+  ) {
+    return new Date(credentials.expiry_date);
+  }
+  if (typeof credentials.expires_in === "number" && credentials.expires_in > 0) {
+    return new Date(Date.now() + credentials.expires_in * 1000);
+  }
+  return new Date(Date.now() + 3600 * 1000);
 }
 
 /**
@@ -83,20 +101,34 @@ export async function getTokensFromCode(
     );
   }
 
+  const expires_in =
+    "expires_in" in tokens && typeof tokens.expires_in === "number"
+      ? tokens.expires_in
+      : undefined;
+  const expires_at = credentialsToExpiry({
+    expiry_date: tokens.expiry_date ?? undefined,
+    expires_in,
+  });
+
   return {
     access_token: tokens.access_token,
     refresh_token: tokens.refresh_token,
+    expires_at,
   };
 }
 
+export interface RefreshedAccessToken {
+  access_token: string;
+  expires_at: Date;
+}
+
 /**
- * Exchanges a refresh token for a new access token.
- * Returns the new access_token.
+ * Exchanges a refresh token for a new access token and expiry (for DB storage).
  * Throws an explicit error if refresh fails.
  */
-export async function refreshAccessToken(
+export async function refreshAccessTokenWithExpiry(
   refreshToken: string
-): Promise<string> {
+): Promise<RefreshedAccessToken> {
   const oauth2 = getOAuth2Client();
   oauth2.setCredentials({ refresh_token: refreshToken });
 
@@ -110,7 +142,22 @@ export async function refreshAccessToken(
     throw new Error("Google OAuth token refresh failed: no access_token in response");
   }
 
-  return credentials.access_token;
+  return {
+    access_token: credentials.access_token,
+    expires_at: credentialsToExpiry(credentials),
+  };
+}
+
+/**
+ * Exchanges a refresh token for a new access token.
+ * Returns the new access_token.
+ * Throws an explicit error if refresh fails.
+ */
+export async function refreshAccessToken(
+  refreshToken: string
+): Promise<string> {
+  const { access_token } = await refreshAccessTokenWithExpiry(refreshToken);
+  return access_token;
 }
 
 /**

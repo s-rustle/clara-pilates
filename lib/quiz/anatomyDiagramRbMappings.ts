@@ -1,6 +1,7 @@
 import type { IExerciseData, Muscle } from "react-body-highlighter";
 import { MuscleType } from "react-body-highlighter";
 import type { AnatomyDiagramMuscleId } from "@/lib/quiz/anatomyDiagramMuscles";
+import { claraPalette } from "@/lib/design/claraPalette";
 
 export type DiagramSide = "front" | "back";
 
@@ -63,10 +64,9 @@ export function buildHighlighterData(args: {
 }): { data: IExerciseData[]; highlightedColors: string[] } {
   const { side, revealAnswer, correctMuscle, selectedMuscle } = args;
 
-  /** Clara accent (see tailwind `clara.accent`) — selected region on diagram */
-  const FILL_SELECTED = "#D4A84B";
-  const FILL_CORRECT = "#E8C84A";
-  const FILL_INCORRECT = "#9B2335";
+  const FILL_SELECTED = claraPalette["diagram-selected"];
+  const FILL_CORRECT = claraPalette["diagram-correct"];
+  const FILL_INCORRECT = claraPalette["diagram-incorrect"];
 
   if (revealAnswer) {
     const correctR = correctMuscle

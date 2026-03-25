@@ -135,6 +135,40 @@ export async function calculateQuizScore(userId: string): Promise<number> {
 const HOURS_TARGET = 536;
 
 /**
+ * Logged + completed hours as % of 536 target (not capped). Can exceed 100%.
+ */
+export async function calculateHoursProgressPercentUncapped(
+  userId: string
+): Promise<number> {
+  try {
+    const supabase = createServiceClient();
+    const { data, error } = await supabase
+      .from("hour_logs")
+      .select("duration_minutes")
+      .eq("user_id", userId)
+      .in("status", ["logged", "complete"]);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    let totalMinutes = 0;
+    for (const row of data ?? []) {
+      const m = (row as { duration_minutes: number | null }).duration_minutes;
+      if (typeof m === "number" && !Number.isNaN(m)) {
+        totalMinutes += m;
+      }
+    }
+
+    const totalHours = totalMinutes / 60;
+    return roundToOneDecimal((totalHours / HOURS_TARGET) * 100);
+  } catch (err) {
+    console.error("[readiness] calculateHoursProgressPercentUncapped failed:", err);
+    return 0;
+  }
+}
+
+/**
  * Logged + completed hours vs 536 target, capped at 100%.
  */
 export async function calculateHoursScore(userId: string): Promise<number> {

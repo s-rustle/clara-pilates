@@ -16,7 +16,7 @@ interface QuizSummaryProps {
 export default function QuizSummary({
   score,
   total,
-  sessionId,
+  sessionId: _sessionId,
   apparatus,
   topic,
   onTryAgain,

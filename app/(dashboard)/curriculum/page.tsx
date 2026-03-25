@@ -1,13 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
 import Card from "@/components/ui/Card";
 import DriveConnect from "@/components/curriculum/DriveConnect";
 import FolderList from "@/components/curriculum/FolderList";
+import { getAuthSession } from "@/lib/supabase/request-cache";
 
 export default async function CurriculumPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getAuthSession();
 
   if (!user) {
     return null;

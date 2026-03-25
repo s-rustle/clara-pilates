@@ -8,6 +8,9 @@ const READINESS_SYSTEM = `You are Clara, a Pilates exam readiness advisor
 Generate a plain-language readiness brief based only on the score data provided
 Do not invent progress or fabricate details not present in the scores
 Be honest — if scores are low, say so directly but constructively
+
+Mandatory rule: If "hours_progress_percent_uncapped" is strictly less than 80, you MUST NOT state or imply that the user is fully exam-ready, ready to sit the exam, or "good to go" for certification. Acknowledge that required practice hours are not yet complete (even when curriculum_score or quiz_score are high).
+
 Return ONLY valid JSON:
 
 {
@@ -23,6 +26,8 @@ export interface ReadinessBriefInput {
   curriculum_score: number;
   quiz_score: number;
   hours_score: number;
+  /** Logged hours vs 536h target, uncapped (can exceed 100). */
+  hours_progress_percent_uncapped: number;
   overall_score: number;
   weak_spots?: WeakSpotItem[];
 }
@@ -73,6 +78,7 @@ export async function generateReadinessBrief(
     curriculum_score: scores.curriculum_score,
     quiz_score: scores.quiz_score,
     hours_score: scores.hours_score,
+    hours_progress_percent_uncapped: scores.hours_progress_percent_uncapped,
     overall_score: scores.overall_score,
     weak_spots: scores.weak_spots?.map((w) => ({
       area: w.area,

@@ -6,6 +6,7 @@ import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { claraPalette } from "@/lib/design/claraPalette";
 
 const WORKER_SRC =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
@@ -110,7 +111,7 @@ export default function VisualQuiz() {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
 
-      ctx.fillStyle = "#FFFFFF";
+      ctx.fillStyle = claraPalette.bg;
       ctx.fillRect(0, 0, viewport.width, viewport.height);
 
       await page.render({
@@ -345,7 +346,7 @@ export default function VisualQuiz() {
                 {evalResult.result === "correct" ? (
                   <Badge variant="green">Correct</Badge>
                 ) : evalResult.result === "close" ? (
-                  <span className="inline-flex items-center rounded-none border border-clara-border bg-[#FFF8E8] px-[10px] py-[2px] text-xs font-medium text-[#5C4A12]">
+                  <span className="inline-flex items-center rounded-none border border-clara-border bg-clara-exam-chip px-[10px] py-[2px] text-xs font-medium text-clara-exam-chip-ink">
                     Close
                   </span>
                 ) : (

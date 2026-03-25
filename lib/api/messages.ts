@@ -39,6 +39,9 @@ export const STUDY_ASSISTANT_UNAVAILABLE =
 export const GOOGLE_DRIVE_NOT_CONNECTED =
   "Google Drive not connected. Please connect your Drive account in Curriculum Manager.";
 
+/** API JSON `{ error: REAUTH_REQUIRED }` — refresh token invalid/revoked; user must reconnect Drive. */
+export const REAUTH_REQUIRED = "reauth_required";
+
 export const GOOGLE_DRIVE_CONNECT_FAILED =
   "Unable to connect to Google Drive. Check your connection and try again.";
 

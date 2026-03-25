@@ -1,7 +1,16 @@
 import { type NextRequest } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { AUTH_REQUIRED, GOOGLE_DRIVE_NOT_CONNECTED } from "@/lib/api/messages";
-import { listFilesInFolder, downloadFile } from "@/lib/google/drive";
+import {
+  AUTH_REQUIRED,
+  GOOGLE_DRIVE_NOT_CONNECTED,
+  REAUTH_REQUIRED,
+} from "@/lib/api/messages";
+import { ensureGoogleAccessToken } from "@/lib/google/ensureAccessToken";
+import {
+  listFilesInFolder,
+  downloadFile,
+  isGoogleDriveReauthRequiredError,
+} from "@/lib/google/drive";
 import type { ContentChunk } from "@/types";
 import {
   processImage,
@@ -43,24 +52,17 @@ async function runIngestion(
     );
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("google_access_token, google_refresh_token")
-    .eq("id", userId)
-    .single();
-
-  const accessToken = profile?.google_access_token ?? null;
-  const refreshToken = profile?.google_refresh_token ?? null;
-
-  if (!accessToken || !refreshToken) {
-    return jsonResponse(
-      {
-        success: false,
-        error: GOOGLE_DRIVE_NOT_CONNECTED,
-      },
-      400
-    );
+  const tokenResult = await ensureGoogleAccessToken(supabase, userId);
+  if (!tokenResult.ok) {
+    if (tokenResult.error === "not_connected") {
+      return jsonResponse(
+        { success: false, error: GOOGLE_DRIVE_NOT_CONNECTED },
+        400
+      );
+    }
+    return jsonResponse({ error: REAUTH_REQUIRED }, 401);
   }
+  let accessToken = tokenResult.accessToken;
 
   const serviceClient = createServiceClient();
 
@@ -114,11 +116,7 @@ async function runIngestion(
   }
 
   try {
-    const filesResult = await listFilesInFolder(
-      accessToken,
-      drive_folder_id,
-      refreshToken
-    );
+    const filesResult = await listFilesInFolder(accessToken, drive_folder_id);
 
     if ("error" in filesResult) {
       await serviceClient
@@ -126,16 +124,11 @@ async function runIngestion(
         .update({ status: "failed", error_message: filesResult.error })
         .eq("id", uploadId);
 
-      const isAuthError = new RegExp("401|unauthorized|token|refresh", "i").test(
-        filesResult.error
-      );
+      if (filesResult.error === REAUTH_REQUIRED) {
+        return jsonResponse({ error: REAUTH_REQUIRED }, 401);
+      }
       return jsonResponse(
-        {
-          success: false,
-          error: isAuthError
-            ? "Google Drive not connected. Please connect your Drive account first."
-            : filesResult.error,
-        },
+        { success: false, error: filesResult.error },
         400
       );
     }
@@ -189,11 +182,28 @@ async function runIngestion(
         wave.map(async (file) => {
           const treatAsPdf = isPdf(file.mimeType, file.name);
           try {
-            const buffer = await downloadFile(
-              accessToken,
-              file.id,
-              refreshToken
-            );
+            let buffer: Buffer;
+            try {
+              buffer = await downloadFile(accessToken, file.id);
+            } catch (downErr) {
+              if (isGoogleDriveReauthRequiredError(downErr)) {
+                const again = await ensureGoogleAccessToken(supabase, userId, {
+                  forceRefresh: true,
+                });
+                if (!again.ok) {
+                  return {
+                    ok: false as const,
+                    name: file.name,
+                    message: REAUTH_REQUIRED,
+                    reauth: true as const,
+                  };
+                }
+                accessToken = again.accessToken;
+                buffer = await downloadFile(accessToken, file.id);
+              } else {
+                throw downErr;
+              }
+            }
             const extracted = treatAsPdf
               ? await processPdf(buffer, file.name, folder_name)
               : await processImage(buffer, file.name, folder_name);
@@ -231,6 +241,13 @@ async function runIngestion(
       );
 
       for (const r of waveResults) {
+        if (!r.ok && "reauth" in r && r.reauth) {
+          await serviceClient
+            .from("curriculum_uploads")
+            .update({ status: "failed", error_message: REAUTH_REQUIRED })
+            .eq("id", uploadId);
+          return jsonResponse({ error: REAUTH_REQUIRED }, 401);
+        }
         if (r.ok) {
           allChunks.push(...r.chunks);
           files_processed += 1;

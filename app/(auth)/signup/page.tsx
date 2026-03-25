@@ -43,7 +43,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="relative z-10 flex min-h-screen flex-col bg-white">
+    <div className="relative z-10 flex min-h-screen flex-col bg-clara-bg">
       <div className="h-[5px] shrink-0 bg-clara-primary" aria-hidden />
       <div className="flex flex-1 items-center justify-center px-5 py-10">
         <div className="w-full max-w-[min(100%,380px)]">
@@ -51,7 +51,7 @@ export default function SignupPage() {
             <Wordmark variant="login" />
           </div>
 
-          <div className="border border-[#D8D8D0] bg-[#FAFAF8]">
+          <div className="border border-clara-border bg-clara-surface">
             <input
               type="email"
               name="email"
@@ -62,7 +62,7 @@ export default function SignupPage() {
               disabled={loading}
               className="w-full border-0 bg-transparent px-4 py-[13px] text-[13px] text-clara-deep placeholder:text-clara-muted focus:outline-none disabled:opacity-50"
             />
-            <div className="h-px bg-[#D8D8D0]" />
+            <div className="h-px bg-clara-border" />
             <input
               type="password"
               name="password"
@@ -96,7 +96,7 @@ export default function SignupPage() {
 
             <div className="mt-5 flex items-center gap-3">
               <div className="h-px flex-1 bg-clara-border" />
-              <span className="text-[10px] text-[#CCCCCC]">or</span>
+              <span className="text-[10px] text-clara-muted">or</span>
               <div className="h-px flex-1 bg-clara-border" />
             </div>
 

@@ -8,7 +8,9 @@ import {
   AUTH_REQUIRED,
   GOOGLE_DRIVE_CONNECT_FAILED,
   GOOGLE_DRIVE_NOT_CONNECTED,
+  REAUTH_REQUIRED,
 } from "@/lib/api/messages";
+import { ensureGoogleAccessToken } from "@/lib/google/ensureAccessToken";
 import { listFolders, listFoldersInFolder } from "@/lib/google/drive";
 import type { DriveFolder } from "@/types";
 
@@ -29,39 +31,25 @@ export async function GET() {
       return jsonResponse({ success: false, error: AUTH_REQUIRED }, 401);
     }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("google_access_token, google_refresh_token")
-      .eq("id", user.id)
-      .single();
-
-    const accessToken = profile?.google_access_token ?? null;
-    const refreshToken = profile?.google_refresh_token ?? null;
-
-    if (!accessToken || !refreshToken) {
-      return jsonResponse(
-        {
-          success: false,
-          error: GOOGLE_DRIVE_NOT_CONNECTED,
-        },
-        400
-      );
+    const tokenResult = await ensureGoogleAccessToken(supabase, user.id);
+    if (!tokenResult.ok) {
+      if (tokenResult.error === "not_connected") {
+        return jsonResponse(
+          { success: false, error: GOOGLE_DRIVE_NOT_CONNECTED },
+          400
+        );
+      }
+      return jsonResponse({ error: REAUTH_REQUIRED }, 401);
     }
+    const { accessToken } = tokenResult;
 
-    const rootResult = await listFolders(accessToken, refreshToken);
+    const rootResult = await listFolders(accessToken);
 
     if ("error" in rootResult) {
-      const msg = rootResult.error;
-      const isAuthError = new RegExp("401|unauthorized|token|refresh", "i").test(
-        msg
-      );
-      return jsonResponse(
-        {
-          success: false,
-          error: isAuthError ? GOOGLE_DRIVE_NOT_CONNECTED : msg,
-        },
-        isAuthError ? 400 : 502
-      );
+      if (rootResult.error === REAUTH_REQUIRED) {
+        return jsonResponse({ error: REAUTH_REQUIRED }, 401);
+      }
+      return jsonResponse({ success: false, error: rootResult.error }, 502);
     }
 
     const allFolders: DriveFolder[] = [...rootResult];
@@ -75,8 +63,7 @@ export async function GET() {
     if (balancedBodyFolder) {
       const subResult = await listFoldersInFolder(
         accessToken,
-        balancedBodyFolder.id,
-        refreshToken
+        balancedBodyFolder.id
       );
       if (!("error" in subResult)) {
         allFolders.push(...subResult);

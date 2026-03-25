@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @config "../tailwind.config.ts";
 
+/* Match lib/design/claraPalette.json (bg, deep) */
 :root {
   --background: #ffffff;
   --foreground: #1a1a14;

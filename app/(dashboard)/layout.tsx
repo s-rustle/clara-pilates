@@ -1,29 +1,22 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import DashboardShell from "@/components/layout/DashboardShell";
+import {
+  getAuthSession,
+  getExamTargetDateForUser,
+} from "@/lib/supabase/request-cache";
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user } = await getAuthSession();
 
   if (!user) {
     redirect("/login");
   }
 
-  const { data: profileRow } = await supabase
-    .from("profiles")
-    .select("exam_target_date")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const examTargetDate =
-    (profileRow?.exam_target_date as string | null | undefined) ?? null;
+  const examTargetDate = await getExamTargetDateForUser(user.id);
 
   return (
     <DashboardShell examTargetDate={examTargetDate}>{children}</DashboardShell>

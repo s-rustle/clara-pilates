@@ -42,6 +42,9 @@ export interface SessionPlannerFormProps {
   onSessionDateChange: (v: string) => void;
   loggedDates?: string[];
   children?: React.ReactNode;
+  /** Fills warm-up and main sequence via Claude (draft — editable before feedback). */
+  onGenerateAI?: () => void;
+  generateAILoading?: boolean;
 }
 
 export default function SessionPlannerForm({
@@ -61,8 +64,10 @@ export default function SessionPlannerForm({
   onSessionDateChange,
   loggedDates = [],
   children,
+  onGenerateAI,
+  generateAILoading = false,
 }: SessionPlannerFormProps) {
-  const busy = isLoading || isSavingDraft;
+  const busy = isLoading || isSavingDraft || generateAILoading;
 
   return (
     <div className="space-y-6">
@@ -122,6 +127,31 @@ export default function SessionPlannerForm({
       </div>
 
       {children}
+
+      {onGenerateAI && (
+        <div>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onGenerateAI}
+            disabled={busy}
+            className="w-full sm:w-auto"
+          >
+            {generateAILoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <LoadingSpinner size="sm" />
+                Generating…
+              </span>
+            ) : (
+              "Generate plan (AI)"
+            )}
+          </Button>
+          <p className="mt-1 text-xs text-clara-muted">
+            Drafts a warm-up and exercise list from apparatus, session type, and
+            client notes. Edit before requesting feedback.
+          </p>
+        </div>
+      )}
 
       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         <Button

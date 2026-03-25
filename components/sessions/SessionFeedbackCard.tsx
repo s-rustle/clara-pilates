@@ -17,46 +17,42 @@ function normScore(s: string): string {
   return s.toLowerCase().trim().replace(/\s+/g, "_");
 }
 
+function badgeForSessionScore(
+  score: string,
+  positive: string[]
+): { variant: "green" | "yellow" | "red" | "grey"; label: string } {
+  const n = normScore(score);
+  if (positive.some((p) => normScore(p) === n))
+    return { variant: "green", label: score };
+  if (n.includes("not_verified") || n.includes("unknown"))
+    return { variant: "grey", label: "Not verified" };
+  return { variant: "yellow", label: score };
+}
+
 export default function SessionFeedbackCard({
   feedback,
   onRevise,
 }: SessionFeedbackCardProps) {
   const [flagsOpen, setFlagsOpen] = useState(false);
-  const [volumeOpen, setVolumeOpen] = useState(false);
-  const [gapsOpen, setGapsOpen] = useState(false);
 
-  const pl = normScore(feedback.progression_logic.score);
-  const plBadge =
-    pl === "sound"
-      ? { variant: "green" as const, label: "Sound" }
-      : { variant: "yellow" as const, label: "Needs adjustment" };
+  const af = badgeForSessionScore(feedback.alignment_and_form.score, [
+    "sound",
+  ]);
+  const br = badgeForSessionScore(feedback.breathing.score, ["sound"]);
+  const cc = badgeForSessionScore(feedback.cueing_clarity.score, ["clear"]);
+  const cp = badgeForSessionScore(feedback.client_progression.score, [
+    "sound",
+  ]);
 
-  const cf = normScore(feedback.contraindication_flags.score);
-  const nFlags = feedback.contraindication_flags.flags.length;
-  const cfBadge =
-    cf === "none" || nFlags === 0
-      ? { variant: "green" as const, label: "None flagged" }
-      : { variant: "red" as const, label: `${nFlags} flags` };
+  const sn = normScore(feedback.safety.score);
+  const safetyBadge =
+    sn === "appropriate"
+      ? ({ variant: "green" as const, label: "Appropriate" })
+      : sn.includes("not_verified")
+        ? ({ variant: "grey" as const, label: "Not verified" })
+        : ({ variant: "yellow" as const, label: feedback.safety.score });
 
-  const va = normScore(feedback.volume_assessment.score);
-  const vaBadge =
-    va === "appropriate"
-      ? { variant: "green" as const, label: "Appropriate" }
-      : { variant: "yellow" as const, label: "Needs adjustment" };
-
-  const mb = normScore(feedback.muscle_group_balance.score);
-  const mbBadge =
-    mb === "balanced"
-      ? { variant: "green" as const, label: "Balanced" }
-      : { variant: "yellow" as const, label: "Imbalanced" };
-
-  const sa = normScore(feedback.sequence_alignment.score);
-  const saBadge =
-    sa === "aligned"
-      ? { variant: "green" as const, label: "Aligned" }
-      : sa === "partially_aligned"
-        ? { variant: "yellow" as const, label: "Partially aligned" }
-        : { variant: "grey" as const, label: "Not verified" };
+  const nFlags = feedback.safety.flags.length;
 
   return (
     <div className="space-y-4">
@@ -66,99 +62,61 @@ export default function SessionFeedbackCard({
 
       <dl className="space-y-3 text-sm">
         <DimensionRow
-          label="Progression Logic"
-          badgeVariant={plBadge.variant}
-          badgeLabel={plBadge.label}
-          note={feedback.progression_logic.note}
+          label="Alignment & form"
+          badgeVariant={af.variant}
+          badgeLabel={af.label}
+          note={feedback.alignment_and_form.note}
+        />
+        <DimensionRow
+          label="Breathing"
+          badgeVariant={br.variant}
+          badgeLabel={br.label}
+          note={feedback.breathing.note}
+        />
+        <DimensionRow
+          label="Cueing clarity"
+          badgeVariant={cc.variant}
+          badgeLabel={cc.label}
+          note={feedback.cueing_clarity.note}
+        />
+        <DimensionRow
+          label="Client progression"
+          badgeVariant={cp.variant}
+          badgeLabel={cp.label}
+          note={feedback.client_progression.note}
         />
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <dt className="font-bold text-clara-deep">Contraindication Flags</dt>
-            <Badge variant={cfBadge.variant}>{cfBadge.label}</Badge>
+            <dt className="font-bold text-clara-deep">Safety</dt>
+            <Badge variant={safetyBadge.variant}>{safetyBadge.label}</Badge>
             {nFlags > 0 && (
               <button
                 type="button"
                 onClick={() => setFlagsOpen((o) => !o)}
                 className="text-xs text-clara-primary hover:underline"
               >
-                {flagsOpen ? "Hide list" : "Show flags"}
+                {flagsOpen ? "Hide flags" : "Show flags"}
               </button>
             )}
           </div>
+          {feedback.safety.note.trim() ? (
+            <dd className="mt-1 text-clara-deep">
+              <MarkdownBody>{feedback.safety.note}</MarkdownBody>
+            </dd>
+          ) : null}
           {flagsOpen && nFlags > 0 && (
             <ul className="mt-2 list-disc space-y-1 pl-5 text-clara-deep">
-              {feedback.contraindication_flags.flags.map((f, i) => (
+              {feedback.safety.flags.map((f, i) => (
                 <li key={i}>
                   <span className="font-bold text-clara-deep">
                     {formatExerciseNameForDisplay(f.exercise_name)}:
                   </span>{" "}
-                  {f.flag} — {f.recommendation}
+                  {f.concern} — {f.recommendation}
                 </li>
               ))}
             </ul>
           )}
         </div>
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <dt className="font-bold text-clara-deep">Volume Assessment</dt>
-            <Badge variant={vaBadge.variant}>{vaBadge.label}</Badge>
-            {feedback.volume_assessment.flagged_exercises.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setVolumeOpen((o) => !o)}
-                className="text-xs text-clara-primary hover:underline"
-              >
-                {volumeOpen ? "Hide flagged" : "Show flagged"}
-              </button>
-            )}
-          </div>
-          {feedback.volume_assessment.note.trim() ? (
-            <div className="mt-1 text-clara-deep">
-              <MarkdownBody>{feedback.volume_assessment.note}</MarkdownBody>
-            </div>
-          ) : null}
-          {volumeOpen &&
-            feedback.volume_assessment.flagged_exercises.length > 0 && (
-              <ul className="mt-1 list-disc pl-5 text-clara-deep">
-                {feedback.volume_assessment.flagged_exercises.map((ex, i) => (
-                  <li key={i}>{formatExerciseNameForDisplay(ex)}</li>
-                ))}
-              </ul>
-            )}
-        </div>
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <dt className="font-bold text-clara-deep">Muscle Group Balance</dt>
-            <Badge variant={mbBadge.variant}>{mbBadge.label}</Badge>
-            {feedback.muscle_group_balance.gaps.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setGapsOpen((o) => !o)}
-                className="text-xs text-clara-primary hover:underline"
-              >
-                {gapsOpen ? "Hide gaps" : "Show gaps"}
-              </button>
-            )}
-          </div>
-          {feedback.muscle_group_balance.note.trim() ? (
-            <div className="mt-1 text-clara-deep">
-              <MarkdownBody>{feedback.muscle_group_balance.note}</MarkdownBody>
-            </div>
-          ) : null}
-          {gapsOpen && feedback.muscle_group_balance.gaps.length > 0 && (
-            <ul className="mt-1 list-disc pl-5 text-clara-deep">
-              {feedback.muscle_group_balance.gaps.map((g, i) => (
-                <li key={i}>{g}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-        <DimensionRow
-          label="Sequence Alignment"
-          badgeVariant={saBadge.variant}
-          badgeLabel={saBadge.label}
-          note={feedback.sequence_alignment.note}
-        />
       </dl>
 
       <div className="rounded-none border border-clara-border bg-clara-surface p-4 text-sm leading-relaxed">

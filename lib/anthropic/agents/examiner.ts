@@ -194,7 +194,7 @@ export async function explainCorrectAnswer(
 
   const response = await anthropic.messages.create({
     model: EXAMINER_MODEL,
-    max_tokens: 512,
+    max_tokens: 2048,
     system: EXPLAIN_CORRECT_PROMPT,
     messages: [
       {
@@ -521,7 +521,7 @@ async function evaluateAnatomyDiagramTypedRecall(
 
   const user = await anthropic.messages.create({
     model: EXAMINER_MODEL,
-    max_tokens: 512,
+    max_tokens: 2048,
     system: ANATOMY_DIAGRAM_RECALL_EVAL_SYSTEM,
     messages: [
       {
@@ -654,7 +654,7 @@ export async function evaluateAnswer(
 
     const mcFeedbackResponse = await anthropic.messages.create({
       model: EXAMINER_MODEL,
-      max_tokens: 384,
+      max_tokens: 1024,
       system: `You are a Balanced Body exam examiner. The user got a multiple choice question wrong. They need to LEARN why the correct answer is right. In 1–3 sentences, explain why the correct answer is correct and what they might have misunderstood. Be concise and educational. Return ONLY valid JSON: {"feedback": "string"}`,
       messages: [
         {
@@ -728,7 +728,7 @@ export async function evaluateAnswer(
       .join("; ");
     const feedbackResponse = await anthropic.messages.create({
       model: EXAMINER_MODEL,
-      max_tokens: 512,
+      max_tokens: 2048,
       system: MATCHING_FEEDBACK_PROMPT,
       messages: [
         {
@@ -836,7 +836,7 @@ export async function evaluateVisualExerciseAnswer(
 
   const response = await anthropic.messages.create({
     model: EXAMINER_MODEL,
-    max_tokens: 500,
+    max_tokens: 1024,
     system: VISUAL_QUIZ_EVAL_SYSTEM,
     messages: [
       {

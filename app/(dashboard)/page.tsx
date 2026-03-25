@@ -1,10 +1,13 @@
-import { createClient } from "@/lib/supabase/server";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import ReadinessCard from "@/components/dashboard/ReadinessCard";
 import HoursSummaryCard from "@/components/dashboard/HoursSummaryCard";
 import WeakSpotCard from "@/components/dashboard/WeakSpotCard";
 import type { QuizSession } from "@/types";
+import {
+  getAuthSession,
+  getExamTargetDateForUser,
+} from "@/lib/supabase/request-cache";
 
 const quickActionClass =
   "w-full py-2.5 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-primary";
@@ -22,10 +25,7 @@ function formatCompletedAt(iso: string | null) {
 }
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getAuthSession();
 
   let recentSessions: Pick<
     QuizSession,
@@ -35,24 +35,19 @@ export default async function DashboardPage() {
   let examTargetDate: string | null = null;
 
   if (user) {
-    const { data } = await supabase
-      .from("quiz_sessions")
-      .select("id, apparatus, topic, difficulty, score_percent, completed_at")
-      .eq("user_id", user.id)
-      .not("completed_at", "is", null)
-      .order("completed_at", { ascending: false })
-      .limit(5);
+    const [quizResult, cachedExamDate] = await Promise.all([
+      supabase
+        .from("quiz_sessions")
+        .select("id, apparatus, topic, difficulty, score_percent, completed_at")
+        .eq("user_id", user.id)
+        .not("completed_at", "is", null)
+        .order("completed_at", { ascending: false })
+        .limit(5),
+      getExamTargetDateForUser(user.id),
+    ]);
 
-    recentSessions = (data ?? []) as typeof recentSessions;
-
-    const { data: profileRow } = await supabase
-      .from("profiles")
-      .select("exam_target_date")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    examTargetDate =
-      (profileRow?.exam_target_date as string | null | undefined) ?? null;
+    recentSessions = (quizResult.data ?? []) as typeof recentSessions;
+    examTargetDate = cachedExamDate;
   }
 
   return (

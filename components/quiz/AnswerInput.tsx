@@ -55,10 +55,10 @@ export default function AnswerInput({
   onNext,
   disabled = false,
   options,
-  correctId,
+  correctId: _correctId,
   leftItems,
   rightItems,
-  pairs,
+  pairs: _pairs,
   requestExplanation,
 }: AnswerInputProps) {
   const [answer, setAnswer] = useState("");
@@ -106,13 +106,6 @@ export default function AnswerInput({
       onSubmit(answer.trim(), isRetry);
     }
   };
-
-  const canSubmit =
-    format === "multiple_choice"
-      ? !!selectedId
-      : format === "matching"
-        ? leftItems?.every((l) => matchingSelections[l])
-        : !!answer.trim();
 
   if (showEvaluation && result && feedback !== undefined) {
     const showCorrectAnswer =

@@ -39,6 +39,23 @@ export default function HoursProgressPanel({
   const hasAnyGaps =
     gaps.total > 0 || gaps.mat > 0 || gaps.reformer > 0 || gaps.apparatus > 0;
 
+  const overTotal =
+    totalLogged > t.total ? Math.round((totalLogged - t.total) * 10) / 10 : 0;
+  const overMat =
+    matLogged > t.mat_practical
+      ? Math.round((matLogged - t.mat_practical) * 10) / 10
+      : 0;
+  const overReformer =
+    reformerLogged > t.reformer_practical
+      ? Math.round((reformerLogged - t.reformer_practical) * 10) / 10
+      : 0;
+  const overApparatus =
+    apparatusLogged > t.apparatus_practical
+      ? Math.round((apparatusLogged - t.apparatus_practical) * 10) / 10
+      : 0;
+  const hasOverTarget =
+    overTotal > 0 || overMat > 0 || overReformer > 0 || overApparatus > 0;
+
   return (
     <div className="space-y-6">
       <div>
@@ -105,6 +122,43 @@ export default function HoursProgressPanel({
             </>
           ) : (
             <p>All practical targets complete. Great work.</p>
+          )}
+          {hasOverTarget && (
+            <div
+              className="mt-3 rounded-none border border-clara-accent/50 bg-clara-tint/80 px-3 py-2 text-clara-deep"
+              role="status"
+            >
+              <p className="font-medium text-clara-deep">
+                You&apos;ve logged more than required in one or more categories
+                (counts above target for certification paperwork are fine — this
+                is informational only).
+              </p>
+              <ul className="mt-1 list-disc pl-5">
+                {overTotal > 0 && (
+                  <li>
+                    Total: {formatHours(overTotal)} over {t.total}h target
+                  </li>
+                )}
+                {overMat > 0 && (
+                  <li>
+                    Mat practical: {formatHours(overMat)} over{" "}
+                    {t.mat_practical}h
+                  </li>
+                )}
+                {overReformer > 0 && (
+                  <li>
+                    Reformer practical: {formatHours(overReformer)} over{" "}
+                    {t.reformer_practical}h
+                  </li>
+                )}
+                {overApparatus > 0 && (
+                  <li>
+                    Apparatus practical: {formatHours(overApparatus)} over{" "}
+                    {t.apparatus_practical}h
+                  </li>
+                )}
+              </ul>
+            </div>
           )}
         </div>
       </div>

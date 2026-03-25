@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import Select from "@/components/ui/Select";
@@ -23,6 +23,8 @@ const CLIENT_LEVEL_OPTIONS = [
 ];
 
 interface CueInputProps {
+  cue: string;
+  onCueChange: (value: string) => void;
   onSubmit: (
     cue: string,
     apparatus: string,
@@ -30,16 +32,14 @@ interface CueInputProps {
     clientLevel: string
   ) => void;
   isLoading: boolean;
-  /** Increment to clear only the cue textarea (e.g. after "Try again"). */
-  resetCueNonce?: number;
 }
 
 export default function CueInput({
+  cue,
+  onCueChange,
   onSubmit,
   isLoading,
-  resetCueNonce = 0,
 }: CueInputProps) {
-  const [cue, setCue] = useState("");
   const [apparatus, setApparatus] = useState<Apparatus>(
     APPARATUS_KEYS[0] ?? "Mat"
   );
@@ -52,16 +52,6 @@ export default function CueInput({
     const names = EXERCISES_BY_APPARATUS[apparatus] ?? [];
     return [...names].sort((a, b) => a.localeCompare(b));
   }, [apparatus]);
-
-  useEffect(() => {
-    setExerciseName("");
-  }, [apparatus]);
-
-  useEffect(() => {
-    if (resetCueNonce > 0) {
-      setCue("");
-    }
-  }, [resetCueNonce]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -91,7 +81,9 @@ export default function CueInput({
           options={APPARATUS_OPTIONS}
           value={apparatus}
           onChange={(e) => {
-            setApparatus(e.target.value as Apparatus);
+            const next = e.target.value as Apparatus;
+            setApparatus(next);
+            setExerciseName("");
           }}
           disabled={isLoading}
         />
@@ -118,7 +110,7 @@ export default function CueInput({
         </label>
         <textarea
           value={cue}
-          onChange={(e) => setCue(e.target.value)}
+          onChange={(e) => onCueChange(e.target.value)}
           placeholder="Write your cue here..."
           rows={6}
           disabled={isLoading}

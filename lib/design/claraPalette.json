@@ -1,0 +1,21 @@
+{
+  "bg": "#FFFFFF",
+  "surface": "#FAFAF8",
+  "tint": "#F0F5EC",
+  "border": "#E8E8E0",
+  "primary": "#3D5A2A",
+  "primary-hover": "#324A22",
+  "accent": "#D4B800",
+  "deep": "#1A1A14",
+  "muted": "#AAAAAA",
+  "danger": "#B84820",
+  "danger-bg": "#FFF0E8",
+  "exam": "#FFFBE8",
+  "nav-inactive": "#555555",
+  "exam-chip": "#FFF8E8",
+  "exam-chip-ink": "#5C4A12",
+  "diagram-body": "#E4D5C0",
+  "diagram-selected": "#D4A84B",
+  "diagram-correct": "#E8C84A",
+  "diagram-incorrect": "#9B2335"
+}

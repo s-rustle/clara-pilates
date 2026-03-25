@@ -57,13 +57,13 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-2 border-r-[3px] px-2 py-2 text-[11px] font-medium leading-tight transition-colors ${
+              className={`flex min-h-[44px] items-center gap-2 border-r-[3px] px-2 py-2.5 text-xs font-medium leading-tight transition-colors ${
                 isActive
                   ? "border-clara-primary bg-clara-tint text-clara-primary"
-                  : "border-transparent text-[#555555] hover:bg-clara-bg hover:text-clara-deep"
+                  : "border-transparent text-clara-nav-inactive hover:bg-clara-bg hover:text-clara-deep"
               }`}
             >
-              <Icon className="h-3.5 w-3.5 shrink-0" />
+              <Icon className="h-4 w-4 shrink-0" aria-hidden />
               <span className="min-w-0 flex-1">{item.label}</span>
             </Link>
           );
@@ -74,9 +74,9 @@ export default function Sidebar() {
         <button
           type="button"
           onClick={handleSignOut}
-          className="flex w-full items-center gap-2 px-2 py-2.5 text-left text-[11px] text-clara-muted transition-colors hover:bg-clara-bg hover:text-clara-deep"
+          className="flex min-h-[44px] w-full items-center gap-2 px-2 py-2.5 text-left text-xs text-clara-muted transition-colors hover:bg-clara-bg hover:text-clara-deep"
         >
-          <LogOut className="h-3.5 w-3.5 shrink-0" />
+          <LogOut className="h-4 w-4 shrink-0" aria-hidden />
           <span>Sign out</span>
         </button>
       </div>

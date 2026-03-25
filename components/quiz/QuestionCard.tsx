@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { clsx } from "clsx";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ErrorMessage from "@/components/ui/ErrorMessage";
@@ -99,9 +100,12 @@ function DiagramImage({
   }
   if (src) {
     return (
-      <img
+      <Image
         src={src}
         alt="Anatomy diagram"
+        width={800}
+        height={600}
+        unoptimized
         className={
           className ??
           "max-h-64 w-auto rounded-none border border-clara-border object-contain"
@@ -110,6 +114,58 @@ function DiagramImage({
     );
   }
   return null;
+}
+
+function DiagramRecallField({
+  fieldId,
+  diagram_submit_loading,
+  selected_muscle,
+  on_submit_diagram_recall,
+}: {
+  fieldId: string;
+  diagram_submit_loading: boolean;
+  selected_muscle: string | null | undefined;
+  on_submit_diagram_recall: (typed: string) => void;
+}) {
+  const [diagramRecallText, setDiagramRecallText] = useState("");
+
+  return (
+    <div className="flex flex-col gap-2">
+      <label htmlFor={`diagram-recall-input-${fieldId}`} className="sr-only">
+        Name this muscle group
+      </label>
+      <input
+        id={`diagram-recall-input-${fieldId}`}
+        type="text"
+        value={diagramRecallText}
+        onChange={(e) => setDiagramRecallText(e.target.value)}
+        placeholder="Name this muscle group…"
+        disabled={diagram_submit_loading}
+        autoComplete="off"
+        className="w-full rounded-none border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted focus:border-clara-primary focus:outline-none focus:ring-1 focus:ring-clara-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
+      />
+      <Button
+        variant="primary"
+        type="button"
+        onClick={() => on_submit_diagram_recall(diagramRecallText.trim())}
+        disabled={
+          diagram_submit_loading ||
+          !selected_muscle ||
+          !diagramRecallText.trim()
+        }
+        className="w-full sm:w-auto"
+      >
+        {diagram_submit_loading ? (
+          <span className="flex items-center justify-center gap-2">
+            <LoadingSpinner size="sm" />
+            Evaluating…
+          </span>
+        ) : (
+          "Submit Answer"
+        )}
+      </Button>
+    </div>
+  );
 }
 
 export default function QuestionCard({
@@ -135,11 +191,7 @@ export default function QuestionCard({
 }: QuestionCardProps) {
   const isAnatomyMc = question_type === "anatomy_multiple_choice";
   const isAnatomyDiagram = question_type === "anatomy_diagram";
-  const [diagramRecallText, setDiagramRecallText] = useState("");
-
-  useEffect(() => {
-    setDiagramRecallText("");
-  }, [question, target_muscle]);
+  const diagramRecallResetKey = `${currentIndex}-${target_muscle ?? ""}`;
 
   return (
     <div className="flex flex-col gap-3">
@@ -176,43 +228,13 @@ export default function QuestionCard({
               correctMuscle={correct_muscle}
             />
             {!reveal_diagram_answer && (
-              <div className="flex flex-col gap-2">
-                <label htmlFor="diagram-recall-input" className="sr-only">
-                  Name this muscle group
-                </label>
-                <input
-                  id="diagram-recall-input"
-                  type="text"
-                  value={diagramRecallText}
-                  onChange={(e) => setDiagramRecallText(e.target.value)}
-                  placeholder="Name this muscle group…"
-                  disabled={diagram_submit_loading}
-                  autoComplete="off"
-                  className="w-full rounded-none border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted focus:border-clara-primary focus:outline-none focus:ring-1 focus:ring-clara-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
-                />
-                <Button
-                  variant="primary"
-                  type="button"
-                  onClick={() =>
-                    on_submit_diagram_recall(diagramRecallText.trim())
-                  }
-                  disabled={
-                    diagram_submit_loading ||
-                    !selected_muscle ||
-                    !diagramRecallText.trim()
-                  }
-                  className="w-full sm:w-auto"
-                >
-                  {diagram_submit_loading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <LoadingSpinner size="sm" />
-                      Evaluating…
-                    </span>
-                  ) : (
-                    "Submit Answer"
-                  )}
-                </Button>
-              </div>
+              <DiagramRecallField
+                key={diagramRecallResetKey}
+                fieldId={diagramRecallResetKey}
+                diagram_submit_loading={!!diagram_submit_loading}
+                selected_muscle={selected_muscle}
+                on_submit_diagram_recall={on_submit_diagram_recall}
+              />
             )}
           </div>
         )}

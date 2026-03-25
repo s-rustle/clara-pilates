@@ -766,38 +766,27 @@ Build /lib/anthropic/agents/sessions.ts.
 evaluateSession(sessionData, userId):
 - Accepts full session object: mode, session_type, apparatus, client_level, warm_up array, exercise_sequence array
 - Queries RAG for relevant source chunks across all exercises in the sequence
-- Evaluates session across five dimensions, grounded in source material:
+- Evaluates session across five dimensions (stored in `feedback` JSON), grounded in source material. Validated by `lib/sessionFeedback/validate.ts`; legacy rows are mapped in `lib/sessionFeedback/compat.ts`.
 
-  1. Progression Logic
-     - Is the pre-Pilates warm-up appropriate as preparation for the main sequence?
-     - Are transitions between exercises logical?
-     - Is there a closing/cool-down present or notably absent?
-     - Returns: score ('sound' | 'needs_adjustment'), note
+  1. alignment_and_form — joint alignment, stability, movement quality implied by the list and notes.
+     - score: `sound` | `needs_adjustment` | `not_verified`, note: string
 
-  2. Contraindication Flags
-     - Any exercises with precautions for the stated client level?
-     - Returns: array of { exercise_name, flag, recommendation } or empty array if none
+  2. breathing — breath cues or pattern fit; flag in note if absent when repertoire expects it.
+     - score: `sound` | `needs_adjustment` | `not_verified`, note: string
 
-  3. Volume Assessment
-     - Are sets and reps within the 8-12 rep standard?
-     - Flag any exercise with reps below 8 or above 12 with explanation
-     - Assess total session volume for the apparatus and client level
-     - Returns: score ('appropriate' | 'needs_adjustment'), note, flagged_exercises array
+  3. cueing_clarity — teaching notes specific enough for a student teacher.
+     - score: `clear` | `needs_refinement` | `not_verified`, note: string
 
-  4. Muscle Group Balance
-     - Are anterior/posterior chains represented?
-     - Is there flexion/extension balance?
-     - Are lateral patterns included?
-     - Returns: score ('balanced' | 'imbalanced'), note, gaps array
+  4. client_progression — warm-up → main work, difficulty order, template fit for client level (use chunks when present).
+     - score: `sound` | `needs_adjustment` | `not_verified`, note: string
 
-  5. Balanced Body Sequence Alignment
-     - Does the sequence follow Balanced Body methodology from uploaded curriculum?
-     - If source material not found for an exercise: flag as 'not verified' rather than invent
-     - Returns: score ('aligned' | 'partially_aligned' | 'not_verified'), note
+  5. safety — precautions, contraindications, volume (8–12 rep reference); per-exercise concerns in `flags`.
+     - score: `appropriate` | `caution` | `not_verified`, note: string
+     - flags: array of { exercise_name, concern, recommendation }
 
-- Overall: 2-3 sentence synthesis
-- Suggested adjustments: specific numbered recommendations with rationale
-- Returns structured JSON matching session_plans.feedback schema
+- overall: string (2–3 sentence synthesis)
+- suggested_adjustments: string[] (concrete recommendations)
+- Returns structured JSON matching `SessionFeedback` / `session_plans.feedback` schema
 
 Build /app/api/agents/sessions/route.ts:
 - POST: accepts session data, runs evaluateSession, returns structured feedback

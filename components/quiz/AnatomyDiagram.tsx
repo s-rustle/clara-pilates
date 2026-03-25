@@ -6,7 +6,7 @@
  * anterior/posterior muscle polygons with stable ids.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { clsx } from "clsx";
 import type { IMuscleStats } from "react-body-highlighter";
@@ -16,8 +16,9 @@ import {
   rbhMuscleToClara,
 } from "@/lib/quiz/anatomyDiagramRbMappings";
 import type { DiagramSide } from "@/lib/quiz/anatomyDiagramRbMappings";
+import { claraPalette } from "@/lib/design/claraPalette";
 
-const BODY_FILL = "#E4D5C0";
+const BODY_FILL = claraPalette["diagram-body"];
 
 export const ABDOMINAL_LAYER_NOTE =
   "Includes: Rectus Abdominis, Transverse Abdominis (TVA), Internal/External Obliques.";
@@ -53,9 +54,10 @@ export default function AnatomyDiagram({
   const [side, setSide] = useState<DiagramSide>("front");
   const [showAbdominalNote, setShowAbdominalNote] = useState(false);
 
-  useEffect(() => {
+  const switchSide = (next: DiagramSide) => {
     setShowAbdominalNote(false);
-  }, [side]);
+    setSide(next);
+  };
 
   const { data, highlightedColors } = useMemo(
     () =>
@@ -100,7 +102,7 @@ export default function AnatomyDiagram({
       <div className="flex gap-2">
         <button
           type="button"
-          onClick={() => setSide("front")}
+          onClick={() => switchSide("front")}
           className={clsx(
             "rounded-none border px-3 py-1.5 text-sm font-medium transition-colors",
             side === "front"
@@ -112,7 +114,7 @@ export default function AnatomyDiagram({
         </button>
         <button
           type="button"
-          onClick={() => setSide("back")}
+          onClick={() => switchSide("back")}
           className={clsx(
             "rounded-none border px-3 py-1.5 text-sm font-medium transition-colors",
             side === "back"

@@ -1,7 +1,16 @@
 import { type NextRequest } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { AUTH_REQUIRED, GOOGLE_DRIVE_NOT_CONNECTED } from "@/lib/api/messages";
-import { downloadFile, getFileMetadata } from "@/lib/google/drive";
+import {
+  AUTH_REQUIRED,
+  GOOGLE_DRIVE_NOT_CONNECTED,
+  REAUTH_REQUIRED,
+} from "@/lib/api/messages";
+import { ensureGoogleAccessToken } from "@/lib/google/ensureAccessToken";
+import {
+  downloadFile,
+  getFileMetadata,
+  isGoogleDriveReauthRequiredError,
+} from "@/lib/google/drive";
 
 /**
  * Proxies a Google Drive file the user has previously ingested (curriculum_chunks.drive_file_id).
@@ -19,7 +28,7 @@ export async function GET(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
+    return Response.json({ error: AUTH_REQUIRED }, { status: 401 });
   }
 
   const serviceClient = createServiceClient();
@@ -41,22 +50,44 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("google_access_token, google_refresh_token")
-    .eq("id", user.id)
-    .single();
-
-  const accessToken = profile?.google_access_token ?? null;
-  const refreshToken = profile?.google_refresh_token ?? null;
-
-  if (!accessToken || !refreshToken) {
-    return Response.json({ error: GOOGLE_DRIVE_NOT_CONNECTED }, { status: 400 });
+  const tokenResult = await ensureGoogleAccessToken(supabase, user.id);
+  if (!tokenResult.ok) {
+    if (tokenResult.error === "not_connected") {
+      return Response.json({ error: GOOGLE_DRIVE_NOT_CONNECTED }, { status: 400 });
+    }
+    return Response.json({ error: REAUTH_REQUIRED }, { status: 401 });
   }
+  let accessToken = tokenResult.accessToken;
 
   try {
-    const meta = await getFileMetadata(accessToken, fileId, refreshToken);
-    const buffer = await downloadFile(accessToken, fileId, refreshToken);
+    let meta: Awaited<ReturnType<typeof getFileMetadata>>;
+    try {
+      meta = await getFileMetadata(accessToken, fileId);
+    } catch (e) {
+      if (!isGoogleDriveReauthRequiredError(e)) throw e;
+      const again = await ensureGoogleAccessToken(supabase, user.id, {
+        forceRefresh: true,
+      });
+      if (!again.ok) {
+        return Response.json({ error: REAUTH_REQUIRED }, { status: 401 });
+      }
+      accessToken = again.accessToken;
+      meta = await getFileMetadata(accessToken, fileId);
+    }
+    let buffer: Buffer;
+    try {
+      buffer = await downloadFile(accessToken, fileId);
+    } catch (e) {
+      if (!isGoogleDriveReauthRequiredError(e)) throw e;
+      const again = await ensureGoogleAccessToken(supabase, user.id, {
+        forceRefresh: true,
+      });
+      if (!again.ok) {
+        return Response.json({ error: REAUTH_REQUIRED }, { status: 401 });
+      }
+      accessToken = again.accessToken;
+      buffer = await downloadFile(accessToken, fileId);
+    }
 
     return new Response(new Uint8Array(buffer), {
       status: 200,
@@ -66,6 +97,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (e) {
+    if (isGoogleDriveReauthRequiredError(e)) {
+      return Response.json({ error: REAUTH_REQUIRED }, { status: 401 });
+    }
     const message = e instanceof Error ? e.message : String(e);
     console.error("[drive-media]", message);
     return Response.json({ error: "Failed to load file from Drive" }, { status: 502 });

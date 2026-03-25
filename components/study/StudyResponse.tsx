@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Card from "@/components/ui/Card";
 import MarkdownBody from "@/components/ui/MarkdownBody";
 import Badge from "@/components/ui/Badge";
@@ -106,12 +107,13 @@ export default function StudyResponse({
                 <p className="border-b border-clara-border/40 px-2 py-1.5 text-xs font-medium text-clara-deep">
                   {img.file_name}
                 </p>
-                {/* eslint-disable-next-line @next/next/no-img-element -- authenticated same-origin proxy URL */}
-                <img
+                <Image
                   src={driveMediaUrl(img.drive_file_id)}
                   alt=""
+                  width={1200}
+                  height={900}
+                  unoptimized
                   className="h-auto max-h-80 w-full object-contain"
-                  loading="lazy"
                 />
               </li>
             ))}

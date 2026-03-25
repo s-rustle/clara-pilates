@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
+import { AUTH_REQUIRED } from "@/lib/api/messages";
 
 const PROTECTED_PATHS = [
   "/",
@@ -38,6 +39,12 @@ export async function middleware(request: NextRequest) {
 
   if (isProtectedPath(pathname)) {
     if (!user) {
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json(
+          { success: false, error: AUTH_REQUIRED },
+          { status: 401 }
+        );
+      }
       const loginUrl = new URL("/login", request.url);
       return NextResponse.redirect(loginUrl);
     }

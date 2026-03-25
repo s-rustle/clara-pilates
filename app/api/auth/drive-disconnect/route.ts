@@ -21,6 +21,7 @@ export async function PATCH() {
       .update({
         google_access_token: null,
         google_refresh_token: null,
+        google_token_expiry: null,
       })
       .eq("id", user.id);
 

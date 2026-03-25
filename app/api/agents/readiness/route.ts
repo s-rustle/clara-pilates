@@ -8,6 +8,7 @@ import {
 import { generateReadinessBrief } from "@/lib/anthropic/agents/readiness";
 import {
   calculateCurriculumScore,
+  calculateHoursProgressPercentUncapped,
   calculateHoursScore,
   calculateOverallScore,
   calculateQuizScore,
@@ -65,11 +66,13 @@ export async function POST() {
   }
 
   try {
-    const [curriculum_score, quiz_score, hours_score] = await Promise.all([
-      calculateCurriculumScore(user.id),
-      calculateQuizScore(user.id),
-      calculateHoursScore(user.id),
-    ]);
+    const [curriculum_score, quiz_score, hours_score, hours_progress_percent_uncapped] =
+      await Promise.all([
+        calculateCurriculumScore(user.id),
+        calculateQuizScore(user.id),
+        calculateHoursScore(user.id),
+        calculateHoursProgressPercentUncapped(user.id),
+      ]);
 
     const overall_score = calculateOverallScore(
       curriculum_score,
@@ -107,6 +110,7 @@ export async function POST() {
         curriculum_score,
         quiz_score,
         hours_score,
+        hours_progress_percent_uncapped,
         overall_score,
         weak_spots,
       },

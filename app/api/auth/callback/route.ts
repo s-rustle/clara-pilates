@@ -27,13 +27,15 @@ export async function GET(request: NextRequest) {
       return redirectError();
     }
 
-    const { access_token, refresh_token } = await getTokensFromCode(code);
+    const { access_token, refresh_token, expires_at } =
+      await getTokensFromCode(code);
 
     const { error } = await supabase
       .from("profiles")
       .update({
         google_access_token: access_token,
         google_refresh_token: refresh_token,
+        google_token_expiry: expires_at.toISOString(),
       })
       .eq("id", user.id);
 

@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+    return jsonResponse({ success: false, error: AUTH_REQUIRED }, 401);
   }
 
   const { searchParams } = new URL(request.url);
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+    return jsonResponse({ success: false, error: AUTH_REQUIRED }, 401);
   }
 
   try {

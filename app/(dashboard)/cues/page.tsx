@@ -21,7 +21,7 @@ export default function CuesPage() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [resetCueNonce, setResetCueNonce] = useState(0);
+  const [cue, setCue] = useState("");
 
   const activeEntry =
     activeId === null
@@ -89,7 +89,7 @@ export default function CuesPage() {
   );
 
   const handleTryAgain = useCallback(() => {
-    setResetCueNonce((n) => n + 1);
+    setCue("");
   }, []);
 
   const formatHistoryTime = (iso: string) => {
@@ -110,9 +110,10 @@ export default function CuesPage() {
       <CueEducationPanel />
       <Card>
         <CueInput
+          cue={cue}
+          onCueChange={setCue}
           onSubmit={submitCue}
           isLoading={isLoading}
-          resetCueNonce={resetCueNonce}
         />
       </Card>
 

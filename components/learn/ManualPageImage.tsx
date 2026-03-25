@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import Image from "next/image";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
@@ -9,6 +10,7 @@ interface ManualPageImageProps {
   folderName: string;
 }
 
+/** Remount with `key={`${fileName}-${folderName}`}` on parent so loading state resets when source changes. */
 export default function ManualPageImage({
   fileName,
   folderName,
@@ -16,11 +18,6 @@ export default function ManualPageImage({
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
   const url = `/api/drive/image?file_name=${encodeURIComponent(fileName)}&folder_name=${encodeURIComponent(folderName)}`;
-
-  useEffect(() => {
-    setLoaded(false);
-    setError(false);
-  }, [fileName, folderName]);
 
   if (error) {
     return (
@@ -36,10 +33,12 @@ export default function ManualPageImage({
           <p className="text-sm text-clara-deep">Loading manual page…</p>
         </div>
       )}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <Image
         src={url}
         alt=""
+        width={1200}
+        height={900}
+        unoptimized
         className={`mx-auto max-h-64 w-auto max-w-full rounded-none border border-clara-border object-contain ${
           loaded ? "block" : "sr-only"
         }`}

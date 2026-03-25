@@ -2,6 +2,7 @@ import { anthropic } from "@/lib/anthropic/client";
 import { queryRAGWithContext } from "../rag";
 import { OUT_OF_SCOPE_INSTRUCTION } from "./boundaries";
 import { stripBalancedBodyExerciseHeadersFromText } from "@/lib/curriculum/exerciseNames";
+import { validateSessionFeedback } from "@/lib/sessionFeedback/validate";
 import type {
   ExerciseItem,
   RagChunk,
@@ -13,29 +14,53 @@ import type {
 
 const SESSIONS_MODEL = "claude-sonnet-4-20250514";
 
-const SESSION_EVALUATOR_SYSTEM = `You are a Balanced Body Comprehensive session evaluator
-Evaluate the session across five dimensions grounded in source material
-Standard rep range reference: 8-12 reps
+const SESSION_EVALUATOR_SYSTEM = `You are a Balanced Body Comprehensive session evaluator.
+Evaluate the submitted plan/log across five pedagogical dimensions, grounded in the source material when it applies.
+Standard rep range reference: 8-12 reps.
 
-When the source chunks describe program levels (Mat 1 / Mat 2 / Mat 3, Reformer 1 / 2 / 3), prerequisites, recommended order, movement patterns, session templates, or specific exercise progression tables, use them to judge progression_logic and sequence_alignment—not from general knowledge.
+Dimensions:
+1) alignment_and_form — joint alignment, stability, and movement quality implied by the exercise list and notes.
+2) breathing — breath cues or pattern fit; flag if absent when the repertoire expects it.
+3) cueing_clarity — teaching notes specific enough for a student teacher.
+4) client_progression — warm-up → main work, difficulty order, template fit for client level using chunk evidence when present.
+5) safety — precautions, contraindications, volume; use "flags" for per-exercise concerns.
 
-For progression_logic specifically, check whether: (1) warm-up progresses logically into the main sequence; (2) exercises are ordered by difficulty (easier → harder) where the material implies levels; (3) the sequence matches a known Balanced Body session template for the stated client level (Beginner, Intermediate, Advanced, Prenatal, etc.) when templates appear in the chunks; (4) muscle groups or themes are concentrated and built upon progressively. If the chunks include a matching session template (e.g. "Advanced Session"), name it explicitly in your feedback.
+When chunks describe program levels, templates, prerequisites, or sequencing, use them for client_progression and safety—do not invent from general knowledge alone.
 
 Return ONLY valid JSON — no markdown, no preamble:
 
 {
-  "progression_logic": { "score": "sound|needs_adjustment", "note": "string" },
-  "contraindication_flags": { "score": "none|flagged", "flags": [{"exercise_name": "string", "flag": "string", "recommendation": "string"}] },
-  "volume_assessment": { "score": "appropriate|needs_adjustment", "note": "string", "flagged_exercises": [] },
-  "muscle_group_balance": { "score": "balanced|imbalanced", "note": "string", "gaps": [] },
-  "sequence_alignment": { "score": "aligned|partially_aligned|not_verified", "note": "string" },
+  "alignment_and_form": { "score": "sound|needs_adjustment|not_verified", "note": "string" },
+  "breathing": { "score": "sound|needs_adjustment|not_verified", "note": "string" },
+  "cueing_clarity": { "score": "clear|needs_refinement|not_verified", "note": "string" },
+  "client_progression": { "score": "sound|needs_adjustment|not_verified", "note": "string" },
+  "safety": {
+    "score": "appropriate|caution|not_verified",
+    "note": "string",
+    "flags": [{"exercise_name": "string", "concern": "string", "recommendation": "string"}]
+  },
   "overall": "string",
   "suggested_adjustments": ["string"]
 }
 
-If source material not found for an exercise: flag as 'not_verified' rather than invent
+If source material is missing for a claim, use not_verified on that dimension.
 
-Exercise names in JSON (flags, flagged_exercises): use Title Case (e.g. "Swan Dive"), not ALL CAPS manual headers.
+Exercise names in safety.flags: Title Case, not ALL CAPS manual headers.
+
+${OUT_OF_SCOPE_INSTRUCTION}`;
+
+const SESSION_DRAFT_GENERATOR_SYSTEM = `You are a Balanced Body Comprehensive educator. Propose one teaching-ready session draft (warm-up + main sequence) for the apparatus and client context given.
+
+If client_notes mention contraindications, pain, or pathology, choose conservative selections and document modifications in exercise "notes".
+
+Return ONLY valid JSON — no markdown, no preamble:
+
+{
+  "warm_up": [ { "move_name": "string", "sets": number, "reps": number } ],
+  "exercise_sequence": [ { "exercise_name": "string", "sets": number, "reps": number, "notes"?: "string" } ]
+}
+
+At least 2 warm-up moves and at least 4 main exercises. Each main exercise should include "notes" with at least one concrete cue.
 
 ${OUT_OF_SCOPE_INSTRUCTION}`;
 
@@ -177,102 +202,45 @@ function parseSessionEvaluationInput(raw: unknown): {
   };
 }
 
-function assertString(v: unknown, path: string): asserts v is string {
-  if (typeof v !== "string") {
-    throw new Error(`Invalid SessionFeedback from model: ${path} must be a string`);
-  }
-}
+export type SessionDraftInput = {
+  apparatus: string;
+  client_level: string | null;
+  session_type: SessionType;
+  client_notes?: string | null;
+};
 
-function validateSessionFeedback(raw: unknown): SessionFeedback {
-  if (!raw || typeof raw !== "object") {
-    throw new Error("Invalid SessionFeedback from model: root must be an object");
-  }
-  const o = raw as Record<string, unknown>;
+/**
+ * AI-generated warm-up and exercise sequence (user may edit before saving).
+ */
+export async function generateSessionDraft(
+  input: SessionDraftInput
+): Promise<{ warm_up: WarmUpMove[]; exercise_sequence: ExerciseItem[] }> {
+  const userMessage = `apparatus: ${input.apparatus}
+session_type: ${input.session_type}
+client_level: ${input.client_level ?? "(not specified)"}
+client_notes: ${input.client_notes?.trim() || "(none)"}`;
 
-  const pl = o.progression_logic;
-  if (!pl || typeof pl !== "object") {
-    throw new Error("Invalid SessionFeedback from model: progression_logic");
-  }
-  const plObj = pl as Record<string, unknown>;
-  assertString(plObj.score, "progression_logic.score");
-  assertString(plObj.note, "progression_logic.note");
+  const response = await anthropic.messages.create({
+    model: SESSIONS_MODEL,
+    max_tokens: 4096,
+    system: SESSION_DRAFT_GENERATOR_SYSTEM,
+    messages: [{ role: "user", content: userMessage }],
+  });
 
-  const cf = o.contraindication_flags;
-  if (!cf || typeof cf !== "object") {
-    throw new Error("Invalid SessionFeedback from model: contraindication_flags");
-  }
-  const cfObj = cf as Record<string, unknown>;
-  assertString(cfObj.score, "contraindication_flags.score");
-  if (!Array.isArray(cfObj.flags)) {
-    throw new Error("Invalid SessionFeedback from model: contraindication_flags.flags");
-  }
-  for (const f of cfObj.flags) {
-    if (!f || typeof f !== "object") {
-      throw new Error("Invalid SessionFeedback from model: contraindication_flags.flags entry");
-    }
-    const fe = f as Record<string, unknown>;
-    assertString(fe.exercise_name, "flag.exercise_name");
-    assertString(fe.flag, "flag.flag");
-    assertString(fe.recommendation, "flag.recommendation");
+  const text =
+    response.content
+      .filter((block) => block.type === "text")
+      .map((block) => ("text" in block ? (block as { text: string }).text : ""))
+      .join("") ?? "";
+
+  if (!text.trim()) {
+    throw new Error("Claude returned an empty response");
   }
 
-  const va = o.volume_assessment;
-  if (!va || typeof va !== "object") {
-    throw new Error("Invalid SessionFeedback from model: volume_assessment");
-  }
-  const vaObj = va as Record<string, unknown>;
-  assertString(vaObj.score, "volume_assessment.score");
-  assertString(vaObj.note, "volume_assessment.note");
-  if (!Array.isArray(vaObj.flagged_exercises)) {
-    throw new Error("Invalid SessionFeedback from model: volume_assessment.flagged_exercises");
-  }
-  for (const x of vaObj.flagged_exercises) {
-    if (typeof x !== "string") {
-      throw new Error(
-        "Invalid SessionFeedback from model: volume_assessment.flagged_exercises must be strings"
-      );
-    }
-  }
-
-  const mb = o.muscle_group_balance;
-  if (!mb || typeof mb !== "object") {
-    throw new Error("Invalid SessionFeedback from model: muscle_group_balance");
-  }
-  const mbObj = mb as Record<string, unknown>;
-  assertString(mbObj.score, "muscle_group_balance.score");
-  assertString(mbObj.note, "muscle_group_balance.note");
-  if (!Array.isArray(mbObj.gaps)) {
-    throw new Error("Invalid SessionFeedback from model: muscle_group_balance.gaps");
-  }
-  for (const g of mbObj.gaps) {
-    if (typeof g !== "string") {
-      throw new Error(
-        "Invalid SessionFeedback from model: muscle_group_balance.gaps must be strings"
-      );
-    }
-  }
-
-  const sa = o.sequence_alignment;
-  if (!sa || typeof sa !== "object") {
-    throw new Error("Invalid SessionFeedback from model: sequence_alignment");
-  }
-  const saObj = sa as Record<string, unknown>;
-  assertString(saObj.score, "sequence_alignment.score");
-  assertString(saObj.note, "sequence_alignment.note");
-
-  assertString(o.overall, "overall");
-  if (!Array.isArray(o.suggested_adjustments)) {
-    throw new Error("Invalid SessionFeedback from model: suggested_adjustments");
-  }
-  for (const adj of o.suggested_adjustments) {
-    if (typeof adj !== "string") {
-      throw new Error(
-        "Invalid SessionFeedback from model: suggested_adjustments must be strings"
-      );
-    }
-  }
-
-  return raw as SessionFeedback;
+  const parsed = parseJsonFromResponse<Record<string, unknown>>(text);
+  const warm_up = parseWarmUpMoves(parsed.warm_up);
+  const exercise_sequence = parseExerciseItems(parsed.exercise_sequence);
+  return { warm_up, exercise_sequence };
 }
 
 export type SessionEvaluationInput = {

@@ -1,7 +1,8 @@
 "use client";
 
-import type { ExerciseItem, SessionFeedback, SessionPlan, WarmUpMove } from "@/types";
+import type { ExerciseItem, SessionPlan, WarmUpMove } from "@/types";
 import { formatExerciseNameForDisplay } from "@/lib/curriculum/exerciseNames";
+import { normalizeStoredSessionFeedback } from "@/lib/sessionFeedback/compat";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
@@ -22,17 +23,6 @@ function statusVariant(
   if (s === "complete") return "green";
   if (s === "draft") return "yellow";
   return "grey";
-}
-
-function isSessionFeedback(raw: unknown): raw is SessionFeedback {
-  if (!raw || typeof raw !== "object") return false;
-  const o = raw as Record<string, unknown>;
-  return (
-    typeof o.overall === "string" &&
-    Array.isArray(o.suggested_adjustments) &&
-    o.progression_logic != null &&
-    typeof o.progression_logic === "object"
-  );
 }
 
 function formatDate(iso: string | null): string {
@@ -121,7 +111,7 @@ export function SessionReadOnlyModal({
 }) {
   if (!open || !session) return null;
 
-  const feedback = isSessionFeedback(session.feedback) ? session.feedback : null;
+  const feedback = normalizeStoredSessionFeedback(session.feedback);
 
   return (
     <div

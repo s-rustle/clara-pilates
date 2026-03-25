@@ -24,7 +24,10 @@ export default function HoursSummaryCard() {
         fetch("/api/profile", { credentials: "same-origin" }),
       ]);
 
-      const data = await hoursRes.json();
+      const [data, profileJson] = await Promise.all([
+        hoursRes.json(),
+        profileRes.json(),
+      ]);
 
       if (!hoursRes.ok) {
         setError(
@@ -41,8 +44,6 @@ export default function HoursSummaryCard() {
       } else {
         setLogs([]);
       }
-
-      const profileJson = await profileRes.json();
       if (profileRes.ok && profileJson.success && profileJson.data) {
         setHourTargets(
           (profileJson.data.hour_targets as HourTargets | null) ?? null

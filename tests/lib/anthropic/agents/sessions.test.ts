@@ -14,26 +14,19 @@ vi.mock("@/lib/anthropic/client", () => ({
 }));
 
 const validFeedbackJson = {
-  progression_logic: { score: "sound", note: "Warm-up supports main work." },
-  contraindication_flags: {
-    score: "none",
+  alignment_and_form: { score: "sound", note: "Alignment cues present." },
+  breathing: { score: "sound", note: "Breath cued in warm-up." },
+  cueing_clarity: { score: "clear", note: "Notes are specific." },
+  client_progression: { score: "sound", note: "Warm-up supports main work." },
+  safety: {
+    score: "appropriate",
+    note: "Volume reasonable.",
     flags: [] as Array<{
       exercise_name: string;
-      flag: string;
+      concern: string;
       recommendation: string;
     }>,
   },
-  volume_assessment: {
-    score: "appropriate",
-    note: "Within range.",
-    flagged_exercises: [] as string[],
-  },
-  muscle_group_balance: {
-    score: "balanced",
-    note: "Good mix.",
-    gaps: [] as string[],
-  },
-  sequence_alignment: { score: "aligned", note: "Matches BB order." },
   overall: "Solid session.",
   suggested_adjustments: [] as string[],
 };
@@ -78,21 +71,15 @@ describe("Session Planner Agent", () => {
 
     const result = await evaluateSession(sessionData, "user-1");
 
-    expect(result).toHaveProperty("progression_logic");
-    expect(result).toHaveProperty("contraindication_flags");
-    expect(result).toHaveProperty("volume_assessment");
-    expect(result).toHaveProperty("muscle_group_balance");
-    expect(result).toHaveProperty("sequence_alignment");
+    expect(result).toHaveProperty("alignment_and_form");
+    expect(result).toHaveProperty("breathing");
+    expect(result).toHaveProperty("cueing_clarity");
+    expect(result).toHaveProperty("client_progression");
+    expect(result).toHaveProperty("safety");
     expect(result).toHaveProperty("overall");
     expect(result).toHaveProperty("suggested_adjustments");
 
-    expect(result.progression_logic).toHaveProperty("score");
-    expect(result.progression_logic).toHaveProperty("note");
-    expect(Array.isArray(result.contraindication_flags.flags)).toBe(true);
-    expect(Array.isArray(result.volume_assessment.flagged_exercises)).toBe(
-      true
-    );
-    expect(Array.isArray(result.muscle_group_balance.gaps)).toBe(true);
+    expect(result.safety.flags).toEqual([]);
     expect(Array.isArray(result.suggested_adjustments)).toBe(true);
   });
 
@@ -124,7 +111,7 @@ describe("Session Planner Agent", () => {
       content: [
         {
           type: "text",
-          text: JSON.stringify({ progression_logic: "broken" }),
+          text: JSON.stringify({ alignment_and_form: "broken" }),
         },
       ],
     } as never);
