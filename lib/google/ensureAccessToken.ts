@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { refreshAccessTokenWithExpiry } from "@/lib/google/auth";
 import { REAUTH_REQUIRED } from "@/lib/api/messages";
+import { patchProfileGoogleFields } from "@/lib/google/patchProfileGoogleFields";
 
 /** Treat access token as unusable this many seconds before Google's expiry. */
 const TOKEN_REFRESH_BUFFER_MS = 120_000;
@@ -30,9 +31,10 @@ export async function ensureGoogleAccessToken(
   userId: string,
   options?: EnsureGoogleAccessOptions
 ): Promise<EnsureGoogleAccessTokenResult> {
+  /** `*` avoids PostgREST errors when `google_token_expiry` migration is not applied yet. */
   const { data: profile, error: fetchError } = await supabase
     .from("profiles")
-    .select("google_access_token, google_refresh_token, google_token_expiry")
+    .select("*")
     .eq("id", userId)
     .single();
 
@@ -42,7 +44,10 @@ export async function ensureGoogleAccessToken(
 
   const access = profile.google_access_token ?? null;
   const refresh = profile.google_refresh_token ?? null;
-  const expiry = profile.google_token_expiry ?? null;
+  const expiry =
+    typeof profile.google_token_expiry === "string"
+      ? profile.google_token_expiry
+      : null;
 
   const needsRefresh =
     options?.forceRefresh ||
@@ -64,13 +69,10 @@ export async function ensureGoogleAccessToken(
     const { access_token, expires_at } =
       await refreshAccessTokenWithExpiry(refresh);
 
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({
-        google_access_token: access_token,
-        google_token_expiry: expires_at.toISOString(),
-      })
-      .eq("id", userId);
+    const { error: updateError } = await patchProfileGoogleFields(supabase, userId, {
+      google_access_token: access_token,
+      google_token_expiry: expires_at.toISOString(),
+    });
 
     if (updateError) {
       console.error("[ensureGoogleAccessToken] profile update failed", updateError);

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { AUTH_REQUIRED } from "@/lib/api/messages";
+import { patchProfileGoogleFields } from "@/lib/google/patchProfileGoogleFields";
 
 function jsonResponse(data: unknown, status = 200) {
   return Response.json(data, { status });
@@ -16,14 +17,11 @@ export async function PATCH() {
       return jsonResponse({ success: false, error: AUTH_REQUIRED }, 401);
     }
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        google_access_token: null,
-        google_refresh_token: null,
-        google_token_expiry: null,
-      })
-      .eq("id", user.id);
+    const { error } = await patchProfileGoogleFields(supabase, user.id, {
+      google_access_token: null,
+      google_refresh_token: null,
+      google_token_expiry: null,
+    });
 
     if (error) {
       return jsonResponse(
