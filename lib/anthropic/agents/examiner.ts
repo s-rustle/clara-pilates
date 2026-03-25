@@ -800,3 +800,77 @@ Evaluate and return JSON only.`;
       parsed.correct_answer != null ? String(parsed.correct_answer) : null,
   };
 }
+
+export type VisualQuizEvalResult = {
+  result: "correct" | "close" | "incorrect";
+  correctName: string;
+  feedback: string;
+};
+
+const VISUAL_QUIZ_EVAL_SYSTEM = `You are a Balanced Body Comprehensive exam examiner.
+
+The learner viewed one printed page from an illustrated Pilates manual (Mat or Barrels materials) and typed the name of the exercise they think it shows.
+
+You are given the PDF file name. These files usually encode or strongly hint at the canonical exercise name (strip ".pdf", interpret numbering or abbreviations, output the best Title Case name as a Balanced Body instructor would write it).
+
+Return ONLY valid JSON: {"result":"correct"|"close"|"incorrect","correctName":"string","feedback":"string"}
+
+Grading:
+- "correct": The learner's answer names the same exercise as correctName (minor spelling, articles, punctuation, or word order OK).
+- "close": Clearly the same exercise but imprecise wording, missing a common qualifier, or an informal alias that almost passes.
+- "incorrect": Wrong exercise, unrelated answer, or too vague to credit.
+
+feedback: 1–3 short sentences. Be concise and supportive.
+
+${OUT_OF_SCOPE_INSTRUCTION}`;
+
+/**
+ * Names a manual page exercise from the source PDF file name and grades the learner's text answer.
+ */
+export async function evaluateVisualExerciseAnswer(
+  fileName: string,
+  userAnswer: string
+): Promise<VisualQuizEvalResult> {
+  const safeFile = fileName.slice(0, 280);
+  const safeAnswer = userAnswer.slice(0, 500);
+
+  const response = await anthropic.messages.create({
+    model: EXAMINER_MODEL,
+    max_tokens: 500,
+    system: VISUAL_QUIZ_EVAL_SYSTEM,
+    messages: [
+      {
+        role: "user",
+        content: `PDF file name: "${safeFile}"\nLearner's answer: "${safeAnswer}"`,
+      },
+    ],
+  });
+
+  const text =
+    response.content
+      .filter((block) => block.type === "text")
+      .map((block) => ("text" in block ? (block as { text: string }).text : ""))
+      .join("")
+      .trim();
+
+  const parsed = parseJsonFromResponse<{
+    result: string;
+    correctName: string;
+    feedback: string;
+  }>(text);
+
+  const r =
+    parsed.result === "correct" ||
+    parsed.result === "close" ||
+    parsed.result === "incorrect"
+      ? parsed.result
+      : "incorrect";
+
+  return {
+    result: r,
+    correctName:
+      typeof parsed.correctName === "string" ? parsed.correctName.trim() : "",
+    feedback:
+      typeof parsed.feedback === "string" ? parsed.feedback.trim() : "",
+  };
+}

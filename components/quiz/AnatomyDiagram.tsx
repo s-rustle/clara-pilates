@@ -102,7 +102,7 @@ export default function AnatomyDiagram({
           type="button"
           onClick={() => setSide("front")}
           className={clsx(
-            "rounded-sm border px-3 py-1.5 text-sm font-medium transition-colors",
+            "rounded-none border px-3 py-1.5 text-sm font-medium transition-colors",
             side === "front"
               ? "border-clara-primary bg-clara-primary text-white"
               : "border-clara-border bg-clara-surface text-clara-deep hover:bg-clara-border/50"
@@ -114,7 +114,7 @@ export default function AnatomyDiagram({
           type="button"
           onClick={() => setSide("back")}
           className={clsx(
-            "rounded-sm border px-3 py-1.5 text-sm font-medium transition-colors",
+            "rounded-none border px-3 py-1.5 text-sm font-medium transition-colors",
             side === "back"
               ? "border-clara-primary bg-clara-primary text-white"
               : "border-clara-border bg-clara-surface text-clara-deep hover:bg-clara-border/50"
@@ -123,8 +123,8 @@ export default function AnatomyDiagram({
           Back
         </button>
       </div>
-      <div className="flex justify-center overflow-x-auto rounded-sm border border-clara-border bg-clara-bg p-4">
-        <div className="relative w-full max-w-[240px] [&_.rbh]:drop-shadow-sm">
+      <div className="flex justify-center overflow-x-auto rounded-none border border-clara-border bg-clara-bg p-4">
+        <div className="relative w-full max-w-[240px]">
           <Model
             key={side}
             type={side === "front" ? "anterior" : "posterior"}
@@ -150,7 +150,7 @@ export default function AnatomyDiagram({
                 e.stopPropagation();
                 setShowAbdominalNote(true);
               }}
-              className="absolute left-[46%] top-[38%] z-10 -translate-x-1/2 rounded-sm border border-clara-deep/40 bg-clara-surface/95 px-1 py-0.5 text-[10px] font-bold uppercase tracking-wide text-clara-deep shadow-sm hover:bg-clara-accent/30"
+              className="absolute left-[46%] top-[38%] z-10 -translate-x-1/2 rounded-[2px] border border-clara-deep/40 bg-clara-surface/95 px-1 py-0.5 text-[10px] font-bold uppercase tracking-wide text-clara-deep hover:bg-clara-border/50"
             >
               TVA
             </button>
@@ -159,7 +159,7 @@ export default function AnatomyDiagram({
       </div>
       {showAbdominalNote && side === "front" && (
         <p
-          className="rounded-sm border border-clara-border bg-clara-surface/80 px-3 py-2 text-xs text-clara-deep"
+          className="rounded-none border border-clara-border bg-clara-surface/80 px-3 py-2 text-xs text-clara-deep"
           role="note"
         >
           {ABDOMINAL_LAYER_NOTE}

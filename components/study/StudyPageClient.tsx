@@ -99,7 +99,7 @@ export default function StudyPageClient() {
             No curriculum has been ingested yet. Open{" "}
             <a
               href="/curriculum"
-              className="font-medium text-clara-accent underline"
+              className="font-medium text-clara-primary underline"
             >
               Curriculum Manager
             </a>{" "}

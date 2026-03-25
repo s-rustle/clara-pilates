@@ -195,7 +195,7 @@ export default function LearnPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <div className="mb-8 space-y-4 rounded-sm border border-clara-border bg-clara-surface p-5">
+      <div className="mb-8 space-y-4 rounded-none border border-clara-border bg-clara-surface p-5">
         <Select
           label="Apparatus"
           options={APPARATUS_OPTIONS}
@@ -208,7 +208,7 @@ export default function LearnPage() {
           <span className="mb-2 block text-sm font-medium text-clara-deep">
             Browse by
           </span>
-          <div className="flex gap-0 rounded-sm border border-clara-border bg-clara-bg p-0.5">
+          <div className="flex gap-0 rounded-none border border-clara-border bg-clara-bg p-0.5">
             <button
               type="button"
               onClick={() => setBrowseMode("exercise")}
@@ -254,10 +254,10 @@ export default function LearnPage() {
               }}
               placeholder="Search exercises…"
               disabled={tutorialLoading}
-              className="w-full rounded-sm border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted/80 focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40"
+              className="w-full rounded-none border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted/80 focus:border-clara-primary focus:outline-none focus:ring-1 focus:ring-clara-primary/40"
             />
             {dropdownOpen && (
-              <ul className="absolute left-0 right-0 top-full z-20 mt-1 max-h-52 overflow-y-auto rounded-sm border border-clara-border bg-clara-surface py-1">
+              <ul className="absolute left-0 right-0 top-full z-20 mt-1 max-h-52 overflow-y-auto rounded-none border border-clara-border bg-clara-surface py-1">
                 {filteredExercises.length === 0 ? (
                   <li className="px-3 py-2 text-sm text-clara-muted">
                     {exerciseList.length > 0
@@ -336,7 +336,7 @@ export default function LearnPage() {
           )}
 
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-clara-accent md:text-3xl">
+            <h2 className="font-cormorant text-2xl font-semibold tracking-tight text-clara-deep md:text-3xl">
               {formatExerciseNameForDisplay(tutorial.exercise_name)}
             </h2>
             {tutorialLevelRepsBadge ? (
@@ -364,7 +364,7 @@ export default function LearnPage() {
               <div className="flex gap-2">
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="ghost"
                   onClick={() => goPrev()}
                   disabled={tutorialLoading || atStart}
                 >
@@ -372,7 +372,7 @@ export default function LearnPage() {
                 </Button>
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="ghost"
                   onClick={() => goNext()}
                   disabled={tutorialLoading || atEnd}
                 >

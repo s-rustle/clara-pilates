@@ -10,7 +10,7 @@ export default function ErrorMessage({ message }: ErrorMessageProps) {
   return (
     <div
       role="alert"
-      className="flex items-start gap-2 rounded-sm border border-clara-border bg-clara-surface p-3 text-clara-deep"
+      className="flex items-start gap-2 rounded-none border border-clara-border bg-clara-surface p-3 text-clara-deep"
     >
       <AlertCircle
         className="mt-0.5 h-5 w-5 flex-shrink-0 text-clara-primary"

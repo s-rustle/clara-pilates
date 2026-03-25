@@ -122,7 +122,7 @@ export default function CueInput({
           placeholder="Write your cue here..."
           rows={6}
           disabled={isLoading}
-          className="w-full resize-y rounded-sm border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted/80 focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full resize-y rounded-none border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted/80 focus:border-clara-primary focus:outline-none focus:ring-1 focus:ring-clara-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
         />
       </div>
       <div>

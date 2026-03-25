@@ -27,7 +27,7 @@ const EVALUATION_POINTS: { title: string; why: string }[] = [
 
 export default function CueEducationPanel() {
   return (
-    <details className="group rounded-sm border border-clara-border bg-clara-surface">
+    <details className="group rounded-none border border-clara-border bg-clara-surface">
       <summary className="cursor-pointer list-none px-4 py-3 text-sm font-bold text-clara-deep marker:hidden [&::-webkit-details-marker]:hidden">
         <span className="inline-flex items-center gap-2">
           <span
@@ -56,7 +56,7 @@ export default function CueEducationPanel() {
         </p>
         <ul className="mb-4 flex list-none flex-col gap-2">
           {EVALUATION_POINTS.map(({ title, why }) => (
-            <li key={title} className="border-l-2 border-clara-accent/50 pl-3">
+            <li key={title} className="border-l-2 border-clara-primary/40 pl-3">
               <span className="font-bold text-clara-deep">{title}.</span>{" "}
               {why}
             </li>
@@ -67,7 +67,7 @@ export default function CueEducationPanel() {
           manual), open{" "}
           <Link
             href="/learn"
-            className="font-bold text-clara-accent underline-offset-2 hover:underline"
+            className="font-semibold text-clara-primary underline-offset-2 hover:underline"
           >
             Learn
           </Link>

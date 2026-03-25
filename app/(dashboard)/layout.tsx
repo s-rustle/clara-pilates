@@ -16,5 +16,16 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  return <DashboardShell>{children}</DashboardShell>;
+  const { data: profileRow } = await supabase
+    .from("profiles")
+    .select("exam_target_date")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const examTargetDate =
+    (profileRow?.exam_target_date as string | null | undefined) ?? null;
+
+  return (
+    <DashboardShell examTargetDate={examTargetDate}>{children}</DashboardShell>
+  );
 }

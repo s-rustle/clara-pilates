@@ -121,7 +121,7 @@ export default function CalendarPicker({
         <button
           type="button"
           onClick={goPrevMonth}
-          className="rounded p-1 text-clara-deep hover:bg-clara-border"
+          className="rounded-none p-1 text-clara-deep hover:bg-clara-border"
           aria-label="Previous month"
         >
           <ChevronLeft className="h-5 w-5" />
@@ -135,7 +135,7 @@ export default function CalendarPicker({
         <button
           type="button"
           onClick={goNextMonth}
-          className="rounded p-1 text-clara-deep hover:bg-clara-border"
+          className="rounded-none p-1 text-clara-deep hover:bg-clara-border"
           aria-label="Next month"
         >
           <ChevronRight className="h-5 w-5" />
@@ -169,19 +169,19 @@ export default function CalendarPicker({
               key={dateISO}
               type="button"
               onClick={() => handleSelect(dateISO)}
-              className={`relative flex h-9 w-9 flex-col items-center justify-center rounded text-sm transition-colors ${
+              className={`relative flex h-9 w-9 flex-col items-center justify-center rounded-none text-sm transition-colors ${
                 isSelected
                   ? "bg-clara-primary text-white"
                   : isToday
-                    ? "border-2 border-clara-accent text-clara-deep hover:bg-clara-border"
+                    ? "border-2 border-clara-primary text-clara-deep hover:bg-clara-border"
                     : "text-clara-deep hover:bg-clara-border"
-              } ${isFocused && !isSelected ? "ring-2 ring-clara-primary ring-offset-1" : ""}`}
+              } ${isFocused && !isSelected ? "outline outline-2 outline-offset-0 outline-clara-primary" : ""}`}
               aria-label={`Select ${dateISO}${isSelected ? " (selected)" : ""}`}
             >
               <span>{date.getDate()}</span>
               {hasLogs && (
                 <span
-                  className={`absolute bottom-0.5 h-1 w-1 rounded-full ${
+                  className={`absolute bottom-0.5 h-1 w-1 rounded-none ${
                     isSelected ? "bg-clara-bg" : "bg-clara-border"
                   }`}
                 />

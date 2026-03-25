@@ -286,7 +286,7 @@ export default function FolderList() {
             If Google Drive was disconnected or your session expired,{" "}
             <a
               href="#drive-connect"
-              className="font-medium text-clara-accent underline"
+              className="font-medium text-clara-primary underline"
             >
               reconnect Google Drive
             </a>{" "}
@@ -365,7 +365,7 @@ export default function FolderList() {
                     <td className="py-3">
                       {upload ? (
                         <Button
-                          variant="secondary"
+                          variant="ghost"
                           onClick={() =>
                             handleReingest(
                               folderName,

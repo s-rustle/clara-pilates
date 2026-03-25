@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { clsx } from "clsx";
 
-type ButtonVariant = "primary" | "secondary" | "destructive";
+type ButtonVariant = "primary" | "ghost" | "accent";
 
 interface ButtonProps {
   variant?: ButtonVariant;
@@ -14,13 +14,16 @@ interface ButtonProps {
   href?: string;
 }
 
+const baseBtn =
+  "inline-flex cursor-pointer items-center justify-center rounded-none border border-transparent px-4 py-2.5 text-[11px] font-medium uppercase tracking-[0.06em] no-underline transition-colors";
+
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-clara-primary text-white shadow-clara-soft hover:bg-clara-primary-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-accent",
-  secondary:
-    "border border-clara-border bg-clara-surface text-clara-deep shadow-sm hover:bg-clara-bg hover:border-clara-border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-primary/35",
-  destructive:
-    "bg-clara-deep text-white hover:bg-clara-deep/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-accent/60",
+    "bg-clara-primary text-white hover:bg-clara-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-primary",
+  ghost:
+    "border border-clara-primary bg-white text-clara-primary hover:bg-clara-tint/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-primary",
+  accent:
+    "bg-clara-accent text-clara-deep hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-deep",
 };
 
 export default function Button({
@@ -33,7 +36,7 @@ export default function Button({
   href,
 }: ButtonProps) {
   const classes = clsx(
-    "inline-flex cursor-pointer items-center justify-center rounded-clara px-4 py-2 text-sm font-medium no-underline transition-colors",
+    baseBtn,
     variantStyles[variant],
     disabled && "pointer-events-none cursor-not-allowed opacity-50",
     className

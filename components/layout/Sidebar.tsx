@@ -41,12 +41,14 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-60 flex-col border-r border-clara-border/80 bg-gradient-to-b from-clara-bg to-clara-tint shadow-clara-soft">
-      <div className="@container flex min-h-[6.25rem] w-full min-w-0 flex-col justify-end px-4 pb-4 pt-3">
-        <Wordmark size="sm" variant="sidebar" />
+    <aside className="@container fixed left-0 top-0 z-40 flex h-screen w-[140px] flex-col border-r border-clara-border bg-clara-surface">
+      {/* Same vertical band as TopBar (h-16) so “Clara” can scale into that space */}
+      <div className="flex min-h-16 items-center px-3 py-2">
+        <Wordmark variant="sidebar" />
       </div>
+      <div className="border-b-[4px] border-clara-primary" aria-hidden />
 
-      <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2.5">
+      <nav className="flex flex-1 flex-col overflow-y-auto px-0 pt-2">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
@@ -55,26 +57,26 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-2.5 rounded-full px-3 py-2.5 text-sm transition-colors ${
+              className={`flex items-center gap-2 border-r-[3px] px-2 py-2 text-[11px] font-medium leading-tight transition-colors ${
                 isActive
-                  ? "bg-clara-surface font-semibold text-clara-primary shadow-sm ring-1 ring-clara-primary/18"
-                  : "text-clara-deep hover:bg-clara-border/40 hover:text-clara-primary"
+                  ? "border-clara-primary bg-clara-tint text-clara-primary"
+                  : "border-transparent text-[#555555] hover:bg-clara-bg hover:text-clara-deep"
               }`}
             >
-              <Icon className="h-4 w-4 shrink-0" />
-              <span className="flex-1">{item.label}</span>
+              <Icon className="h-3.5 w-3.5 shrink-0" />
+              <span className="min-w-0 flex-1">{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="border-t border-clara-border/80 p-2">
+      <div className="border-t border-clara-border p-0">
         <button
           type="button"
           onClick={handleSignOut}
-          className="flex w-full items-center gap-2 rounded-full px-3 py-2.5 text-sm text-clara-muted transition-colors hover:bg-clara-border/50 hover:text-clara-primary"
+          className="flex w-full items-center gap-2 px-2 py-2.5 text-left text-[11px] text-clara-muted transition-colors hover:bg-clara-bg hover:text-clara-deep"
         >
-          <LogOut className="h-4 w-4 shrink-0" />
+          <LogOut className="h-3.5 w-3.5 shrink-0" />
           <span>Sign out</span>
         </button>
       </div>

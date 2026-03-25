@@ -96,7 +96,7 @@ export default function FeedbackCard({ feedback, onTryAgain }: FeedbackCardProps
         </div>
       ) : null}
 
-      <div className="mt-4 rounded-sm bg-clara-surface p-4 ring-1 ring-clara-border/80">
+      <div className="mt-4 rounded-none border border-clara-border bg-clara-surface p-4">
         <p className="mb-2 text-sm font-bold text-clara-deep">
           Here is a better version:
         </p>
@@ -108,7 +108,7 @@ export default function FeedbackCard({ feedback, onTryAgain }: FeedbackCardProps
       </div>
 
       <div className="mt-4">
-        <Button type="button" variant="secondary" onClick={onTryAgain}>
+        <Button type="button" variant="ghost" onClick={onTryAgain}>
           Try again
         </Button>
       </div>

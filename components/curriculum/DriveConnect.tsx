@@ -61,7 +61,7 @@ export default function DriveConnect({ isConnected }: DriveConnectProps) {
           <Badge variant="green">Connected</Badge>
           <span className="text-clara-deep">Google Drive connected</span>
           <Button
-            variant="secondary"
+            variant="ghost"
             onClick={handleDisconnect}
             disabled={disconnecting}
           >

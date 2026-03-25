@@ -138,7 +138,7 @@ export default function AnswerInput({
           placeholder="Type your answer..."
           disabled={inputDisabled || isLoading}
           rows={5}
-          className="w-full rounded-sm border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-none border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted focus:border-clara-primary focus:outline-none focus:ring-1 focus:ring-clara-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
         />
         <Button
           variant="primary"
@@ -165,7 +165,7 @@ export default function AnswerInput({
           {options.map((opt) => (
             <label
               key={opt.id}
-              className={`flex cursor-pointer items-center gap-3 rounded-sm border px-3 py-2 transition-colors ${
+              className={`flex cursor-pointer items-center gap-3 rounded-none border px-3 py-2 transition-colors ${
                 selectedId === opt.id
                   ? "border-clara-primary bg-clara-border/30"
                   : "border-clara-border bg-clara-bg hover:border-clara-border"
@@ -178,7 +178,7 @@ export default function AnswerInput({
                 checked={selectedId === opt.id}
                 onChange={() => setSelectedId(opt.id)}
                 disabled={inputDisabled || isLoading}
-                className="h-4 w-4 border-clara-border text-clara-accent focus:ring-clara-accent/40"
+                className="h-4 w-4 border-clara-border text-clara-primary focus:ring-clara-primary/40"
               />
               <span className="text-clara-deep">
                 {String.fromCharCode(96 + options.indexOf(opt) + 1)}. {opt.text}
@@ -223,7 +223,7 @@ export default function AnswerInput({
                   }))
                 }
                 disabled={inputDisabled || isLoading}
-                className="flex-1 rounded-sm border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex-1 rounded-none border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep focus:border-clara-primary focus:outline-none focus:ring-1 focus:ring-clara-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="">Select match...</option>
                 {rightItems.map((right) => (
@@ -262,7 +262,7 @@ export default function AnswerInput({
           onChange={(e) => setAnswer(e.target.value)}
           placeholder="Type your answer..."
           disabled={inputDisabled || isLoading}
-          className="w-full rounded-sm border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-none border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted focus:border-clara-primary focus:outline-none focus:ring-1 focus:ring-clara-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
         />
         <Button
           variant="primary"
@@ -290,7 +290,7 @@ export default function AnswerInput({
         placeholder="Type your answer..."
         disabled={inputDisabled || isLoading}
         rows={5}
-        className="w-full rounded-sm border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-full rounded-none border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted focus:border-clara-primary focus:outline-none focus:ring-1 focus:ring-clara-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
       />
       <Button
         variant="primary"

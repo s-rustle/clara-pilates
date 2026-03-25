@@ -9,26 +9,26 @@ import Button from "@/components/ui/Button";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleSignIn() {
+  async function handleSignUp() {
     setError("");
     setLoading(true);
 
     try {
       const supabase = createClient();
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
       });
 
-      if (signInError) {
-        setError("Incorrect email or password. Please try again.");
+      if (signUpError) {
+        setError(signUpError.message || "Could not create account.");
         setLoading(false);
         return;
       }
@@ -36,7 +36,7 @@ export default function LoginPage() {
       router.push("/");
       router.refresh();
     } catch {
-      setError("Incorrect email or password. Please try again.");
+      setError("Could not create account.");
     } finally {
       setLoading(false);
     }
@@ -46,7 +46,6 @@ export default function LoginPage() {
     <div className="relative z-10 flex min-h-screen flex-col bg-white">
       <div className="h-[5px] shrink-0 bg-clara-primary" aria-hidden />
       <div className="flex flex-1 items-center justify-center px-5 py-10">
-        {/* Reference: ~320px inner; wide clamps let “Clara” breathe on larger screens */}
         <div className="w-full max-w-[min(100%,380px)]">
           <div className="mb-9">
             <Wordmark variant="login" />
@@ -67,7 +66,7 @@ export default function LoginPage() {
             <input
               type="password"
               name="password"
-              autoComplete="current-password"
+              autoComplete="new-password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -79,17 +78,17 @@ export default function LoginPage() {
           <div className="mt-6 space-y-4">
             <Button
               variant="primary"
-              onClick={() => void handleSignIn()}
+              onClick={() => void handleSignUp()}
               disabled={loading}
               className="w-full py-3.5 text-[12px] font-medium tracking-[0.08em]"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2 normal-case">
                   <LoadingSpinner size="sm" />
-                  Signing in…
+                  Creating…
                 </span>
               ) : (
-                "Sign in"
+                "Create account"
               )}
             </Button>
 
@@ -103,10 +102,10 @@ export default function LoginPage() {
 
             <p className="text-center text-[11px] text-clara-muted">
               <Link
-                href="/signup"
+                href="/login"
                 className="font-medium text-clara-primary no-underline hover:underline"
               >
-                Create account
+                Sign in
               </Link>
             </p>
           </div>

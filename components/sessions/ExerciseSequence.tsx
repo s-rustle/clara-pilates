@@ -53,10 +53,8 @@ export default function ExerciseSequence({
   return (
     <section className="space-y-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-lg font-bold text-clara-accent">
-          Main Sequence
-        </h2>
-        <span className="text-right text-xs text-clara-accent">
+        <h2 className="text-lg font-semibold text-clara-deep">Main Sequence</h2>
+        <span className="text-right text-xs text-clara-muted">
           (Standard: 8–12 reps)
         </span>
       </div>
@@ -78,12 +76,12 @@ export default function ExerciseSequence({
             }}
             disabled={disabled}
             placeholder={`e.g. Footwork (${apparatusLabel})`}
-            className="w-full rounded-sm border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted/80 focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-none border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted/80 focus:border-clara-primary focus:outline-none focus:ring-1 focus:ring-clara-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
         <Button
           type="button"
-          variant="secondary"
+          variant="ghost"
           onClick={addExercise}
           disabled={disabled || !draftName.trim()}
         >
@@ -92,7 +90,7 @@ export default function ExerciseSequence({
       </div>
 
       {exercises.length === 0 ? (
-        <p className="rounded-sm border border-dashed border-clara-border bg-clara-bg/50 px-3 py-6 text-center text-sm text-clara-muted">
+        <p className="rounded-none border border-dashed border-clara-border bg-clara-bg/50 px-3 py-6 text-center text-sm text-clara-muted">
           Add at least one exercise
         </p>
       ) : (
@@ -100,7 +98,7 @@ export default function ExerciseSequence({
           {exercises.map((ex, index) => (
             <li
               key={`${ex.exercise_name}-${index}`}
-              className="rounded-sm border border-clara-border bg-clara-bg p-3"
+              className="rounded-none border border-clara-border bg-clara-bg p-3"
             >
               <div className="flex flex-wrap items-end gap-2">
                 <div className="min-w-[120px] flex-1">
@@ -196,7 +194,7 @@ function ExerciseNotesRow({
       <button
         type="button"
         onClick={() => setExpanded((e) => !e)}
-        className="text-xs font-medium text-clara-accent hover:underline"
+        className="text-xs font-medium text-clara-primary hover:underline"
       >
         {expanded ? "Hide notes" : "Notes (optional)"}
       </button>
@@ -207,7 +205,7 @@ function ExerciseNotesRow({
           disabled={disabled}
           rows={2}
           placeholder="Cues, springs, modifications…"
-          className="mt-1 w-full rounded-sm border border-clara-border bg-clara-surface px-3 py-2 text-sm text-clara-deep placeholder:text-clara-deep/60 focus:border-clara-primary focus:outline-none focus:ring-1 focus:ring-clara-primary disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-1 w-full rounded-none border border-clara-border bg-clara-surface px-3 py-2 text-sm text-clara-deep placeholder:text-clara-deep/60 focus:border-clara-primary focus:outline-none focus:ring-1 focus:ring-clara-primary disabled:cursor-not-allowed disabled:opacity-50"
         />
       )}
     </div>

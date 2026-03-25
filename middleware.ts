@@ -23,6 +23,7 @@ function isProtectedPath(pathname: string): boolean {
   if (pathname.startsWith("/api/ingest")) return true;
   if (pathname.startsWith("/api/curriculum/")) return true;
   if (pathname.startsWith("/api/drive/")) return true;
+  if (pathname.startsWith("/api/quiz/")) return true;
   // OAuth return URL: must not force /login (loses ?code=); handler redirects with error if needed.
   if (pathname === "/api/auth/drive-url" || pathname === "/api/auth/drive-disconnect") {
     return true;
@@ -40,7 +41,7 @@ export async function middleware(request: NextRequest) {
       const loginUrl = new URL("/login", request.url);
       return NextResponse.redirect(loginUrl);
     }
-  } else if (pathname === "/login" && user) {
+  } else if ((pathname === "/login" || pathname === "/signup") && user) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 

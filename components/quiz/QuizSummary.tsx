@@ -36,7 +36,7 @@ export default function QuizSummary({
         )}
         <div className="flex flex-wrap gap-3">
           <Link href="/study">
-            <Button variant="secondary">Study weak areas</Button>
+            <Button variant="ghost">Study weak areas</Button>
           </Link>
           <Button variant="primary" onClick={onTryAgain}>
             Try again

@@ -9,7 +9,6 @@ import {
   resolveHourTargets,
 } from "@/lib/utils/hours";
 import ProgressBar from "@/components/ui/ProgressBar";
-import Card from "@/components/ui/Card";
 
 interface HoursProgressPanelProps {
   logs: HourLog[];
@@ -46,7 +45,9 @@ export default function HoursProgressPanel({
         <ProgressBar
           label="Total Hours"
           value={totalPercent}
-          sublabel={`${formatHours(totalLogged)} of ${t.total} hours logged`}
+          metric={`${Math.round(totalPercent)}%`}
+          caption={`${formatHours(totalLogged)} of ${t.total} hours logged`}
+          tone="accent"
         />
       </div>
 
@@ -54,22 +55,28 @@ export default function HoursProgressPanel({
         <ProgressBar
           label="Mat Practical"
           value={matPercent}
-          sublabel={`${formatHours(matLogged)} of ${t.mat_practical} hours`}
+          metric={`${Math.round(matPercent)}%`}
+          caption={`${formatHours(matLogged)} of ${t.mat_practical} hours`}
+          tone="accent"
         />
         <ProgressBar
           label="Reformer Practical"
           value={reformerPercent}
-          sublabel={`${formatHours(reformerLogged)} of ${t.reformer_practical} hours`}
+          metric={`${Math.round(reformerPercent)}%`}
+          caption={`${formatHours(reformerLogged)} of ${t.reformer_practical} hours`}
+          tone="accent"
         />
         <ProgressBar
           label="Apparatus Practical"
           value={apparatusPercent}
-          sublabel={`${formatHours(apparatusLogged)} of ${t.apparatus_practical} hours`}
+          metric={`${Math.round(apparatusPercent)}%`}
+          caption={`${formatHours(apparatusLogged)} of ${t.apparatus_practical} hours`}
+          tone="accent"
         />
       </div>
 
-      <Card>
-        <div className="space-y-1 text-clara-deep">
+      <div className="border-t border-clara-border pt-4">
+        <div className="space-y-1 text-sm text-clara-deep">
           {hasAnyGaps ? (
             <>
               {gaps.total > 0 && (
@@ -100,7 +107,7 @@ export default function HoursProgressPanel({
             <p>All practical targets complete. Great work.</p>
           )}
         </div>
-      </Card>
+      </div>
 
       {scheduledHours > 0 && (
         <p className="text-sm text-clara-muted">

@@ -51,15 +51,15 @@ function formatDate(iso: string | null): string {
 export default function SessionHistory({ sessions, onView }: SessionHistoryProps) {
   return (
     <section className="mt-8 space-y-3">
-      <h2 className="text-lg font-bold text-clara-accent">
+      <h2 className="text-lg font-bold text-clara-deep">
         Session history
       </h2>
       {sessions.length === 0 ? (
-        <p className="rounded-sm border border-dashed border-clara-border bg-clara-bg/50 px-3 py-6 text-center text-sm text-clara-deep">
+        <p className="rounded-none border border-dashed border-clara-border bg-clara-bg/50 px-3 py-6 text-center text-sm text-clara-deep">
           No sessions logged yet.
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-sm border border-clara-border bg-clara-surface">
+        <div className="overflow-x-auto rounded-none border border-clara-border bg-clara-surface">
           <table className="w-full min-w-[520px] text-left text-sm">
             <thead>
               <tr className="border-b border-clara-border bg-clara-bg/80">
@@ -93,7 +93,7 @@ export default function SessionHistory({ sessions, onView }: SessionHistoryProps
                   <td className="px-3 py-2">
                     <Button
                       type="button"
-                      variant="secondary"
+                      variant="ghost"
                       className="px-3 py-1 text-xs"
                       onClick={() => onView?.(row)}
                     >
@@ -140,7 +140,7 @@ export function SessionReadOnlyModal({
         <div className="mb-4 flex items-start justify-between gap-2">
           <h2
             id="session-view-title"
-            className="text-lg font-bold text-clara-accent"
+            className="text-lg font-bold text-clara-deep"
           >
             Session
           </h2>

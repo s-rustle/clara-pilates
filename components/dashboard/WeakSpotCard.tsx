@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
+import Button from "@/components/ui/Button";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import type { WeakSpotAnalysis, WeakSpotResult } from "@/types";
@@ -28,7 +28,11 @@ export default function WeakSpotCard() {
       const json = await res.json();
 
       if (!res.ok) {
-        setError(typeof json.error === "string" ? json.error : "Failed to load weak spots");
+        setError(
+          typeof json.error === "string"
+            ? json.error
+            : "Failed to load weak spots"
+        );
         setPayload(null);
         return;
       }
@@ -87,14 +91,15 @@ export default function WeakSpotCard() {
   if (needsMoreSessions) {
     return (
       <Card>
-        <h2 className="mb-2 text-lg font-bold text-clara-accent">
+        <h2 className="mb-2 text-lg font-semibold text-clara-deep">
           Weak spots
         </h2>
         <p className="mb-3 text-sm text-clara-deep">
           Complete {sessionsNeeded} more quiz{" "}
-          {sessionsNeeded === 1 ? "session" : "sessions"} to unlock weak spot analysis.
+          {sessionsNeeded === 1 ? "session" : "sessions"} to unlock weak spot
+          analysis.
         </p>
-        <div className="h-2 w-full overflow-hidden rounded-sm bg-clara-tint">
+        <div className="h-0.5 w-full overflow-hidden bg-clara-border">
           <div
             className="h-full bg-clara-primary transition-[width] duration-300"
             style={{ width: `${progress * 100}%` }}
@@ -115,12 +120,13 @@ export default function WeakSpotCard() {
   if (!top) {
     return (
       <Card>
-        <h2 className="mb-2 text-lg font-bold text-clara-accent">
+        <h2 className="mb-2 text-lg font-semibold text-clara-deep">
           Weak spots
         </h2>
         <p className="text-sm text-clara-deep">
-          Not enough quiz data grouped by area yet. Keep completing quizzes — we need at least
-          three attempted questions per apparatus/topic group to rank weak spots.
+          Not enough quiz data grouped by area yet. Keep completing quizzes —
+          we need at least three attempted questions per apparatus/topic group
+          to rank weak spots.
         </p>
       </Card>
     );
@@ -130,7 +136,7 @@ export default function WeakSpotCard() {
 
   return (
     <Card>
-      <h2 className="mb-3 text-lg font-bold text-clara-accent">
+      <h2 className="mb-3 text-lg font-semibold text-clara-deep">
         Top priority weak spot
       </h2>
       <p className="mb-2 text-sm font-medium text-clara-deep">{top.area}</p>
@@ -140,12 +146,9 @@ export default function WeakSpotCard() {
       <p className="mb-4 text-sm leading-relaxed text-clara-deep">
         {top.pattern_description}
       </p>
-      <Link
-        href={studyHref}
-        className="inline-flex w-full items-center justify-center rounded-sm bg-clara-primary px-4 py-2 text-sm font-medium text-white shadow-clara-soft transition-colors hover:bg-clara-primary-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-accent sm:w-auto"
-      >
+      <Button href={studyHref} variant="primary" className="w-full sm:w-auto">
         Study this now
-      </Link>
+      </Button>
     </Card>
   );
 }

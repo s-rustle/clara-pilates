@@ -66,7 +66,7 @@ export default function SessionPlannerForm({
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-0 rounded-sm border border-clara-border bg-clara-bg p-0.5">
+      <div className="flex gap-0 rounded-none border border-clara-border bg-clara-bg p-0.5">
         {(["plan", "log"] as const).map((m) => (
           <button
             key={m}
@@ -142,7 +142,7 @@ export default function SessionPlannerForm({
         </Button>
         <Button
           type="button"
-          variant="secondary"
+          variant="ghost"
           onClick={onSaveDraft}
           disabled={busy}
           className="sm:min-w-[140px]"

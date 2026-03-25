@@ -104,7 +104,7 @@ function DiagramImage({
         alt="Anatomy diagram"
         className={
           className ??
-          "max-h-64 w-auto rounded-sm border border-clara-border object-contain"
+          "max-h-64 w-auto rounded-none border border-clara-border object-contain"
         }
       />
     );
@@ -146,7 +146,7 @@ export default function QuestionCard({
       <p className="text-sm text-clara-deep">
         Question {currentIndex + 1} of {totalCount}
       </p>
-      <p className="text-sm font-medium text-clara-accent">
+      <p className="text-sm font-medium text-clara-primary">
         {scoreSoFar} correct so far
       </p>
       {!isAnatomyDiagram &&
@@ -157,7 +157,7 @@ export default function QuestionCard({
             folder_name={folder_name}
             className={
               isAnatomyMc
-                ? "max-h-80 w-auto max-w-full rounded-sm border border-clara-border object-contain"
+                ? "max-h-80 w-auto max-w-full rounded-none border border-clara-border object-contain"
                 : undefined
             }
           />
@@ -188,7 +188,7 @@ export default function QuestionCard({
                   placeholder="Name this muscle group…"
                   disabled={diagram_submit_loading}
                   autoComplete="off"
-                  className="w-full rounded-sm border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="w-full rounded-none border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted focus:border-clara-primary focus:outline-none focus:ring-1 focus:ring-clara-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
                 />
                 <Button
                   variant="primary"
@@ -228,9 +228,9 @@ export default function QuestionCard({
                 type="button"
                 onClick={() => on_select_anatomy_option(opt)}
                 className={clsx(
-                  "w-full rounded-sm border px-4 py-3 text-left text-sm font-medium transition-colors",
+                  "w-full rounded-none border px-4 py-3 text-left text-sm font-medium transition-colors",
                   selected_anatomy_option === opt
-                    ? "border-clara-accent bg-clara-accent text-white"
+                    ? "border-clara-primary bg-clara-primary text-white"
                     : "border-clara-border bg-clara-surface text-clara-deep hover:border-clara-border"
                 )}
               >

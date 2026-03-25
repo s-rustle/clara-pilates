@@ -76,14 +76,14 @@ export default function WarmUpSection({
 
   return (
     <section className="space-y-3">
-      <h2 className="text-lg font-bold text-clara-accent">
+      <h2 className="text-lg font-semibold text-clara-deep">
         Pre-Pilates Warm-Up
       </h2>
 
       <div className="relative" ref={panelRef}>
         <Button
           type="button"
-          variant="secondary"
+          variant="ghost"
           onClick={() => setOpen((o) => !o)}
           disabled={disabled}
           className="inline-flex items-center gap-1"
@@ -92,13 +92,13 @@ export default function WarmUpSection({
           <ChevronDown className="h-4 w-4" aria-hidden />
         </Button>
         {open && (
-          <div className="absolute left-0 top-full z-20 mt-1 w-full max-w-md rounded-sm border border-clara-border bg-clara-surface p-2">
+          <div className="absolute left-0 top-full z-20 mt-1 w-full max-w-md rounded-none border border-clara-border bg-clara-surface p-2">
             <input
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search moves…"
-              className="mb-2 w-full rounded-sm border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted/80 focus:border-clara-accent focus:outline-none focus:ring-1 focus:ring-clara-accent/40"
+              className="mb-2 w-full rounded-none border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted/80 focus:border-clara-primary focus:outline-none focus:ring-1 focus:ring-clara-primary/40"
               autoFocus
             />
             <ul className="max-h-48 overflow-y-auto text-sm">
@@ -123,7 +123,7 @@ export default function WarmUpSection({
       </div>
 
       {moves.length === 0 ? (
-        <p className="rounded-sm border border-dashed border-clara-border bg-clara-bg/50 px-3 py-6 text-center text-sm text-clara-muted">
+        <p className="rounded-none border border-dashed border-clara-border bg-clara-bg/50 px-3 py-6 text-center text-sm text-clara-muted">
           Add at least one warm-up move
         </p>
       ) : (
@@ -131,7 +131,7 @@ export default function WarmUpSection({
           {moves.map((move, index) => (
             <li
               key={`${move.move_name}-${index}`}
-              className="flex flex-wrap items-end gap-2 rounded-sm border border-clara-border bg-clara-bg px-3 py-2"
+              className="flex flex-wrap items-end gap-2 rounded-none border border-clara-border bg-clara-bg px-3 py-2"
             >
               <div className="min-w-[140px] flex-1">
                 <span className="text-sm font-medium text-clara-deep">

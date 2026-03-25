@@ -132,7 +132,7 @@ export default function CuesPage() {
       )}
 
       <div>
-        <h2 className="mb-3 text-lg font-bold text-clara-accent">
+        <h2 className="mb-3 text-lg font-semibold text-clara-deep">
           This session
         </h2>
         {history.length === 0 ? (
@@ -148,9 +148,9 @@ export default function CuesPage() {
                   <button
                     type="button"
                     onClick={() => setActiveId(entry.id)}
-                    className={`w-full rounded-sm border px-4 py-3 text-left text-sm transition-colors ${
+                    className={`w-full rounded-none border px-4 py-3 text-left text-sm transition-colors ${
                       isActive
-                        ? "border-clara-accent bg-clara-bg ring-1 ring-clara-accent/30"
+                        ? "border-clara-primary bg-clara-bg ring-1 ring-clara-primary/30"
                         : "border-clara-border bg-clara-surface hover:bg-clara-bg"
                     }`}
                   >

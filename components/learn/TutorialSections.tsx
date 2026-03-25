@@ -5,7 +5,7 @@ import MarkdownBody from "@/components/ui/MarkdownBody";
 import type { TutorialContent } from "@/types";
 
 const sectionClass =
-  "text-[0.65rem] font-bold uppercase tracking-[0.2em] text-clara-accent";
+  "text-[0.65rem] font-bold uppercase tracking-[0.2em] text-clara-primary";
 
 interface TutorialSectionsProps {
   tutorial: TutorialContent;

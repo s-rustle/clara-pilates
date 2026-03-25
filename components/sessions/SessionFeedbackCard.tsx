@@ -60,7 +60,7 @@ export default function SessionFeedbackCard({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-base font-bold text-clara-accent">
+      <h3 className="text-base font-semibold text-clara-deep">
         Clara&apos;s feedback
       </h3>
 
@@ -79,7 +79,7 @@ export default function SessionFeedbackCard({
               <button
                 type="button"
                 onClick={() => setFlagsOpen((o) => !o)}
-                className="text-xs text-clara-accent hover:underline"
+                className="text-xs text-clara-primary hover:underline"
               >
                 {flagsOpen ? "Hide list" : "Show flags"}
               </button>
@@ -106,7 +106,7 @@ export default function SessionFeedbackCard({
               <button
                 type="button"
                 onClick={() => setVolumeOpen((o) => !o)}
-                className="text-xs text-clara-accent hover:underline"
+                className="text-xs text-clara-primary hover:underline"
               >
                 {volumeOpen ? "Hide flagged" : "Show flagged"}
               </button>
@@ -134,7 +134,7 @@ export default function SessionFeedbackCard({
               <button
                 type="button"
                 onClick={() => setGapsOpen((o) => !o)}
-                className="text-xs text-clara-accent hover:underline"
+                className="text-xs text-clara-primary hover:underline"
               >
                 {gapsOpen ? "Hide gaps" : "Show gaps"}
               </button>
@@ -161,13 +161,13 @@ export default function SessionFeedbackCard({
         />
       </dl>
 
-      <div className="rounded-sm border border-clara-border bg-clara-surface p-4 text-sm leading-relaxed">
+      <div className="rounded-none border border-clara-border bg-clara-surface p-4 text-sm leading-relaxed">
         <MarkdownBody>{feedback.overall}</MarkdownBody>
       </div>
 
       {feedback.suggested_adjustments.length > 0 && (
         <div>
-          <h4 className="mb-2 text-sm font-bold text-clara-accent">
+          <h4 className="mb-2 text-sm font-semibold text-clara-deep">
             Suggested Adjustments
           </h4>
           <ol className="list-decimal space-y-2 pl-5 text-sm text-clara-deep">
@@ -183,7 +183,7 @@ export default function SessionFeedbackCard({
       {onRevise && (
         <Button
           type="button"
-          variant="secondary"
+          variant="ghost"
           onClick={onRevise}
           className="w-full"
         >

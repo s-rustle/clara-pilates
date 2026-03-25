@@ -208,14 +208,12 @@ export default function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold text-clara-accent">
-        Settings
-      </h1>
+      <h1 className="font-cormorant text-2xl font-semibold text-clara-deep">Settings</h1>
 
       {loadError ? <ErrorMessage message={loadError} /> : null}
 
       <Card>
-        <h2 className="mb-4 text-lg font-bold text-clara-accent">Profile</h2>
+        <h2 className="mb-4 text-lg font-bold text-clara-deep">Profile</h2>
         <div className="flex flex-col gap-4">
           <Input
             label="Display name"
@@ -241,7 +239,7 @@ export default function SettingsPage() {
             )}
           </Button>
           {profileSuccess ? (
-            <p className="text-sm font-medium text-clara-accent">
+            <p className="text-sm font-medium text-clara-deep">
               {profileSuccess}
             </p>
           ) : null}
@@ -250,7 +248,7 @@ export default function SettingsPage() {
       </Card>
 
       <Card>
-        <h2 className="mb-4 text-lg font-bold text-clara-accent">
+        <h2 className="mb-4 text-lg font-bold text-clara-deep">
           Exam target date
         </h2>
         <div className="flex flex-col gap-4">
@@ -262,7 +260,7 @@ export default function SettingsPage() {
             disabled={examSaving}
           />
           <p className="text-xs text-clara-muted">
-            Setting a target date will enable exam countdown in a future update.
+            Setting a target date shows the countdown in the header and on your dashboard metrics.
           </p>
           <Button
             type="button"
@@ -280,14 +278,14 @@ export default function SettingsPage() {
             )}
           </Button>
           {examSuccess ? (
-            <p className="text-sm font-medium text-clara-accent">{examSuccess}</p>
+            <p className="text-sm font-medium text-clara-deep">{examSuccess}</p>
           ) : null}
           <ErrorMessage message={examError} />
         </div>
       </Card>
 
       <Card>
-        <h2 className="mb-4 text-lg font-bold text-clara-accent">
+        <h2 className="mb-4 text-lg font-bold text-clara-deep">
           Hour targets
         </h2>
         <p className="mb-3 text-xs text-clara-muted">
@@ -347,7 +345,7 @@ export default function SettingsPage() {
             )}
           </Button>
           {hoursSuccess ? (
-            <p className="text-sm font-medium text-clara-accent">
+            <p className="text-sm font-medium text-clara-deep">
               {hoursSuccess}
             </p>
           ) : null}
@@ -358,7 +356,7 @@ export default function SettingsPage() {
       <div className="border-t border-clara-border pt-6">
         <Button
           type="button"
-          variant="secondary"
+          variant="ghost"
           onClick={() => void onSignOut()}
           disabled={signingOut}
         >

@@ -411,7 +411,7 @@ export default function SessionsPage() {
             <div className="mb-4 flex items-start justify-between gap-2">
               <h2
                 id="hour-link-title"
-                className="text-lg font-bold text-clara-accent"
+                className="text-lg font-semibold text-clara-deep"
               >
                 Log hours
               </h2>

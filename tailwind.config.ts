@@ -1,52 +1,42 @@
 import type { Config } from "tailwindcss";
 import typography from "@tailwindcss/typography";
 
-/** Mediterranean-adjacent: warm plaster neutrals, olive primary, terracotta accent, sea for links */
+/** Cycladic Mediterranean — grove green primary, lemon accent (hours bar + exam only), stark geometry */
 const config: Config = {
   content: [],
   theme: {
     extend: {
       colors: {
         clara: {
-          bg: "#F5F1E8",
-          surface: "#FDFBF7",
-          tint: "#EFE8DC",
-          border: "#E0D8CC",
-          deep: "#2C2824",
-          muted: "#7A756E",
-          primary: {
-            DEFAULT: "#5F6F52",
-            dark: "#4D5C42",
-          },
-          accent: {
-            DEFAULT: "#C2782E",
-            soft: "#F3EBE0",
-            foreground: "#8B5220",
-          },
-          sea: {
-            DEFAULT: "#2C5F63",
-            muted: "#3D7377",
-          },
-          leaf: "#5F6F52",
+          bg: "#FFFFFF",
+          surface: "#FAFAF8",
+          tint: "#F0F5EC",
+          border: "#E8E8E0",
+          primary: "#3D5A2A",
+          "primary-hover": "#324A22",
+          accent: "#D4B800",
+          deep: "#1A1A14",
+          muted: "#AAAAAA",
+          danger: "#B84820",
+          "danger-bg": "#FFF0E8",
+          exam: "#FFFBE8",
         },
       },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        /** Display / page titles — Cormorant Garamond */
         display: [
-          "var(--font-fraunces)",
+          "var(--font-cormorant)",
           "Georgia",
           "Times New Roman",
           "serif",
         ],
-      },
-      borderRadius: {
-        clara: "0.375rem",
-      },
-      boxShadow: {
-        "clara-soft":
-          "0 2px 14px rgba(44, 40, 36, 0.06), 0 1px 2px rgba(44, 40, 36, 0.04)",
-        "clara-lift":
-          "0 6px 24px rgba(44, 40, 36, 0.08), 0 2px 6px rgba(44, 40, 36, 0.05)",
+        cormorant: [
+          "var(--font-cormorant)",
+          "Georgia",
+          "Times New Roman",
+          "serif",
+        ],
       },
     },
   },

@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import HoursProgressPanel from "@/components/hours/HoursProgressPanel";
@@ -66,9 +66,7 @@ export default function HoursSummaryCard() {
   if (loading) {
     return (
       <Card>
-        <h2 className="mb-4 text-lg font-bold text-clara-accent">
-          Hours
-        </h2>
+        <h2 className="mb-4 text-lg font-semibold text-clara-deep">Hours</h2>
         <div className="flex min-h-[200px] items-center justify-center">
           <LoadingSpinner size="md" />
         </div>
@@ -79,15 +77,10 @@ export default function HoursSummaryCard() {
   return (
     <Card>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-lg font-bold text-clara-accent">
-          Hours
-        </h2>
-        <Link
-          href="/hours"
-          className="text-sm font-medium text-clara-accent underline-offset-2 hover:underline"
-        >
+        <h2 className="text-lg font-semibold text-clara-deep">Hours</h2>
+        <Button href="/hours" variant="accent" className="px-3 py-1.5 text-[10px]">
           Log hours
-        </Link>
+        </Button>
       </div>
       {error ? (
         <ErrorMessage message={error} />

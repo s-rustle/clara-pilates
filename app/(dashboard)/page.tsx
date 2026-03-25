@@ -7,7 +7,7 @@ import WeakSpotCard from "@/components/dashboard/WeakSpotCard";
 import type { QuizSession } from "@/types";
 
 const quickActionClass =
-  "w-full rounded-sm py-2.5 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-primary";
+  "w-full py-2.5 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clara-primary";
 
 function formatCompletedAt(iso: string | null) {
   if (!iso) return "";
@@ -32,6 +32,8 @@ export default async function DashboardPage() {
     "id" | "apparatus" | "topic" | "difficulty" | "score_percent" | "completed_at"
   >[] = [];
 
+  let examTargetDate: string | null = null;
+
   if (user) {
     const { data } = await supabase
       .from("quiz_sessions")
@@ -42,11 +44,20 @@ export default async function DashboardPage() {
       .limit(5);
 
     recentSessions = (data ?? []) as typeof recentSessions;
+
+    const { data: profileRow } = await supabase
+      .from("profiles")
+      .select("exam_target_date")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    examTargetDate =
+      (profileRow?.exam_target_date as string | null | undefined) ?? null;
   }
 
   return (
     <div className="flex flex-col gap-6">
-      <ReadinessCard />
+      <ReadinessCard examTargetDate={examTargetDate} />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
         <div className="md:col-span-3">
@@ -58,9 +69,7 @@ export default async function DashboardPage() {
       </div>
 
       <Card>
-        <h2 className="mb-4 text-lg font-bold text-clara-accent">
-          Quick actions
-        </h2>
+        <h2 className="mb-4 text-lg font-semibold text-clara-deep">Quick actions</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Button href="/study" variant="primary" className={quickActionClass}>
             Study
@@ -71,16 +80,14 @@ export default async function DashboardPage() {
           <Button href="/sessions" variant="primary" className={quickActionClass}>
             Sessions
           </Button>
-          <Button href="/hours" variant="primary" className={quickActionClass}>
+          <Button href="/hours" variant="accent" className={quickActionClass}>
             Log hours
           </Button>
         </div>
       </Card>
 
       <Card>
-        <h2 className="mb-4 text-lg font-bold text-clara-accent">
-          Recent activity
-        </h2>
+        <h2 className="mb-4 text-lg font-semibold text-clara-deep">Recent activity</h2>
         {recentSessions.length === 0 ? (
           <p className="text-sm text-clara-deep">
             No completed quiz sessions yet. Finish a quiz to see it here.

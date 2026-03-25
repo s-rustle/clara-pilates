@@ -1,58 +1,42 @@
----
-description: Clara UI — grove + citrus spec palette, Inter + Fraunces. Apply when editing layout, Tailwind, or components.
-globs:
-  - "**/*.tsx"
-  - "**/*.css"
-  - "**/tailwind.config.ts"
----
+# Clara visual design — Cycladic Mediterranean
 
-# Clara visual design
-
-**Direction:** **Grove green** leads (**`#5F6F52`**), **orange** is a warm accent (**`#C2782E`**). **Warm plaster surfaces** on a **sage-tinted** page (**`#F5F1E8`**). Typography: **Inter** for UI and SR line; **Fraunces** for headings and wordmark “Clara”.
+**Direction:** Stark white/plaster neutrals, **grove green** primary (`#3D5A2A`), **lemon yellow** accent (`#D4B800`) **only** for exam countdown UI and hours progress bars / “Log hours” actions. **Cormorant Garamond** for wordmark, page titles (h1), and metric numerals. **Inter** for all other UI. **No** border-radius except **2px** on quiz/study answer bubbles only. **No** shadows or gradients; **1px** `clara-border` dividers.
 
 ## Tokens (`tailwind.config.ts` → `clara-*`)
 
 | Token | Hex | Role |
-|-------|-----|------|
-| `bg` | `#F5F1E8` | Page / app background |
-| `surface` | `#FDFBF7` | Cards, panels, inputs |
-| `tint` | `#EFE8DC` | Soft wash (metrics, progress track, sidebar fade) |
-| `border` | `#E0D8CC` | Dividers, outlines |
-| `deep` | `#2C2824` | Body text, labels |
-| `muted` | `#7A756E` | Secondary labels |
-| `primary` | `#5F6F52` | Default buttons, active nav emphasis, solid green badges, wordmark “Clara” |
-| `primary-dark` | `#4D5C42` | Primary hover |
-| `accent` | `#C2782E` | **Headings** (`h1`–`h6`, TopBar title), links, focus rings on primary, warm highlights |
-| `accent-soft` | `#F3EBE0` | Warm badge background |
-| `accent-foreground` | `#8B5220` | Text on warm badges |
-| `sea` | `#2C5F63` | Prose links |
-| `sea-muted` | `#3D7377` | Prose link hover |
-| `leaf` | `#5F6F52` | Success (same as primary) |
+|----|-----|---|
+| `bg` | `#FFFFFF` | Page background |
+| `surface` | `#FAFAF8` | Sidebar, secondary panels |
+| `tint` | `#F0F5EC` | Active nav wash, good-score badges |
+| `border` | `#E8E8E0` | Dividers, outlines |
+| `primary` | `#3D5A2A` | CTAs, active nav text, links, fills |
+| `primary-hover` | `#324A22` | Primary hover |
+| `accent` | `#D4B800` | Exam badge, hours bars, Log hours buttons only |
+| `deep` | `#1A1A14` | Body and headings |
+| `muted` | `#AAAAAA` | Secondary labels |
+| `danger` | `#B84820` | Weak / low scores |
+| `danger-bg` | `#FFF0E8` | Weak badge background |
+| `exam` | `#FFFBE8` | Exam countdown metric cell |
+
+## Typography
+
+- **Cormorant Garamond** (`font-cormorant`): wordmark “Clara”, dashboard **h1** / page titles, large **metric values**.
+- **Inter** (`font-sans`): navigation, labels, buttons, inputs, body.
+
+## Buttons (`Button.tsx`)
+
+- **primary** — green fill, white label, uppercase tracking.
+- **ghost** — white fill, green border + text.
+- **accent** — lemon fill, deep text (Log hours only).
 
 ## Badges (`Badge.tsx`)
 
-- **green** — primary: green fill, white text.
-- **yellow** — warm: `accent-soft` + `accent` text + light ring.
-- **red** — dark label: `deep` + white text.
-- **blue** — soft: `tint` + `primary` text (info / neutral emphasis).
-- **grey** — outlined surface.
-
-## Buttons
-
-- **Primary:** `bg-clara-primary`, `hover:bg-clara-primary-dark`, white text; focus outline `clara-accent`.
-- **Destructive:** `bg-clara-deep`, white text.
-
-## Layout
-
-- **Sidebar:** `from-clara-bg` → `to-clara-tint`.
-- **Active nav:** white/surface pill, green text, subtle `primary` ring.
-
-## Wordmark
-
-- **SR:** Inter Black, small caps tracking, `text-clara-muted`.
-- **Clara:** Fraunces bold, `text-clara-primary` (title case).
+- **green / blue** — `tint` + `primary` text (good / info).
+- **yellow** — white + border (neutral caution).
+- **red** — `danger-bg` + `danger` text (weak).
 
 ## Do / don’t
 
-- **Do** use `accent` for links and focus, primary green for main actions and wordmark “Clara”.
-- **Don’t** introduce extra brand fonts beyond Inter + Fraunces without updating this spec.
+- **Do** use `gap-px` + `bg-clara-border` grids for metric cells; `1px` borders for sections.
+- **Don’t** use `box-shadow`, gradients, or **accent** color outside exam + hours affordances.

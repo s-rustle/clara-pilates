@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase/client";
 import Card from "@/components/ui/Card";
 import ErrorMessage from "@/components/ui/ErrorMessage";
@@ -10,6 +11,22 @@ import QuestionCard from "@/components/quiz/QuestionCard";
 import AnswerInput from "@/components/quiz/AnswerInput";
 import QuizSummary from "@/components/quiz/QuizSummary";
 import { useHasIngestedCurriculum } from "@/lib/hooks/useHasIngestedCurriculum";
+
+const VisualQuizPanel = dynamic(
+  () => import("@/components/quiz/VisualQuiz"),
+  {
+    ssr: false,
+    loading: () => (
+      <Card>
+        <div className="flex justify-center py-12">
+          <LoadingSpinner size="lg" />
+        </div>
+      </Card>
+    ),
+  }
+);
+
+type QuizTab = "knowledge" | "visual";
 
 type Phase = "setup" | "in_progress" | "complete";
 
@@ -49,6 +66,7 @@ interface EvaluationState {
 
 export default function QuizPage() {
   const hasIngestedCurriculum = useHasIngestedCurriculum();
+  const [quizTab, setQuizTab] = useState<QuizTab>("knowledge");
   const [phase, setPhase] = useState<Phase>("setup");
   const [error, setError] = useState<string | null>(null);
 
@@ -369,110 +387,141 @@ export default function QuizPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {error && <ErrorMessage message={error} />}
+      <div className="flex gap-0 rounded-none border border-clara-border bg-clara-bg p-0.5">
+        <button
+          type="button"
+          onClick={() => setQuizTab("knowledge")}
+          className={`flex-1 rounded-none px-4 py-2.5 text-sm font-medium transition-colors ${
+            quizTab === "knowledge"
+              ? "bg-clara-primary text-white"
+              : "text-clara-deep hover:bg-clara-border/50"
+          }`}
+        >
+          Knowledge Quiz
+        </button>
+        <button
+          type="button"
+          onClick={() => setQuizTab("visual")}
+          className={`flex-1 rounded-none px-4 py-2.5 text-sm font-medium transition-colors ${
+            quizTab === "visual"
+              ? "bg-clara-primary text-white"
+              : "text-clara-deep hover:bg-clara-border/50"
+          }`}
+        >
+          Visual Quiz
+        </button>
+      </div>
 
-      {phase === "setup" && hasIngestedCurriculum === false && (
-        <Card>
-          <p className="text-clara-deep">
-            No curriculum has been ingested yet. Quiz questions are built from
-            your uploaded manuals. Go to{" "}
-            <a
-              href="/curriculum"
-              className="font-medium text-clara-accent underline"
-            >
-              Curriculum Manager
-            </a>{" "}
-            to connect Google Drive and ingest your folders before starting a
-            quiz.
-          </p>
-        </Card>
-      )}
-
-      {phase === "setup" && (
-        <QuizSetup
-          onStart={(app, diff, count, fmt) => void handleStart(app, diff, count, fmt)}
-          isStarting={isLoadingQuestion}
-        />
-      )}
-
-      {phase === "in_progress" && (
+      {quizTab === "visual" ? (
+        <VisualQuizPanel />
+      ) : (
         <>
-          {isLoadingQuestion && !currentQuestion ? (
-            <Card>
-              <div className="flex justify-center py-12">
-                <LoadingSpinner size="lg" />
-              </div>
-            </Card>
-          ) : currentQuestion ? (
-            <Card>
-              <div className="flex flex-col gap-6">
-                <QuestionCard
-                  question={currentQuestion.question}
-                  currentIndex={currentIndex}
-                  totalCount={questionCount}
-                  scoreSoFar={score}
-                  image_file_name={currentQuestion.image_file_name}
-                  folder_name={
-                    currentQuestion.folder_name ??
-                    currentQuestion.image_folder_name
-                  }
-                  question_type={currentQuestion.format}
-                  anatomy_options={currentQuestion.anatomyOptions}
-                  selected_anatomy_option={selectedAnatomyOption}
-                  on_select_anatomy_option={setSelectedAnatomyOption}
-                  on_submit_anatomy={() => {
-                    if (selectedAnatomyOption) {
-                      void handleAnswerSubmit(selectedAnatomyOption, false);
-                    }
-                  }}
-                  anatomy_submit_loading={isEvaluating}
-                  target_muscle={currentQuestion.targetMuscle}
-                  selected_muscle={diagramSelectedRegion}
-                  on_select_muscle={setDiagramSelectedRegion}
-                  on_submit_diagram_recall={(typed) => {
-                    void handleAnswerSubmit(typed, false);
-                  }}
-                  diagram_submit_loading={isEvaluating}
-                  reveal_diagram_answer={!!evaluation}
-                  correct_muscle={
-                    evaluation?.correctAnswer ??
-                    currentQuestion.targetMuscle ??
-                    ""
-                  }
-                />
-                <AnswerInput
-                  key={currentQuestion.questionId}
-                  format={currentQuestion.format}
-                  onSubmit={handleAnswerSubmit}
-                  isLoading={isEvaluating}
-                  showRetry={evaluation?.showRetry ?? false}
-                  result={evaluation?.result ?? null}
-                  feedback={evaluation?.feedback}
-                  correctAnswer={evaluation?.correctAnswer}
-                  onNext={handleNextQuestion}
-                  options={currentQuestion.options}
-                  correctId={currentQuestion.correctId}
-                  leftItems={currentQuestion.leftItems}
-                  rightItems={currentQuestion.rightItems}
-                  pairs={currentQuestion.pairs}
-                  requestExplanation={handleRequestExplanation}
-                  option_strings={currentQuestion.anatomyOptions}
-                />
-              </div>
-            </Card>
-          ) : null}
-        </>
-      )}
+          {error && <ErrorMessage message={error} />}
 
-      {phase === "complete" && (
-        <QuizSummary
-          score={score}
-          total={questionCount}
-          sessionId={sessionId ?? ""}
-          apparatus={apparatus}
-          topic={topic}
-          onTryAgain={handleTryAgain}
-        />
+          {phase === "setup" && hasIngestedCurriculum === false && (
+            <Card>
+              <p className="text-clara-deep">
+                No curriculum has been ingested yet. Quiz questions are built from
+                your uploaded manuals. Go to{" "}
+                <a
+                  href="/curriculum"
+                  className="font-medium text-clara-primary underline"
+                >
+                  Curriculum Manager
+                </a>{" "}
+                to connect Google Drive and ingest your folders before starting a
+                quiz.
+              </p>
+            </Card>
+          )}
+
+          {phase === "setup" && (
+            <QuizSetup
+              onStart={(app, diff, count, fmt) => void handleStart(app, diff, count, fmt)}
+              isStarting={isLoadingQuestion}
+            />
+          )}
+
+          {phase === "in_progress" && (
+            <>
+              {isLoadingQuestion && !currentQuestion ? (
+                <Card>
+                  <div className="flex justify-center py-12">
+                    <LoadingSpinner size="lg" />
+                  </div>
+                </Card>
+              ) : currentQuestion ? (
+                <Card>
+                  <div className="flex flex-col gap-6">
+                    <QuestionCard
+                      question={currentQuestion.question}
+                      currentIndex={currentIndex}
+                      totalCount={questionCount}
+                      scoreSoFar={score}
+                      image_file_name={currentQuestion.image_file_name}
+                      folder_name={
+                        currentQuestion.folder_name ??
+                        currentQuestion.image_folder_name
+                      }
+                      question_type={currentQuestion.format}
+                      anatomy_options={currentQuestion.anatomyOptions}
+                      selected_anatomy_option={selectedAnatomyOption}
+                      on_select_anatomy_option={setSelectedAnatomyOption}
+                      on_submit_anatomy={() => {
+                        if (selectedAnatomyOption) {
+                          void handleAnswerSubmit(selectedAnatomyOption, false);
+                        }
+                      }}
+                      anatomy_submit_loading={isEvaluating}
+                      target_muscle={currentQuestion.targetMuscle}
+                      selected_muscle={diagramSelectedRegion}
+                      on_select_muscle={setDiagramSelectedRegion}
+                      on_submit_diagram_recall={(typed) => {
+                        void handleAnswerSubmit(typed, false);
+                      }}
+                      diagram_submit_loading={isEvaluating}
+                      reveal_diagram_answer={!!evaluation}
+                      correct_muscle={
+                        evaluation?.correctAnswer ??
+                        currentQuestion.targetMuscle ??
+                        ""
+                      }
+                    />
+                    <AnswerInput
+                      key={currentQuestion.questionId}
+                      format={currentQuestion.format}
+                      onSubmit={handleAnswerSubmit}
+                      isLoading={isEvaluating}
+                      showRetry={evaluation?.showRetry ?? false}
+                      result={evaluation?.result ?? null}
+                      feedback={evaluation?.feedback}
+                      correctAnswer={evaluation?.correctAnswer}
+                      onNext={handleNextQuestion}
+                      options={currentQuestion.options}
+                      correctId={currentQuestion.correctId}
+                      leftItems={currentQuestion.leftItems}
+                      rightItems={currentQuestion.rightItems}
+                      pairs={currentQuestion.pairs}
+                      requestExplanation={handleRequestExplanation}
+                      option_strings={currentQuestion.anatomyOptions}
+                    />
+                  </div>
+                </Card>
+              ) : null}
+            </>
+          )}
+
+          {phase === "complete" && (
+            <QuizSummary
+              score={score}
+              total={questionCount}
+              sessionId={sessionId ?? ""}
+              apparatus={apparatus}
+              topic={topic}
+              onTryAgain={handleTryAgain}
+            />
+          )}
+        </>
       )}
     </div>
   );

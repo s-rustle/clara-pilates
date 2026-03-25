@@ -149,7 +149,7 @@ export default function HourLogTable({ logs, onStatusUpdate }: HourLogTableProps
 
   return (
     <div className="space-y-4">
-      <div className="overflow-x-auto rounded-sm border border-clara-border">
+      <div className="overflow-x-auto rounded-none border border-clara-border">
         <table className="w-full min-w-[600px]">
           <thead className="border-b border-clara-border bg-clara-surface">
             <tr>
@@ -189,7 +189,7 @@ export default function HourLogTable({ logs, onStatusUpdate }: HourLogTableProps
                     </Badge>
                     {canMarkComplete(log) && (
                       <Button
-                        variant="secondary"
+                        variant="ghost"
                         onClick={() => handleMarkComplete(log)}
                         disabled={loadingId === log.id}
                         className="h-7 px-2 py-1 text-xs"
@@ -218,7 +218,7 @@ export default function HourLogTable({ logs, onStatusUpdate }: HourLogTableProps
             type="button"
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={currentPage === 1}
-            className="text-clara-accent disabled:cursor-not-allowed disabled:opacity-50 hover:underline"
+            className="text-clara-primary disabled:cursor-not-allowed disabled:opacity-50 hover:underline"
           >
             Previous
           </button>
@@ -231,7 +231,7 @@ export default function HourLogTable({ logs, onStatusUpdate }: HourLogTableProps
               setCurrentPage((p) => Math.min(totalPages, p + 1))
             }
             disabled={currentPage === totalPages}
-            className="text-clara-accent disabled:cursor-not-allowed disabled:opacity-50 hover:underline"
+            className="text-clara-primary disabled:cursor-not-allowed disabled:opacity-50 hover:underline"
           >
             Next
           </button>
