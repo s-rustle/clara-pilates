@@ -20,11 +20,13 @@ import {
   countChunksForUploadFile,
 } from "@/lib/google/ingest";
 
-/** Large folders + many PDFs + Claude + embeddings can exceed default serverless limits */
-export const maxDuration = 300;
+/**
+ * Vercel Pro (or equivalent) — raises the serverless cap above the default ~10s.
+ * @see https://vercel.com/docs/functions/configuring-functions/duration
+ */
+export const maxDuration = 60;
 
-/** Process this many Drive files at once (download + Claude + chunk). */
-const FILE_INGEST_CONCURRENCY = 3;
+const MAX_FILE_BYTES = 20 * 1024 * 1024;
 
 function jsonResponse(data: unknown, status = 200) {
   return Response.json(data, { status });
@@ -133,21 +135,45 @@ async function runIngestion(
       );
     }
 
-    const files = filesResult as { id: string; name: string; mimeType: string }[];
+    const files = filesResult as {
+      id: string;
+      name: string;
+      mimeType: string;
+      size?: string;
+    }[];
 
     const allChunks: ContentChunk[] = [];
     const fileErrors: string[] = [];
     const skipped_files: string[] = [];
+    const skipped_oversized: string[] = [];
     let files_processed = 0;
+    let files_failed = 0;
 
     const isPdf = (mime: string, name: string) =>
       mime === "application/pdf" ||
       name.toLowerCase().endsWith(".pdf");
 
-    type DriveFile = { id: string; name: string; mimeType: string };
+    type DriveFile = {
+      id: string;
+      name: string;
+      mimeType: string;
+      size?: string;
+    };
     const filesToIngest: DriveFile[] = [];
 
     for (const file of files) {
+      const listedSize = parseInt(file.size ?? "0", 10);
+      if (
+        Number.isFinite(listedSize) &&
+        listedSize > MAX_FILE_BYTES
+      ) {
+        console.warn(
+          `[INGEST] Skipping oversized file "${file.name}" (${(listedSize / (1024 * 1024)).toFixed(1)}MB > 20MB limit)`
+        );
+        skipped_oversized.push(file.name);
+        continue;
+      }
+
       let existingCount = 0;
       try {
         existingCount = await countChunksForUploadFile(uploadId, file.name);
@@ -162,6 +188,7 @@ async function runIngestion(
         fileErrors.push(
           `${file.name}: could not check existing chunks (${msg})`
         );
+        files_failed += 1;
         continue;
       }
 
@@ -176,91 +203,85 @@ async function runIngestion(
       filesToIngest.push(file);
     }
 
-    for (let i = 0; i < filesToIngest.length; i += FILE_INGEST_CONCURRENCY) {
-      const wave = filesToIngest.slice(i, i + FILE_INGEST_CONCURRENCY);
-      const waveResults = await Promise.all(
-        wave.map(async (file) => {
-          const treatAsPdf = isPdf(file.mimeType, file.name);
-          try {
-            let buffer: Buffer;
-            try {
-              buffer = await downloadFile(accessToken, file.id);
-            } catch (downErr) {
-              if (isGoogleDriveReauthRequiredError(downErr)) {
-                const again = await ensureGoogleAccessToken(supabase, userId, {
-                  forceRefresh: true,
-                });
-                if (!again.ok) {
-                  return {
-                    ok: false as const,
-                    name: file.name,
-                    message: REAUTH_REQUIRED,
-                    reauth: true as const,
-                  };
-                }
-                accessToken = again.accessToken;
-                buffer = await downloadFile(accessToken, file.id);
-              } else {
-                throw downErr;
-              }
+    /** One file at a time — isolates failures and avoids parallel memory spikes. */
+    for (const file of filesToIngest) {
+      const treatAsPdf = isPdf(file.mimeType, file.name);
+      try {
+        let buffer: Buffer;
+        try {
+          buffer = await downloadFile(accessToken, file.id);
+        } catch (downErr) {
+          if (isGoogleDriveReauthRequiredError(downErr)) {
+            const again = await ensureGoogleAccessToken(supabase, userId, {
+              forceRefresh: true,
+            });
+            if (!again.ok) {
+              await serviceClient
+                .from("curriculum_uploads")
+                .update({ status: "failed", error_message: REAUTH_REQUIRED })
+                .eq("id", uploadId);
+              return jsonResponse({ error: REAUTH_REQUIRED }, 401);
             }
-            const extracted = treatAsPdf
-              ? await processPdf(buffer, file.name, folder_name)
-              : await processImage(buffer, file.name, folder_name);
-
-            if ("error" in extracted) {
-              console.error(
-                "[INGEST] processPdf/processImage failed for",
-                file.name,
-                ":",
-                extracted.error
-              );
-              return {
-                ok: false as const,
-                name: file.name,
-                message: extracted.error,
-              };
-            }
-
-            const chunks = chunkContent(
-              extracted,
-              uploadId,
-              folder_name,
-              file.name,
-              {
-                driveFileId: file.id,
-                mimeType: file.mimeType,
-              }
-            );
-            return { ok: true as const, name: file.name, chunks };
-          } catch (err) {
-            const message = err instanceof Error ? err.message : String(err);
-            return { ok: false as const, name: file.name, message };
+            accessToken = again.accessToken;
+            buffer = await downloadFile(accessToken, file.id);
+          } else {
+            throw downErr;
           }
-        })
-      );
+        }
 
-      for (const r of waveResults) {
-        if (!r.ok && "reauth" in r && r.reauth) {
-          await serviceClient
-            .from("curriculum_uploads")
-            .update({ status: "failed", error_message: REAUTH_REQUIRED })
-            .eq("id", uploadId);
-          return jsonResponse({ error: REAUTH_REQUIRED }, 401);
+        if (buffer.length > MAX_FILE_BYTES) {
+          console.warn(
+            `[INGEST] Skipping oversized download "${file.name}" (${(buffer.length / (1024 * 1024)).toFixed(1)}MB > 20MB limit)`
+          );
+          skipped_oversized.push(file.name);
+          continue;
         }
-        if (r.ok) {
-          allChunks.push(...r.chunks);
-          files_processed += 1;
-        } else {
-          fileErrors.push(`${r.name}: ${r.message}`);
+
+        const extracted = treatAsPdf
+          ? await processPdf(buffer, file.name, folder_name)
+          : await processImage(buffer, file.name, folder_name);
+
+        if ("error" in extracted) {
+          console.error(
+            "[INGEST] processPdf/processImage failed for",
+            file.name,
+            ":",
+            extracted.error
+          );
+          fileErrors.push(`${file.name}: ${extracted.error}`);
+          files_failed += 1;
+          continue;
         }
+
+        const chunks = chunkContent(
+          extracted,
+          uploadId,
+          folder_name,
+          file.name,
+          {
+            driveFileId: file.id,
+            mimeType: file.mimeType,
+          }
+        );
+        allChunks.push(...chunks);
+        files_processed += 1;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("[INGEST] file pipeline failed:", file.name, message);
+        fileErrors.push(`${file.name}: ${message}`);
+        files_failed += 1;
       }
     }
 
     const skipped_count = skipped_files.length;
+    const skipped_oversized_count = skipped_oversized.length;
 
-    /** All Drive files were skipped (already in DB); nothing new to embed */
-    if (allChunks.length === 0 && files.length > 0 && fileErrors.length === 0) {
+    /** All Drive files were skipped (already in DB, over limit, etc.); nothing new to embed */
+    if (
+      allChunks.length === 0 &&
+      files.length > 0 &&
+      fileErrors.length === 0
+    ) {
       const { count: totalChunks, error: totalErr } = await serviceClient
         .from("curriculum_chunks")
         .select("*", { count: "exact", head: true })
@@ -282,7 +303,12 @@ async function runIngestion(
             chunks_stored: 0,
             skipped_files,
             skipped_count,
+            skipped_oversized,
+            skipped_oversized_count,
+            files_succeeded: 0,
+            files_failed,
             files_processed: 0,
+            partial: false,
             errors: fileErrors,
           },
           500
@@ -305,9 +331,14 @@ async function runIngestion(
         chunks_stored: 0,
         skipped_files,
         skipped_count,
+        skipped_oversized,
+        skipped_oversized_count,
+        files_succeeded: 0,
+        files_failed: 0,
         files_processed: 0,
+        partial: false,
         errors: [],
-        message: `${skipped_count} file(s) already up to date, 0 new files ingested`,
+        message: `${skipped_count} file(s) already up to date, ${skipped_oversized_count} over 20MB skipped, 0 new files ingested`,
       });
     }
 
@@ -340,7 +371,12 @@ async function runIngestion(
           chunks_stored: 0,
           skipped_files,
           skipped_count,
+          skipped_oversized,
+          skipped_oversized_count,
+          files_succeeded: 0,
+          files_failed,
           files_processed: 0,
+          partial: false,
           errors: fileErrors,
         },
         500
@@ -361,17 +397,43 @@ async function runIngestion(
         .eq("id", uploadId);
     }
 
-    const statusCode = result.success ? 200 : 500;
-    const newSummary = `${files_processed} new file(s) ingested, ${skipped_count} already up to date`;
+    const combinedErrors = fileErrors.concat(result.errors);
+    const hadFileLevelIssues =
+      fileErrors.length > 0 || skipped_oversized_count > 0;
+    const partialSuccess =
+      result.chunks_stored > 0 &&
+      (hadFileLevelIssues || !result.success);
+    /** At least one file produced stored chunks → 200; total embedding failure stays 500. */
+    const statusCode =
+      result.chunks_stored > 0 ? 200 : 500;
+    const responseSuccess = result.chunks_stored > 0;
+    const newSummary = `${files_processed} file(s) processed, ${skipped_count} already up to date, ${skipped_oversized_count} skipped (over 20MB limit)`;
+    const errorForClient =
+      responseSuccess && partialSuccess && combinedErrors.length > 0
+        ? combinedErrors.slice(0, 5).join("; ") +
+          (combinedErrors.length > 5 ? "…" : "")
+        : !responseSuccess && combinedErrors.length > 0
+          ? combinedErrors.slice(0, 5).join("; ") +
+            (combinedErrors.length > 5 ? "…" : "")
+          : !responseSuccess
+            ? newSummary
+            : undefined;
+
     return jsonResponse(
       {
-        success: result.success,
+        success: responseSuccess,
+        partial: partialSuccess,
+        error: errorForClient,
         upload_id: uploadId,
         chunks_stored: result.chunks_stored,
         skipped_files,
         skipped_count,
+        skipped_oversized,
+        skipped_oversized_count,
+        files_succeeded: files_processed,
+        files_failed,
         files_processed,
-        errors: fileErrors.concat(result.errors),
+        errors: combinedErrors,
         message: newSummary,
       },
       statusCode
@@ -393,7 +455,12 @@ async function runIngestion(
         error: `Ingestion failed: ${message}`,
         skipped_files: [] as string[],
         skipped_count: 0,
+        skipped_oversized: [] as string[],
+        skipped_oversized_count: 0,
+        files_succeeded: 0,
+        files_failed: 0,
         files_processed: 0,
+        partial: false,
       },
       500
     );

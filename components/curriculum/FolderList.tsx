@@ -39,10 +39,14 @@ function statusBadgeVariant(
   }
 }
 
+/** YYYY-MM-DD only — avoids server/client locale mismatch (React hydration #418). */
 function formatDate(iso: string | null): string {
   if (!iso) return "—";
+  const day = iso.slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(day)) return day;
   const d = new Date(iso);
-  return d.toLocaleDateString();
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toISOString().slice(0, 10);
 }
 
 /**

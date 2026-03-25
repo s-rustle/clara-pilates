@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CurriculumUpload } from "@/types";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -16,6 +16,12 @@ export default function IngestionStatus({
 }: IngestionStatusProps) {
   const [upload, setUpload] = useState<CurriculumUpload | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** Fire `onComplete` once per finished job to avoid rapid parent refresh / DOM churn. */
+  const completionNotified = useRef(false);
+
+  useEffect(() => {
+    completionNotified.current = false;
+  }, [uploadId]);
 
   useEffect(() => {
     if (!uploadId) return;
@@ -38,7 +44,12 @@ export default function IngestionStatus({
           (u: CurriculumUpload) => u.id === uploadId
         );
         setUpload(found ?? null);
-        if (found && found.status !== "processing") {
+        if (
+          found &&
+          found.status !== "processing" &&
+          !completionNotified.current
+        ) {
+          completionNotified.current = true;
           onComplete();
         }
       } catch {
