@@ -28,7 +28,7 @@ export default function ProgressBar({
         </div>
       ) : null}
       {metric ? (
-        <div className="mb-2 font-cormorant text-[36px] font-light leading-none tabular-nums text-clara-deep">
+        <div className="mb-2 font-cormorant text-[36px] font-semibold leading-none tabular-nums text-clara-deep">
           {metric}
         </div>
       ) : null}

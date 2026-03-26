@@ -141,7 +141,9 @@ export default function WeakSpotCard() {
       </h2>
       <p className="mb-2 text-sm font-medium text-clara-deep">{top.area}</p>
       <div className="mb-3">
-        <Badge variant="red">{top.accuracy_percent}% accuracy</Badge>
+        <Badge variant="red" className="!font-semibold">
+          {top.accuracy_percent}% accuracy
+        </Badge>
       </div>
       <p className="mb-4 text-sm leading-relaxed text-clara-deep">
         {top.pattern_description}

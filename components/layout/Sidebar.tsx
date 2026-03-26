@@ -19,10 +19,10 @@ import Wordmark from "./Wordmark";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: Home },
-  { href: "/study", label: "Study", icon: BookOpen },
-  { href: "/quiz", label: "Quiz", icon: ClipboardList },
-  { href: "/sessions", label: "Sessions", icon: Calendar },
   { href: "/learn", label: "Learn", icon: GraduationCap },
+  { href: "/quiz", label: "Quiz", icon: ClipboardList },
+  { href: "/study", label: "Discuss", icon: BookOpen },
+  { href: "/sessions", label: "Sessions", icon: Calendar },
   { href: "/cues", label: "Practice Cues", icon: Mic },
   { href: "/hours", label: "Hours", icon: Clock },
   { href: "/curriculum", label: "Curriculum", icon: FolderOpen },

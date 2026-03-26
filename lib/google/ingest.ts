@@ -644,6 +644,8 @@ export async function embedAndStore(
 ): Promise<EmbedAndStoreResult> {
   const errors: string[] = [];
   let chunks_stored = 0;
+  /** Chunks skipped because (file_name, chunk_index) already exists for this upload. */
+  let skipped_already_stored_chunks = 0;
   const supabase = createServiceClient();
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -654,6 +656,42 @@ export async function embedAndStore(
     };
   }
   const openai = new OpenAI({ apiKey });
+
+  function chunkDedupeKey(c: ContentChunk): string {
+    return `${c.file_name}\0${c.chunk_index}`;
+  }
+
+  /** Drop rows already stored for this upload (scoped by user_id + upload_id — not folder_name alone). */
+  async function filterChunksNotYetStored(
+    batch: ContentChunk[]
+  ): Promise<ContentChunk[]> {
+    if (batch.length === 0) return batch;
+    const fileNames = [...new Set(batch.map((c) => c.file_name))];
+    const { data: existing, error } = await supabase
+      .from("curriculum_chunks")
+      .select("file_name, chunk_index")
+      .eq("user_id", userId)
+      .eq("upload_id", uploadId)
+      .in("file_name", fileNames);
+
+    if (error) {
+      console.error("[embedAndStore] existing chunk lookup failed", error);
+      errors.push(`Could not check existing chunks: ${error.message}`);
+      return batch;
+    }
+
+    const existingSet = new Set(
+      (existing ?? []).map((r) => `${r.file_name}\0${r.chunk_index}`)
+    );
+    const fresh = batch.filter((c) => !existingSet.has(chunkDedupeKey(c)));
+    const skipped = batch.length - fresh.length;
+    if (skipped > 0) {
+      console.log(
+        `[embedAndStore] Skipping ${skipped} chunk(s) already present for upload_id=${uploadId}`
+      );
+    }
+    return fresh;
+  }
 
   async function insertRowsWithFallback(
     batch: ContentChunk[],
@@ -685,13 +723,30 @@ export async function embedAndStore(
       return;
     }
 
+    const isUniqueViolation = (err: { code?: string } | null | undefined) =>
+      err?.code === "23505";
+
+    if (!isUniqueViolation(bulkErr)) {
+      errors.push(
+        `Bulk insert failed (${batch.length} rows): ${bulkErr.message}`
+      );
+      return;
+    }
+
     for (let j = 0; j < batch.length; j++) {
       const chunk = batch[j];
       const { error: rowErr } = await supabase.from("curriculum_chunks").insert(rows[j]);
       if (rowErr) {
-        errors.push(
-          `Chunk ${chunk.chunk_index} (${chunk.file_name}): ${rowErr.message} (bulk: ${bulkErr.message})`
-        );
+        if (isUniqueViolation(rowErr)) {
+          skipped_already_stored_chunks += 1;
+          console.log(
+            `[embedAndStore] Skipping duplicate chunk (23505): ${chunk.file_name} chunk_index=${chunk.chunk_index}`
+          );
+        } else {
+          errors.push(
+            `Chunk ${chunk.chunk_index} (${chunk.file_name}): ${rowErr.message} (bulk: ${bulkErr.message})`
+          );
+        }
       } else {
         chunks_stored += 1;
       }
@@ -701,11 +756,19 @@ export async function embedAndStore(
   for (let i = 0; i < chunks.length; i += EMBEDDING_BATCH_SIZE) {
     const batch = chunks.slice(i, i + EMBEDDING_BATCH_SIZE);
     try {
+      const toEmbed = await filterChunksNotYetStored(batch);
+      if (toEmbed.length === 0) {
+        if (batch.length > 0) {
+          skipped_already_stored_chunks += batch.length;
+        }
+        continue;
+      }
+      skipped_already_stored_chunks += batch.length - toEmbed.length;
       const embeddings = await createEmbeddingsBatch(
         openai,
-        batch.map((c) => c.content)
+        toEmbed.map((c) => c.content)
       );
-      await insertRowsWithFallback(batch, embeddings);
+      await insertRowsWithFallback(toEmbed, embeddings);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       for (const chunk of batch) {
@@ -718,16 +781,35 @@ export async function embedAndStore(
     }
   }
 
-  const allFailed = chunks_stored === 0 && chunks.length > 0;
+  const idempotentNoop =
+    chunks.length > 0 &&
+    chunks_stored === 0 &&
+    skipped_already_stored_chunks === chunks.length &&
+    errors.length === 0;
+
+  const allFailed =
+    chunks.length > 0 && chunks_stored === 0 && !idempotentNoop;
+
   const errorSummary =
     allFailed && errors.length > 0
       ? `${errors.length} of ${chunks.length} chunks failed: ${errors.slice(0, 3).join("; ")}${errors.length > 3 ? "..." : ""}`
       : null;
 
+  let fileCountForRow = chunks_stored;
+  if (idempotentNoop || chunks_stored > 0) {
+    const { count: totalInUpload, error: cntErr } = await supabase
+      .from("curriculum_chunks")
+      .select("*", { count: "exact", head: true })
+      .eq("upload_id", uploadId);
+    if (!cntErr && typeof totalInUpload === "number") {
+      fileCountForRow = totalInUpload;
+    }
+  }
+
   const finalPayload = {
     status: allFailed ? ("failed" as const) : ("complete" as const),
     last_ingested_at: new Date().toISOString(),
-    file_count: chunks_stored,
+    file_count: fileCountForRow,
     error_message: allFailed ? errorSummary : null,
   };
 

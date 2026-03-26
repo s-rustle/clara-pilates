@@ -38,7 +38,7 @@ function MetricCell({ label, metric }: { label: string; metric: string }) {
   return (
     <div className="bg-white p-4">
       <p className={metricLabel}>{label}</p>
-      <p className="mt-1 font-cormorant text-[36px] font-light leading-none tabular-nums text-clara-deep">
+      <p className="mt-1 font-cormorant text-[36px] font-semibold leading-none tabular-nums text-clara-deep">
         {metric}
       </p>
     </div>
@@ -207,7 +207,7 @@ export default function ReadinessCard({
             {showExamCell ? (
               <div className="border-l-2 border-clara-accent bg-clara-exam p-4">
                 <p className={`${metricLabel} mb-1`}>Exam countdown</p>
-                <p className="font-cormorant text-[36px] font-light leading-none tabular-nums text-clara-deep">
+                <p className="font-cormorant text-[36px] font-semibold leading-none tabular-nums text-clara-deep">
                   {examMetric}
                 </p>
               </div>

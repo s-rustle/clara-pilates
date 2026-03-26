@@ -105,7 +105,7 @@ export default async function DashboardPage() {
                     <p className="text-xs text-clara-muted">{s.difficulty}</p>
                   </div>
                   <div className="flex shrink-0 flex-col items-start gap-0.5 sm:items-end">
-                    <span className="text-clara-deep">{score}</span>
+                    <span className="font-semibold text-clara-deep">{score}</span>
                     <time
                       className="text-xs text-clara-muted"
                       dateTime={s.completed_at ?? undefined}
