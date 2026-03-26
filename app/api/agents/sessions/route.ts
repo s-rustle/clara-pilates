@@ -51,13 +51,6 @@ export async function POST(request: NextRequest) {
     }
 
     const { id: _omit, ...sessionPayload } = record;
-    // TEMP: verify client_notes reaches evaluator (remove after debugging)
-    console.log(
-      "[api/agents/sessions][temp] evaluate payload client_notes:",
-      "client_notes" in sessionPayload
-        ? sessionPayload.client_notes
-        : "(key missing from payload)"
-    );
     const feedback = await evaluateSession(sessionPayload, user.id);
 
     // Persist feedback with the same user-scoped client (avoid server → self HTTP fetch,
