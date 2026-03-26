@@ -168,6 +168,8 @@ export interface WarmUpMove {
   move_name: string;
   sets: number;
   reps: number;
+  /** Cues or context (e.g. from AI-generated plans). */
+  notes?: string;
 }
 
 export interface ExerciseItem {
@@ -175,6 +177,8 @@ export interface ExerciseItem {
   sets: number;
   reps: number;
   notes?: string;
+  /** Which apparatus this piece uses when a session spans multiple stations. */
+  apparatus?: string;
 }
 
 export interface SessionPlan {
@@ -184,6 +188,7 @@ export interface SessionPlan {
   session_type: SessionType;
   apparatus: string;
   client_level: string | null;
+  client_notes: string | null;
   warm_up: WarmUpMove[];
   exercise_sequence: ExerciseItem[];
   feedback: Record<string, unknown> | null;
@@ -200,11 +205,32 @@ export interface SessionSafetyFlag {
   recommendation: string;
 }
 
+/** When client notes imply pregnancy, injury, or other considerations; drives the warning card. */
+export interface SessionSpecialPopulationsWarning {
+  applies: boolean;
+  flags_detected: string[];
+  contraindications_this_session: string;
+  exercises_modify_or_remove: string[];
+  curriculum_substitutions: string[];
+  trimester_or_condition_notes: string | null;
+}
+
+/** Ergonomic sequencing of positions (supine, prone, etc.). */
+export interface SessionFlowErgonomics {
+  score: string;
+  note: string;
+  transition_issues: string[];
+  /** Ordered exercise/move names for a minimized-transition sequence (main work; warm-up called out in note if needed). */
+  suggested_reorder: string[];
+}
+
 /**
- * Session evaluation rubric: alignment/form, breathing, cueing, progression, safety.
+ * Session evaluation rubric: special populations (when applicable), alignment/form, breathing,
+ * cueing, progression, safety, session flow & ergonomics.
  * Stored on session_plans.feedback (JSON).
  */
 export interface SessionFeedback {
+  special_populations: SessionSpecialPopulationsWarning;
   alignment_and_form: { score: string; note: string };
   breathing: { score: string; note: string };
   cueing_clarity: { score: string; note: string };
@@ -214,6 +240,7 @@ export interface SessionFeedback {
     note: string;
     flags: SessionSafetyFlag[];
   };
+  session_flow_ergonomics: SessionFlowErgonomics;
   overall: string;
   suggested_adjustments: string[];
 }

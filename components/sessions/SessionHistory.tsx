@@ -182,6 +182,16 @@ function ReadOnlyDetails({ session }: { session: SessionPlan }) {
           {session.client_level}
         </p>
       )}
+      {session.client_notes?.trim() && (
+        <div>
+          <span className="font-medium text-clara-deep">
+            Client considerations:
+          </span>
+          <p className="mt-1 whitespace-pre-wrap text-clara-deep/90">
+            {session.client_notes}
+          </p>
+        </div>
+      )}
       <div>
         <span className="font-medium text-clara-deep">Warm-up</span>
         <ul className="mt-1 list-disc pl-5">

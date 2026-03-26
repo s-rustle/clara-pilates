@@ -102,9 +102,16 @@ export default function ExerciseSequence({
             >
               <div className="flex flex-wrap items-end gap-2">
                 <div className="min-w-[120px] flex-1">
-                  <span className="text-sm font-medium text-clara-deep">
-                    {formatExerciseNameForDisplay(ex.exercise_name)}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium text-clara-deep">
+                      {formatExerciseNameForDisplay(ex.exercise_name)}
+                    </span>
+                    {ex.apparatus?.trim() ? (
+                      <span className="rounded-none border border-clara-border bg-clara-surface px-2 py-0.5 text-xs text-clara-muted">
+                        {ex.apparatus.trim()}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="w-20">
                   <Input

@@ -193,10 +193,52 @@ export default function WarmUpSection({
                   <span className="text-lg leading-none">×</span>
                 </button>
               </div>
+              <WarmUpNotesRow
+                move={move}
+                index={index}
+                disabled={disabled}
+                onUpdate={updateMove}
+              />
             </li>
           ))}
         </ul>
       )}
     </section>
+  );
+}
+
+function WarmUpNotesRow({
+  move,
+  index,
+  disabled,
+  onUpdate,
+}: {
+  move: WarmUpMove;
+  index: number;
+  disabled: boolean;
+  onUpdate: (index: number, patch: Partial<WarmUpMove>) => void;
+}) {
+  const [expanded, setExpanded] = useState(Boolean(move.notes?.trim()));
+
+  return (
+    <div className="mt-2 w-full basis-full border-t border-clara-border/80 pt-2">
+      <button
+        type="button"
+        onClick={() => setExpanded((e) => !e)}
+        className="text-xs font-medium text-clara-primary hover:underline"
+      >
+        {expanded ? "Hide cues / notes" : "Cues / notes (optional)"}
+      </button>
+      {expanded && (
+        <textarea
+          value={move.notes ?? ""}
+          onChange={(e) => onUpdate(index, { notes: e.target.value })}
+          disabled={disabled}
+          rows={2}
+          placeholder="Key cues, breath, modifications…"
+          className="mt-1 w-full rounded-none border border-clara-border bg-clara-surface px-3 py-2 text-sm text-clara-deep placeholder:text-clara-deep/60 focus:border-clara-primary focus:outline-none focus:ring-1 focus:ring-clara-primary disabled:cursor-not-allowed disabled:opacity-50"
+        />
+      )}
+    </div>
   );
 }

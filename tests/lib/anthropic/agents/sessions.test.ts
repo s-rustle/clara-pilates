@@ -14,6 +14,14 @@ vi.mock("@/lib/anthropic/client", () => ({
 }));
 
 const validFeedbackJson = {
+  special_populations: {
+    applies: false,
+    flags_detected: [] as string[],
+    contraindications_this_session: "",
+    exercises_modify_or_remove: [] as string[],
+    curriculum_substitutions: [] as string[],
+    trimester_or_condition_notes: null as string | null,
+  },
   alignment_and_form: { score: "sound", note: "Alignment cues present." },
   breathing: { score: "sound", note: "Breath cued in warm-up." },
   cueing_clarity: { score: "clear", note: "Notes are specific." },
@@ -26,6 +34,12 @@ const validFeedbackJson = {
       concern: string;
       recommendation: string;
     }>,
+  },
+  session_flow_ergonomics: {
+    score: "sound",
+    note: "Positions grouped sensibly.",
+    transition_issues: [] as string[],
+    suggested_reorder: ["The Hundred"],
   },
   overall: "Solid session.",
   suggested_adjustments: [] as string[],
@@ -58,7 +72,7 @@ describe("Session Planner Agent", () => {
     } as never);
   });
 
-  it("returns structured five-dimension SessionFeedback", async () => {
+  it("returns structured SessionFeedback with special populations and flow", async () => {
     const sessionData = {
       mode: "plan",
       session_type: "personal",
@@ -71,14 +85,18 @@ describe("Session Planner Agent", () => {
 
     const result = await evaluateSession(sessionData, "user-1");
 
+    expect(result).toHaveProperty("special_populations");
     expect(result).toHaveProperty("alignment_and_form");
     expect(result).toHaveProperty("breathing");
     expect(result).toHaveProperty("cueing_clarity");
     expect(result).toHaveProperty("client_progression");
     expect(result).toHaveProperty("safety");
+    expect(result).toHaveProperty("session_flow_ergonomics");
     expect(result).toHaveProperty("overall");
     expect(result).toHaveProperty("suggested_adjustments");
 
+    expect(result.special_populations.applies).toBe(false);
+    expect(result.session_flow_ergonomics.suggested_reorder).toEqual(["The Hundred"]);
     expect(result.safety.flags).toEqual([]);
     expect(Array.isArray(result.suggested_adjustments)).toBe(true);
   });

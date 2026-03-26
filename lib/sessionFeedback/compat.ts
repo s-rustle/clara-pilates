@@ -1,5 +1,9 @@
 import type { SessionFeedback, SessionSafetyFlag } from "@/types";
-import { validateSessionFeedback } from "@/lib/sessionFeedback/validate";
+import {
+  defaultSessionFlowErgonomics,
+  defaultSpecialPopulations,
+  validateSessionFeedback,
+} from "@/lib/sessionFeedback/validate";
 
 /**
  * Normalize session_plans.feedback JSON: current rubric, or legacy (pre–Mar 2026) shape.
@@ -41,6 +45,7 @@ export function normalizeStoredSessionFeedback(raw: unknown): SessionFeedback | 
   );
 
   return {
+    special_populations: defaultSpecialPopulations(),
     alignment_and_form: {
       score: typeof vol?.score === "string" ? vol.score : "not_verified",
       note:
@@ -70,6 +75,7 @@ export function normalizeStoredSessionFeedback(raw: unknown): SessionFeedback | 
           : "Legacy volume and contraindication assessment.",
       flags,
     },
+    session_flow_ergonomics: defaultSessionFlowErgonomics(),
     overall: typeof o.overall === "string" ? o.overall : "",
     suggested_adjustments: Array.isArray(o.suggested_adjustments)
       ? (o.suggested_adjustments as unknown[]).filter(

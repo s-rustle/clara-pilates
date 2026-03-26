@@ -1,12 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ExerciseItem, HourLog, SessionFeedback, SessionMode, SessionPlan, SessionType, WarmUpMove } from "@/types";
 import { validateSessionFeedback } from "@/lib/sessionFeedback/validate";
 import Card from "@/components/ui/Card";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import Button from "@/components/ui/Button";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import Select from "@/components/ui/Select";
+import {
+  GENERATE_PLAN_APPARATUS_OPTIONS,
+  GENERATE_PLAN_DURATIONS,
+  GENERATE_PLAN_FOCUS_AREAS,
+  GENERATE_PLAN_SESSION_GOALS,
+  type GeneratePlanDuration,
+} from "@/lib/sessions/generatePlanForm";
 import HourLogForm, { HOUR_CATEGORY_OPTIONS } from "@/components/hours/HourLogForm";
 import SessionPlannerForm from "@/components/sessions/SessionPlannerForm";
 import WarmUpSection from "@/components/sessions/WarmUpSection";
@@ -27,6 +35,8 @@ function mapApparatusToHourCategory(apparatus: string): string {
     "Trapeze Cadillac": "Trapeze Cadillac",
     Chair: "Chair",
     Barrels: "Barrels",
+    Tower: "Trapeze Cadillac",
+    Props: "Mat 1",
   };
   const mapped = direct[apparatus];
   if (mapped) return mapped;
@@ -39,8 +49,19 @@ function sessionSubTypeForHours(sessionType: SessionType): string {
 }
 
 function normalizeExercises(list: ExerciseItem[]): ExerciseItem[] {
-  return list.map(({ exercise_name, sets, reps, notes }) => {
+  return list.map(({ exercise_name, sets, reps, notes, apparatus }) => {
     const row: ExerciseItem = { exercise_name, sets, reps };
+    const n = notes?.trim();
+    if (n) row.notes = n;
+    const a = apparatus?.trim();
+    if (a) row.apparatus = a;
+    return row;
+  });
+}
+
+function normalizeWarmUpMoves(list: WarmUpMove[]): WarmUpMove[] {
+  return list.map(({ move_name, sets, reps, notes }) => {
+    const row: WarmUpMove = { move_name, sets, reps };
     const n = notes?.trim();
     if (n) row.notes = n;
     return row;
@@ -57,6 +78,27 @@ function isSessionFeedback(raw: unknown): raw is SessionFeedback {
   }
 }
 
+const PLAN_CLIENT_LEVEL_OPTIONS = [
+  { value: "Beginner", label: "Beginner" },
+  { value: "Intermediate", label: "Intermediate" },
+  { value: "Advanced", label: "Advanced" },
+];
+
+const DURATION_SELECT_OPTIONS = GENERATE_PLAN_DURATIONS.map((m) => ({
+  value: String(m),
+  label: `${m} minutes`,
+}));
+
+const FOCUS_SELECT_OPTIONS = [
+  { value: "", label: "— Optional —" },
+  ...GENERATE_PLAN_FOCUS_AREAS.map((f) => ({ value: f, label: f })),
+];
+
+const GOAL_SELECT_OPTIONS = [
+  { value: "", label: "— Optional —" },
+  ...GENERATE_PLAN_SESSION_GOALS.map((g) => ({ value: g, label: g })),
+];
+
 export default function SessionsPage() {
   const [mode, setMode] = useState<SessionMode>("plan");
   const [sessionType, setSessionType] = useState<SessionType>("teaching");
@@ -71,7 +113,7 @@ export default function SessionsPage() {
   const [feedback, setFeedback] = useState<SessionFeedback | null>(null);
 
   const [feedbackLoading, setFeedbackLoading] = useState(false);
-  const [generateAILoading, setGenerateAILoading] = useState(false);
+  const [fullPlanLoading, setFullPlanLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [linkLoading, setLinkLoading] = useState(false);
 
@@ -88,8 +130,20 @@ export default function SessionsPage() {
     null
   );
 
+  const planDraftHydratedRef = useRef(false);
+
+  const [planSource, setPlanSource] = useState<"manual" | "generate">("manual");
+  const [generateDuration, setGenerateDuration] =
+    useState<GeneratePlanDuration>(60);
+  const [generateApparatus, setGenerateApparatus] = useState<string[]>([
+    "Mat",
+  ]);
+  const [generateFocus, setGenerateFocus] = useState("");
+  const [generateGoal, setGenerateGoal] = useState("");
+  const [planRationale, setPlanRationale] = useState<string | null>(null);
+
   const busy =
-    feedbackLoading || generateAILoading || saveLoading || linkLoading;
+    feedbackLoading || fullPlanLoading || saveLoading || linkLoading;
 
   const sessionPayload = useMemo(
     () => ({
@@ -97,12 +151,22 @@ export default function SessionsPage() {
       session_type: sessionType,
       apparatus,
       client_level: sessionType === "teaching" ? clientLevel : null,
-      warm_up: warmUp,
+      client_notes: clientNotes.trim() || null,
+      warm_up: normalizeWarmUpMoves(warmUp),
       exercise_sequence: normalizeExercises(exercises),
       session_date: sessionDate,
       status: "draft" as const,
     }),
-    [mode, sessionType, apparatus, clientLevel, warmUp, exercises, sessionDate]
+    [
+      mode,
+      sessionType,
+      apparatus,
+      clientLevel,
+      clientNotes,
+      warmUp,
+      exercises,
+      sessionDate,
+    ]
   );
 
   const fetchHourDates = useCallback(async () => {
@@ -172,12 +236,64 @@ export default function SessionsPage() {
   }, [mode, fetchHourDates, fetchLogHistory]);
 
   useEffect(() => {
+    if (mode !== "plan" || planDraftHydratedRef.current) return;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/sessions?mode=plan&status=draft");
+        const data = await res.json();
+        if (
+          cancelled ||
+          !res.ok ||
+          !data.success ||
+          !Array.isArray(data.data)
+        ) {
+          return;
+        }
+        planDraftHydratedRef.current = true;
+        const rows = data.data as SessionPlan[];
+        const d = rows[0];
+        if (!d) return;
+
+        setDraftId(d.id);
+        setSessionType(d.session_type);
+        setApparatus(d.apparatus);
+        setClientLevel(d.client_level);
+        setSessionDate(d.session_date ?? todayISO());
+        setClientNotes(d.client_notes ?? "");
+        setWarmUp(normalizeWarmUpMoves(d.warm_up ?? []));
+        setExercises(normalizeExercises(d.exercise_sequence ?? []));
+        if (isSessionFeedback(d.feedback)) {
+          setFeedback(d.feedback);
+        }
+      } catch {
+        /* ignore */
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [mode]);
+
+  useEffect(() => {
+    if (mode === "log") {
+      setPlanSource("manual");
+    }
+  }, [mode]);
+
+  useEffect(() => {
+    if (planSource === "generate") {
+      if (clientLevel == null) setClientLevel("Beginner");
+      return;
+    }
     if (sessionType === "personal") {
       setClientLevel(null);
     } else if (clientLevel == null) {
       setClientLevel("Beginner");
     }
-  }, [sessionType, clientLevel]);
+  }, [sessionType, clientLevel, planSource]);
 
   async function persistDraft(
     overrides?: Partial<{ status: "draft" | "complete" }>
@@ -251,33 +367,48 @@ export default function SessionsPage() {
     setFeedback(null);
   };
 
-  const handleGenerateAI = async () => {
+  const handleGenerateFullPlan = async () => {
     setError("");
-    setGenerateAILoading(true);
+    setFullPlanLoading(true);
     try {
-      const res = await fetch("/api/agents/sessions/plan", {
+      if (generateApparatus.length === 0) {
+        throw new Error("Select at least one apparatus.");
+      }
+      const res = await fetch("/api/sessions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          apparatus,
+          action: "generatePlan",
           session_type: sessionType,
-          client_level: sessionType === "teaching" ? clientLevel : null,
+          client_level: clientLevel ?? "Beginner",
+          session_duration_minutes: generateDuration,
+          apparatus_available: generateApparatus,
           client_notes: clientNotes.trim() || null,
+          focus_area: generateFocus.trim() || null,
+          session_goal: generateGoal.trim() || null,
         }),
       });
       const data = await res.json();
       if (!res.ok || !data.success || !data.data) {
         throw new Error(
-          typeof data.error === "string" ? data.error : "AI plan failed"
+          typeof data.error === "string" ? data.error : "Generate plan failed"
         );
       }
-      setWarmUp(data.data.warm_up as WarmUpMove[]);
-      setExercises(normalizeExercises(data.data.exercise_sequence as ExerciseItem[]));
+      const payload = data.data as {
+        why_this_plan: string;
+        primary_apparatus: string;
+        warm_up: WarmUpMove[];
+        exercise_sequence: ExerciseItem[];
+      };
+      setWarmUp(normalizeWarmUpMoves(payload.warm_up));
+      setExercises(normalizeExercises(payload.exercise_sequence));
+      setApparatus(payload.primary_apparatus);
+      setPlanRationale(payload.why_this_plan);
       setFeedback(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "AI plan failed");
+      setError(e instanceof Error ? e.message : "Generate plan failed");
     } finally {
-      setGenerateAILoading(false);
+      setFullPlanLoading(false);
     }
   };
 
@@ -334,8 +465,145 @@ export default function SessionsPage() {
 
   return (
     <div>
+      {mode === "plan" && (
+        <div className="mb-6 flex gap-0 rounded-none border border-clara-border bg-clara-bg p-0.5">
+          <button
+            type="button"
+            onClick={() => {
+              setPlanSource("manual");
+              setPlanRationale(null);
+              setFeedback(null);
+            }}
+            disabled={busy}
+            className={`flex-1 rounded px-4 py-2 text-sm font-medium transition-colors ${
+              planSource === "manual"
+                ? "bg-clara-primary text-white underline decoration-clara-border decoration-2 underline-offset-4"
+                : "text-clara-deep hover:bg-clara-border/60"
+            } disabled:opacity-50`}
+          >
+            Build plan manually
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setPlanSource("generate");
+              setFeedback(null);
+              setGenerateApparatus((prev) =>
+                prev.length > 0 ? prev : apparatus ? [apparatus] : ["Mat"]
+              );
+            }}
+            disabled={busy}
+            className={`flex-1 rounded px-4 py-2 text-sm font-medium transition-colors ${
+              planSource === "generate"
+                ? "bg-clara-primary text-white underline decoration-clara-border decoration-2 underline-offset-4"
+                : "text-clara-deep hover:bg-clara-border/60"
+            } disabled:opacity-50`}
+          >
+            Generate plan with AI
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,55fr)_minmax(0,45fr)] lg:items-start">
         <Card>
+          {mode === "plan" && planSource === "generate" && (
+            <section className="mb-6 space-y-4 border-b border-clara-border pb-6">
+              <h2 className="text-base font-semibold text-clara-deep">
+                Generate a session plan
+              </h2>
+              <p className="text-xs text-clara-muted">
+                Clara scans client notes for special populations first, then builds
+                a duration-appropriate, ergonomically sequenced plan. Edit the
+                warm-up and main sequence below before saving or requesting
+                feedback.
+              </p>
+              <Select
+                label="Client level"
+                options={PLAN_CLIENT_LEVEL_OPTIONS}
+                value={clientLevel ?? "Beginner"}
+                onChange={(e) => setClientLevel(e.target.value)}
+                disabled={busy}
+              />
+              <Select
+                label="Session duration"
+                options={DURATION_SELECT_OPTIONS}
+                value={String(generateDuration)}
+                onChange={(e) =>
+                  setGenerateDuration(
+                    Number(e.target.value) as GeneratePlanDuration
+                  )
+                }
+                disabled={busy}
+              />
+              <fieldset>
+                <legend className="mb-2 block text-sm font-medium text-clara-deep">
+                  Apparatus available
+                </legend>
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
+                  {GENERATE_PLAN_APPARATUS_OPTIONS.map(({ value, label }) => (
+                    <label
+                      key={value}
+                      className="flex cursor-pointer items-center gap-2 text-sm text-clara-deep"
+                    >
+                      <input
+                        type="checkbox"
+                        className="rounded-none border-clara-border"
+                        checked={generateApparatus.includes(value)}
+                        disabled={busy}
+                        onChange={() => {
+                          setGenerateApparatus((prev) => {
+                            const on = prev.includes(value);
+                            if (on && prev.length === 1) return prev;
+                            if (on) return prev.filter((x) => x !== value);
+                            return [...prev, value];
+                          });
+                        }}
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              <Select
+                label="Focus area"
+                options={FOCUS_SELECT_OPTIONS}
+                value={generateFocus}
+                onChange={(e) => setGenerateFocus(e.target.value)}
+                disabled={busy}
+              />
+              <Select
+                label="Session goal"
+                options={GOAL_SELECT_OPTIONS}
+                value={generateGoal}
+                onChange={(e) => setGenerateGoal(e.target.value)}
+                disabled={busy}
+              />
+              <Button
+                type="button"
+                variant="primary"
+                onClick={() => void handleGenerateFullPlan()}
+                disabled={busy}
+                className="w-full sm:w-auto"
+              >
+                {fullPlanLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <LoadingSpinner size="sm" />
+                    Generating plan…
+                  </span>
+                ) : (
+                  "Generate session plan"
+                )}
+              </Button>
+            </section>
+          )}
+
+          {planRationale ? (
+            <div className="mb-6 rounded-none border border-clara-border bg-clara-surface/80 p-4 text-sm text-clara-deep">
+              <h3 className="font-semibold text-clara-deep">Why this plan</h3>
+              <p className="mt-2 whitespace-pre-wrap">{planRationale}</p>
+            </div>
+          ) : null}
+
           <SessionPlannerForm
             mode={mode}
             onModeChange={(m) => {
@@ -355,19 +623,32 @@ export default function SessionsPage() {
             sessionDate={sessionDate}
             onSessionDateChange={setSessionDate}
             loggedDates={hourLogsLoaded ? loggedDates : []}
-            onGenerateAI={mode === "plan" ? handleGenerateAI : undefined}
-            generateAILoading={generateAILoading}
+            suppressApparatusSelect={mode === "plan" && planSource === "generate"}
+            suppressClientLevelSelect={
+              mode === "plan" && planSource === "generate"
+            }
           >
+            {mode === "plan" && planSource === "generate" ? (
+              <p className="mb-4 text-xs text-clara-muted">
+                Primary apparatus for this draft:{" "}
+                <span className="font-medium text-clara-deep">{apparatus}</span>
+                . Multi-station pieces show their apparatus on each exercise.
+              </p>
+            ) : null}
             <div className="mb-4">
               <label className="mb-1.5 block text-sm font-medium text-clara-deep">
-                Client / session notes (optional)
+                Client considerations (optional)
               </label>
+              <p className="mb-1.5 text-xs text-clara-muted">
+                Pregnancy stage, injuries, osteoporosis, hypertension, scoliosis, or
+                other notes for safer sequencing and feedback.
+              </p>
               <textarea
                 value={clientNotes}
                 onChange={(e) => setClientNotes(e.target.value)}
                 disabled={busy}
                 rows={3}
-                placeholder="e.g. goals, limitations, contraindications…"
+                placeholder="e.g. 3rd trimester, left knee pain, osteopenia, goals…"
                 className="w-full resize-y rounded-none border border-clara-border bg-clara-bg px-3 py-2 text-sm text-clara-deep placeholder:text-clara-muted/80 focus:border-clara-primary focus:outline-none focus:ring-1 focus:ring-clara-primary/40 disabled:opacity-50"
               />
             </div>
